@@ -1,1044 +1,275 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interfaz VTS LLAN/AUT</title>
-  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    body {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      position: relative;
-      overflow-x: hidden;
-      font-family: 'Inter', sans-serif;
-      color: #e2e8f0;
-    }
-    .container {
-      background: linear-gradient(145deg, #1e293b, #0f172a);
-      border: 2px solid rgba(96, 165, 250, 0.3);
-      border-radius: 1.5rem;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-      padding: 2rem;
-      margin: 1rem auto;
-      position: relative;
-      overflow: hidden;
-    }
-    .container::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      border-radius: 1.5rem;
-      background: linear-gradient(45deg, #60a5fa, #a78bfa);
-      z-index: -1;
-      opacity: 0.2;
-    }
-    .header-container {
-      position: relative;
-      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAADkTV1aAAAAA1BMVEUAAACnej3aAAAASElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPCHYAAACgAABT3c1YAAAAAElFTkSuQmCC') center/cover no-repeat;
-      background-blend-mode: overlay;
-      opacity: 0.9;
-      padding: 2rem 1rem;
-      border-radius: 1rem;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-      margin-bottom: 2rem;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .header-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
-      border-radius: 1rem;
-    }
-    .header-container h1, .header-container p {
-      position: relative;
-      z-index: 1;
-    }
-    .header-3d {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 800;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5), 
-                   -1px -1px 2px rgba(255, 255, 255, 0.2);
-    }
-    .custom-button {
-      background: linear-gradient(145deg, #1e40af, #3b82f6);
-      border: 2px solid #60a5fa;
-      border-radius: 0.75rem;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
-      padding: 1rem 2rem;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      color: #ffffff;
-      position: relative;
-    }
-    .custom-button:hover {
-      background: linear-gradient(145deg, #2563eb, #60a5fa);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), inset 0 3px 6px rgba(255, 255, 255, 0.3);
-      transform: translateY(-2px);
-    }
-    .custom-select {
-      background: linear-gradient(145deg, #1e293b, #0f172a);
-      border: 2px solid #60a5fa;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.5);
-      transition: all 0.3s ease;
-      font-family: 'Inter', sans-serif;
-    }
-    .custom-select:hover {
-      border-color: #93c5fd;
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-    .table-header {
-      background: linear-gradient(to right, #7c3aed, #3b82f6);
-    }
-    .prospect-table-header {
-      background: linear-gradient(to right, #10b981, #34d399);
-    }
-    .section-frame {
-      background: #1e293b;
-      border: 2px solid rgba(96, 165, 250, 0.5);
-      border-radius: 1rem;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-      padding: 1.5rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .section-frame::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      border-radius: 1rem;
-      background: linear-gradient(45deg, #60a5fa, #a78bfa);
-      z-index: -1;
-      opacity: 0.1;
-    }
-    .section-title {
-      font-family: 'Poppins', sans-serif;
-      font-weight: 600;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-      border-bottom: 2px solid #60a5fa;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .watermark {
-      position: absolute;
-      z-index: -1;
-      opacity: 0.15;
-      pointer-events: none;
-    }
-    .watermark-logo-roma {
-      bottom: 20px;
-      right: 20px;
-      width: 300px;
-      height: 100px;
-      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAT4AAACgCAMAAADkTV1aAAAAA1BMVEUAAACnej3aAAAASElEQVR4nO3BMQEAAADCoPVPbQwfoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPCHYAAACgAABT3c1YAAAAAElFTkSuQmCC') no-repeat center;
-      background-size: contain;
-    }
-    .progress-bar {
-      background: #2d3748;
-      border-radius: 0.5rem;
-      overflow: hidden;
-      height: 1.5rem;
-      position: relative;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      transition: width 0.5s ease-in-out;
-    }
-    @media (max-width: 640px) {
-      table { font-size: 0.65rem; }
-      th, td { padding: 0.4rem; }
-      .container { padding: 1rem; }
-      select { font-size: 0.8rem; padding: 0.5rem; }
-      h1 { font-size: 1.75rem; }
-      h2 { font-size: 1.5rem; }
-      canvas { max-height: 250px; }
-      .custom-button { padding: 0.75rem 1.5rem; font-size: 0.9rem; }
-      .section-frame { padding: 1rem; }
-      .progress-bar { height: 1rem; }
-    }
-    @media (min-width: 641px) {
-      table { font-size: 0.85rem; }
-      th, td { padding: 0.75rem; }
-      select { font-size: 0.9rem; padding: 0.75rem; }
-      canvas { max-height: 350px; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Prospectos - Refaccionarias Hidalgo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .status-badge { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .status-alto { background-color: #dcfce7; color: #166534; }
+        .status-medio { background-color: #fef9c3; color: #854d0e; }
+        .status-bajo { background-color: #fee2e2; color: #991b1b; }
+    </style>
 </head>
-<body class="min-h-screen">
-  <div class="watermark watermark-logo-roma"></div>
-  <div id="root" class="container mx-auto"></div>
+<body>
 
-  <script type="text/babel">
-    // Registrar el plugin de datalabels para Chart.js
-    Chart.register(ChartDataLabels);
-
-    function parseNumber(value) {
-      if (!value || value === "") return 0;
-      const cleaned = String(value).replace(/[^0-9.-]+/g, '');
-      return Number(cleaned) || 0;
-    }
-
-    function getMonthName(dateString) {
-      if (!dateString || dateString.trim() === "") return "Mes desconocido";
-      let date;
-      const cleanedDateString = dateString.trim().replace(/\s+/g, ' ');
-      
-      const formats = [
-        { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/, parse: (match) => new Date(`${match[3]}-${match[2]}-${match[1]}T${match[4]}:${match[5]}:${match[6]}`) },
-        { regex: /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, parse: (match) => new Date(`${match[3]}-${match[2]}-${match[1]}`) },
-        { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2}):(\d{2})$/, parse: (match) => new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`) },
-        { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})$/, parse: (match) => new Date(`${match[1]}-${match[2]}-${match[3]}`) },
-        { regex: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, parse: (match) => new Date(`${match[3]}-${match[1]}-${match[2]}`) },
-        { regex: /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/, parse: (match) => new Date(`${match[1]}-${match[2]}-${match[3]}`) },
-      ];
-
-      for (const format of formats) {
-        const match = cleanedDateString.match(format.regex);
-        if (match) {
-          date = format.parse(match);
-          break;
-        }
-      }
-
-      if (!date || isNaN(date?.getTime())) {
-        date = new Date(cleanedDateString);
-      }
-
-      if (isNaN(date?.getTime())) {
-        const parts = cleanedDateString.split(/[\s\/-]+/);
-        if (parts.length >= 3) {
-          date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-          if (isNaN(date?.getTime())) {
-            date = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`);
-          }
-        }
-      }
-
-      if (isNaN(date?.getTime())) {
-        console.warn(`No se pudo parsear la fecha: "${dateString}"`);
-        return "Mes desconocido";
-      }
-
-      const monthNames = [
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-      ];
-      return monthNames[date.getMonth()];
-    }
-
-    function SalesTable() {
-      const [data, setData] = React.useState([]);
-      const [filterVend, setFilterVend] = React.useState([]);
-      const [filterClas, setFilterClas] = React.useState("");
-      const [filterDate, setFilterDate] = React.useState("");
-      const [filterClients, setFilterClients] = React.useState([]);
-      const [view, setView] = React.useState("home");
-      const [passwordError, setPasswordError] = React.useState("");
-      const tableRef = React.useRef(null);
-      const chartRef = React.useRef(null);
-      const chartInstanceRef = React.useRef(null);
-      const [error, setError] = React.useState(null);
-      const [isLoading, setIsLoading] = React.useState(true);
-      const [objectivesFilterVend, setObjectivesFilterVend] = React.useState([]);
-
-      // Definición de nombres, colores y objetivos
-      const vendorNames = {
-        "3": "Carlos Calderón",
-        "4": "Marco Hernández",
-        "6": "Miguel Lozada",
-        "5": "Ulises Alvarado",
-        "7": "Alfredo Tapia",
-        "8": "Empresarial/Talleres",
-        "12": "Ruben León",
-        "23": "Enrique Reséndiz",
-        "71": "Cecilia Pérez",
-        "72": "Oscar Flóres",
-        "22": "Cecilio Ivan",
-        "21": "Celene Soto"
-      };
-
-      const vendorColors = {
-        "3": "#FF6F61",
-        "4": "#D4A5A5",
-        "6": "#6B7280",
-        "5": "#FBBF24",
-        "7": "#34D399",
-        "8": "#60A5FA",
-        "12": "#F472B6",
-        "23": "#A78BFA",
-        "71": "#FCD34D",
-        "72": "#4ADE80",
-        "22": "#2DD4BF",
-        "21": "#F87171"
-      };
-
-      const companyObjectives = {
-        Acumuladores: 6502,
-        Lubricantes: 53500,
-        Motobaterias: 620,
-        Filtros: 1200
-      };
-
-      const vendorObjectives = {
-        "72": { // Oscar Flóres
-          Acumuladores: 76,
-          Lubricantes: 1500,
-          Motobaterias: 30,
-          Filtros: 100
-        },
-        "22": { // Cecilio Ivan
-          Acumuladores: 150,
-          Lubricantes: 3500,
-          Motobaterias: 30,
-          Filtros: 100
-        },
-        "21": { // Celene Soto
-          Acumuladores: 202,
-          Lubricantes: 5500,
-          Motobaterias: 60,
-          Filtros: 150
-        },
-        "23": { // Enrique Reséndiz
-          Acumuladores: 80,
-          Lubricantes: 7000,
-          Motobaterias: 80,
-          Filtros: 100
-        },
-        "12": { // Ruben León
-          Acumuladores: 630,
-          Lubricantes: 10000,
-          Motobaterias: 80,
-          Filtros: 150
-        },
-        "3": { // Carlos Calderón
-          Acumuladores: 2112,
-          Lubricantes: 8500,
-          Motobaterias: 60,
-          Filtros: 150
-        },
-        "6": { // Miguel Lozada
-          Acumuladores: 528,
-          Lubricantes: 10000,
-          Motobaterias: 80,
-          Filtros: 150
-        }
-      };
-
-      const categoryColors = {
-        Acumuladores: '#10B981',
-        Lubricantes: '#3B82F6',
-        Motobaterias: '#F59E0B',
-        Filtros: '#8B5CF6'
-      };
-
-      // Mapeo de clasificaciones del CSV a categorías internas
-      const classificationMap = {
-        '8 MOTOBAT': 'Motobaterias',
-        '5 ACUMULAD': 'Acumuladores',
-        '6 FILTROS': 'Filtros',
-        '7 LUBRICAN': 'Lubricantes'
-      };
-
-      // Memorización de listas para filtros
-      const vendorCodes = React.useMemo(() => [...new Set(data.map(item => item.codVend))].sort(), [data]);
-      const clasificaciones = React.useMemo(() => [...new Set(data.map(item => item.clasificacion))].sort(), [data]);
-      const fechas = React.useMemo(() => [...new Set(data.map(item => item.fecha))].sort(), [data]);
-      const clientes = React.useMemo(() => [...new Set(data.map(item => item.cliente))].sort(), [data]);
-
-      // Datos filtrados según los filtros seleccionados
-      const filteredData = React.useMemo(() => {
-        let result = [...data];
-        if (filterVend.length > 0) result = result.filter(item => filterVend.includes(item.codVend));
-        if (filterClas) result = result.filter(item => item.clasificacion === filterClas);
-        if (filterDate) result = result.filter(item => item.fecha === filterDate);
-        if (filterClients.length > 0) {
-          result = result.filter(item => filterClients.includes(item.cliente));
-        }
-        return result.sort((a, b) => b.importe - a.importe);
-      }, [data, filterVend, filterClas, filterDate, filterClients]);
-
-      // Totales de cantidad e importe
-      const totals = React.useMemo(() => {
-        return filteredData.reduce(
-          (acc, item) => {
-            acc.cantidad += item.cantidad;
-            acc.importe += item.importe;
-            return acc;
-          },
-          { cantidad: 0, importe: 0 }
-        );
-      }, [filteredData]);
-
-      // Totales por vendedor para la tabla de líderes
-      const vendorTotals = React.useMemo(() => {
-        const totalsByVendor = filteredData.reduce((acc, item) => {
-          if (!acc[item.codVend]) {
-            acc[item.codVend] = 0;
-          }
-          acc[item.codVend] += item.cantidad;
-          return acc;
-        }, {});
-        return Object.entries(totalsByVendor)
-          .map(([vendor, cantidad]) => ({ vendor, cantidad }))
-          .sort((a, b) => b.cantidad - a.cantidad);
-      }, [filteredData]);
-
-      // Progreso general de la empresa
-      const companyProgress = React.useMemo(() => {
-        const salesByCategory = filteredData.reduce((acc, item) => {
-          const category = classificationMap[item.clasificacion] || item.clasificacion;
-          if (!acc[category]) acc[category] = 0;
-          acc[category] += item.cantidad;
-          return acc;
-        }, {});
-        return Object.keys(companyObjectives).map(category => ({
-          category,
-          sales: salesByCategory[category] || 0,
-          target: companyObjectives[category],
-          percentage: ((salesByCategory[category] || 0) / companyObjectives[category] * 100).toFixed(2)
-        }));
-      }, [filteredData]);
-
-      // Progreso por vendedor
-      const vendorProgress = React.useMemo(() => {
-        const salesByVendorAndCategory = filteredData.reduce((acc, item) => {
-          const vendor = item.codVend;
-          const rawCategory = item.clasificacion;
-          const category = classificationMap[rawCategory] || rawCategory;
-          if (!acc[vendor]) acc[vendor] = {};
-          if (!acc[vendor][category]) acc[vendor][category] = 0;
-          acc[vendor][category] += item.cantidad;
-          return acc;
-        }, {});
-
-        return Object.keys(vendorObjectives).map(vendor => {
-          const objectives = vendorObjectives[vendor];
-          return {
-            vendor,
-            progress: Object.keys(objectives).map(category => ({
-              category,
-              sales: salesByVendorAndCategory[vendor]?.[category] || 0,
-              target: objectives[category],
-              percentage: ((salesByVendorAndCategory[vendor]?.[category] || 0) / objectives[category] * 100).toFixed(2)
-            }))
-          };
-        }).filter(v => objectivesFilterVend.length === 0 || objectivesFilterVend.includes(v.vendor));
-      }, [filteredData, objectivesFilterVend]);
-
-      // Función para determinar el color según la cantidad
-      const getColor = (value, type) => {
-        if (type === "cantidad") return value > 15 ? "bg-green-500 text-black" : value < 5 ? "bg-red-500 text-white" : "bg-yellow-400 text-black";
-        return "";
-      };
-
-      // Carga de datos desde Google Drive
-      React.useEffect(() => {
-        const csvUrl = "https://docs.google.com/spreadsheets/d/1Oa4a5rJp0W2IhIlAa5iwCCWOK9KkRgQp/export?format=csv";
-        const fetchData = () => {
-          const scrollPosition = tableRef.current ? tableRef.current.scrollLeft : 0;
-          Papa.parse(csvUrl, {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: (result) => {
-              if (!result.data || result.data.length === 0) {
-                setError("El archivo CSV está vacío o no contiene datos válidos.");
-                setIsLoading(false);
-                return;
-              }
-              const parsedData = result.data
-                .filter(row => row["COD DE VEND"] && row["CANTIDAD"] && row["CLASIFICACION"]) // Filtrar filas incompletas
-                .map(row => ({
-                  codVend: String(row["COD DE VEND"]).trim() || "",
-                  cantidad: parseNumber(row["CANTIDAD"]),
-                  importe: parseNumber(row["IMPORTE"]),
-                  cliente: row["NOMBRE DEL CLIENTE"]?.trim() || "",
-                  codCliente: row["CODIGO DEL CLIENTE"]?.trim() || "",
-                  clasificacion: row["CLASIFICACION"]?.trim() || "",
-                  almacen: row["ALMACEN"]?.trim() || "",
-                  factura: row["FACTURA"]?.trim() || "",
-                  descuento: parseNumber(row["DESCUENTO"]),
-                  descripcion: row["DESCRIPCION"]?.trim() || "",
-                  fecha: row["FECHA"]?.trim() || "",
-                }));
-              setData(parsedData);
-              setError(null);
-              setIsLoading(false);
-              if (tableRef.current) {
-                tableRef.current.scrollLeft = scrollPosition;
-              }
-            },
-            error: (err) => {
-              console.error("Error al cargar el CSV:", err);
-              setError("No se pudo cargar los datos. Verifica la conexión o la URL del CSV.");
-              setIsLoading(false);
-            },
-          });
-        };
-        fetchData();
-        const interval = setInterval(fetchData, 60000);
-        return () => clearInterval(interval);
-      }, []);
-
-      // Configuración del gráfico para la tabla de líderes
-      React.useEffect(() => {
-        if (chartRef.current && vendorTotals.length > 0 && view === "leaders") {
-          if (chartInstanceRef.current) {
-            chartInstanceRef.current.destroy();
-          }
-
-          const maxCantidad = Math.max(...vendorTotals.map(item => item.cantidad));
-          const suggestedMax = maxCantidad * 1.5;
-
-          const ctx = chartRef.current.getContext('2d');
-          chartInstanceRef.current = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: vendorTotals.map(item => vendorNames[item.vendor] || item.vendor),
-              datasets: [{
-                label: 'Cantidad por Vendedor',
-                data: vendorTotals.map(item => item.cantidad),
-                backgroundColor: vendorTotals.map(item => vendorColors[item.vendor] || '#FFFFFF'),
-                borderColor: '#FFFFFF',
-                borderWidth: 1,
-                barThickness: 15,
-              }],
-            },
-            options: {
-              indexAxis: 'x',
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: '#1e293b',
-                  titleColor: '#FFFFFF',
-                  bodyColor: '#FFFFFF',
-                  borderColor: '#60a5fa',
-                  borderWidth: 1,
-                },
-                datalabels: {
-                  anchor: 'end',
-                  align: 'top',
-                  color: '#FFFFFF',
-                  font: { size: 12, family: 'Inter' },
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  borderRadius: 3,
-                  padding: 2,
-                  formatter: (value) => value.toLocaleString(),
-                  rotation: -45,
-                },
-              },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: { color: '#e2e8f0', font: { size: 10, family: 'Inter' } },
-                },
-                y: {
-                  grid: { display: false },
-                  ticks: { color: '#e2e8f0', font: { size: 10, family: 'Inter' } },
-                  beginAtZero: true,
-                  suggestedMax: suggestedMax,
-                },
-              },
-              layout: {
-                padding: { top: 30 },
-              },
-            },
-          });
-        }
-        return () => {
-          if (chartInstanceRef.current) {
-            chartInstanceRef.current.destroy();
-          }
-        };
-      }, [vendorTotals, view]);
-
-      // Handlers para cambios en los filtros
-      const handleVendorChange = (e) => {
-        const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-        if (selectedOptions.includes("")) {
-          setFilterVend([]);
-        } else {
-          const selected = selectedOptions.filter(option => option !== "").slice(0, 3);
-          setFilterVend(selected);
-        }
-      };
-
-      const handleObjectivesVendorChange = (e) => {
-        const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-        if (selectedOptions.includes("")) {
-          setObjectivesFilterVend([]);
-        } else {
-          const selected = selectedOptions.filter(option => option !== "");
-          setObjectivesFilterVend(selected);
-        }
-      };
-
-      const handleClientChange = (e) => {
-        const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-        if (selectedOptions.includes("")) {
-          setFilterClients([]);
-        } else {
-          const selected = selectedOptions.filter(option => option !== "").slice(0, 2);
-          setFilterClients(selected);
-        }
-      };
-
-      const resetClientFilter = () => {
-        setFilterClients([]);
-        const selectElement = document.querySelector('select[multiple]:last-of-type');
-        if (selectElement) {
-          selectElement.value = [];
-        }
-      };
-
-      const handleResultsClick = () => {
-        const password = window.prompt("Ingrese la contraseña para acceder a la Tabla de Resultados:");
-        if (password === "Llanterama24") {
-          setPasswordError("");
-          setView("results");
-        } else {
-          setPasswordError("Contraseña incorrecta. Intente de nuevo.");
-        }
-      };
-
-      const handleObjectivesClick = () => {
-        const password = window.prompt("Ingrese la contraseña para acceder a Resultados de Objetivos:");
-        if (password === "Llanterama24") {
-          setPasswordError("");
-          setView("objectives");
-        } else {
-          setPasswordError("Contraseña incorrecta. Intente de nuevo.");
-        }
-      };
-
-      // Renderizar la vista de inicio
-      const renderHome = () => (
-        <div className="flex flex-col items-center gap-8">
-          {isLoading ? (
-            <p className="text-lg sm:text-xl text-blue-300 text-center font-semibold">
-              Cargando la interfaz, por favor espera...
-            </p>
-          ) : (
-            <>
-              <div className="header-container w-full">
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-wide header-3d">INTERFAZ - VTS - LLAN/AUT</h1>
-                <p className="text-sm sm:text-base text-blue-200 header-3d">
-                  Información confidencial · Uso interno exclusivo · Prohibida su reproducción sin autorización
-                </p>
-              </div>
-              <p className="text-lg sm:text-xl text-blue-300 text-center font-semibold">
-                Bienvenido(a) a la Interfaz de Ventas. Analice y optimice el rendimiento de su equipo con nuestras herramientas avanzadas.
-              </p>
-              {passwordError && (
-                <p className="text-red-400 text-center font-semibold">{passwordError}</p>
-              )}
-              <div className="flex flex-col sm:flex-row gap-6 flex-wrap justify-center">
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={() => setView("leaders")}
-                    className="custom-button"
-                  >
-                    Tabla de Líderes
-                  </button>
-                  <ul className="text-sm text-gray-300 mt-2 list-disc list-inside">
-                    <li>Visualice el ranking de vendedores por cantidad.</li>
-                    <li>Compare el desempeño con gráficos dinámicos.</li>
-                    <li>Filtre por vendedor, fecha y más.</li>
-                  </ul>
-                </div>
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={handleResultsClick}
-                    className="custom-button"
-                  >
-                    Tabla de Resultados
-                  </button>
-                  <ul className="text-sm text-gray-300 mt-2 list-disc list-inside">
-                    <li>Revise detalles de facturación por factura.</li>
-                    <li>Analice importes y cantidades por cliente.</li>
-                    <li>Filtre por clasificación, cliente y más.</li>
-                  </ul>
-                </div>
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={handleObjectivesClick}
-                    className="custom-button"
-                  >
-                    Resultados de Objetivos
-                  </button>
-                  <ul className="text-sm text-gray-300 mt-2 list-disc list-inside">
-                    <li>Vea el progreso hacia los objetivos mensuales.</li>
-                    <li>Analice el desempeño por vendedor y categoría.</li>
-                    <li>Filtre por vendedor para detalles específicos.</li>
-                  </ul>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      );
-
-      // Renderizar la vista de tabla de líderes
-      const renderLeaders = () => (
-        <div className="space-y-6">
-          <div className="header-container">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-wide header-3d">INTERFAZ - VTS - LLAN/AUT</h1>
-            <p className="text-sm sm:text-base text-blue-200 header-3d">
-              Información confidencial · Uso interno exclusivo · Prohibida su reproducción sin autorización
-            </p>
-          </div>
-          <button
-            onClick={() => setView("home")}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
-          >
-            Volver al Inicio
-          </button>
-          <div className="section-frame flex flex-col items-center gap-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-blue-400 text-center section-title">Filtros de Ventas</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 w-full">
-              <select
-                multiple
-                size="3"
-                className="p-3 rounded-lg text-white custom-select"
-                value={filterVend}
-                onChange={handleVendorChange}
-              >
-                <option value="">Todos los Vendedores</option>
-                {vendorCodes.map((code) => (
-                  <option key={code} value={code}>{vendorNames[code] || code}</option>
-                ))}
-              </select>
-              <select
-                className="p-3 rounded-lg text-white custom-select"
-                value={filterClas}
-                onChange={(e) => setFilterClas(e.target.value)}
-              >
-                <option value="">Todas las Clasificaciones</option>
-                {clasificaciones.map((clas) => (
-                  <option key={clas} value={clas}>{clas}</option>
-                ))}
-              </select>
-              <select
-                className="p-3 rounded-lg text-white custom-select"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-              >
-                <option value="">Todas las Fechas</option>
-                {fechas.map((fecha) => (
-                  <option key={fecha} value={fecha}>{fecha}</option>
-                ))}
-              </select>
-              <div className="flex items-center gap-2">
-                <select
-                  multiple
-                  size="3"
-                  className="p-3 rounded-lg text-white custom-select flex-1"
-                  value={filterClients}
-                  onChange={handleClientChange}
-                >
-                  <option value="">Todos los Clientes</option>
-                  {clientes.map((cliente) => (
-                    <option key={cliente} value={cliente}>{cliente}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={resetClientFilter}
-                  className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
-                >
-                  Reiniciar
-                </button>
-              </div>
+    <div class="flex h-screen overflow-hidden">
+        
+        <aside class="w-64 bg-slate-900 text-white hidden md:flex flex-col">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold tracking-tight text-blue-400">AutoCRM <span class="text-xs text-gray-400">Hidalgo</span></h1>
             </div>
-          </div>
-          <div className="section-frame">
-            <h3 className="text-lg sm:text-xl font-semibold text-blue-400 text-center mb-4 section-title">Tabla de Líderes</h3>
-            {error ? (
-              <p className="text-red-400 text-center">{error}</p>
-            ) : (
-              <div className="w-full h-[250px] sm:h-[350px]">
-                <canvas ref={chartRef}></canvas>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => setView("home")}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
-          >
-            Volver al Inicio
-          </button>
-        </div>
-      );
-
-      // Renderizar la vista de tabla de resultados
-      const renderResults = () => (
-        <div className="space-y-6">
-          <div className="header-container">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-wide header-3d">INTERFAZ - VTS - LLAN/AUT</h1>
-            <p className="text-sm sm:text-base text-blue-200 header-3d">
-              Información confidencial · Uso interno exclusivo · Prohibida su reproducción sin autorización
-            </p>
-          </div>
-          <button
-            onClick={() => setView("home")}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
-          >
-            Volver al Inicio
-          </button>
-          <div className="section-frame flex flex-col items-center gap-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-blue-400 text-center section-title">Filtros de Resultados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 w-full">
-              <select
-                multiple
-                size="3"
-                className="p-3 rounded-lg text-white custom-select"
-                value={filterVend}
-                onChange={handleVendorChange}
-              >
-                <option value="">Todos los Vendedores</option>
-                {vendorCodes.map((code) => (
-                  <option key={code} value={code}>{vendorNames[code] || code}</option>
-                ))}
-              </select>
-              <select
-                className="p-3 rounded-lg text-white custom-select"
-                value={filterClas}
-                onChange={(e) => setFilterClas(e.target.value)}
-              >
-                <option value="">Todas las Clasificaciones</option>
-                {clasificaciones.map((clas) => (
-                  <option key={clas} value={clas}>{clas}</option>
-                ))}
-              </select>
-              <select
-                className="p-3 rounded-lg text-white custom-select"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-              >
-                <option value="">Todas las Fechas</option>
-                {fechas.map((fecha) => (
-                  <option key={fecha} value={fecha}>{fecha}</option>
-                ))}
-              </select>
-              <div className="flex items-center gap-2">
-                <select
-                  multiple
-                  size="3"
-                  className="p-3 rounded-lg text-white custom-select flex-1"
-                  value={filterClients}
-                  onChange={handleClientChange}
-                >
-                  <option value="">Todos los Clientes</option>
-                  {clientes.map((cliente) => (
-                    <option key={cliente} value={cliente}>{cliente}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={resetClientFilter}
-                  className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
-                >
-                  Reiniciar
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="section-frame overflow-x-auto" ref={tableRef}>
-            <table className="w-full text-left border-collapse bg-gray-900 shadow-2xl rounded-lg">
-              <thead className="table-header text-white sticky top-0 z-10">
-                <tr>
-                  <th className="p-3">Vendedor</th>
-                  <th className="p-3">Clasif.</th>
-                  <th className="p-3">Descripción</th>
-                  <th className="p-3">Cant.</th>
-                  <th className="p-3">Importe</th>
-                  <th className="p-3">Cliente</th>
-                  <th className="p-3">Alm.</th>
-                  <th className="p-3">Factura</th>
-                  <th className="p-3">Fecha</th>
-                </tr>
-                <tr className="bg-green-400 text-black font-semibold">
-                  <td className="p-3"></td>
-                  <td className="p-3"></td>
-                  <td className="p-3"></td>
-                  <td className="p-3">{totals.cantidad.toLocaleString()}</td>
-                  <td className="p-3">${totals.importe.toLocaleString()}</td>
-                  <td className="p-3"></td>
-                  <td className="p-3"></td>
-                  <td className="p-3"></td>
-                  <td className="p-3"></td>
-                </tr>
-              </thead>
-              <tbody>
-                {data.length === 0 ? (
-                  <tr>
-                    <td colSpan="9" className="p-3 text-blue-300 text-center">
-                      Cargando datos desde Google Drive...
-                    </td>
-                  </tr>
-                ) : filteredData.length === 0 ? (
-                  <tr>
-                    <td colSpan="9" className="p-3 text-blue-300 text-center">
-                      No hay datos disponibles para los filtros seleccionados
-                    </td>
-                  </tr>
-                ) : (
-                  filteredData.map((item, index) => (
-                    <tr key={index} className="border-b border-gray-700 hover:bg-gray-800 transition-colors">
-                      <td className="p-3" style={{ color: vendorColors[item.codVend] || '#FFFFFF' }}>
-                        {vendorNames[item.codVend] || item.codVend}
-                      </td>
-                      <td className="p-3">{item.clasificacion}</td>
-                      <td className="p-3">{item.descripcion}</td>
-                      <td className={`p-3 ${getColor(item.cantidad, "cantidad")}`}>{item.cantidad}</td>
-                      <td className="p-3 text-green-300">${item.importe.toLocaleString()}</td>
-                      <td className="p-3">{item.cliente}</td>
-                      <td className="p-3">{item.almacen}</td>
-                      <td className="p-3">{item.factura}</td>
-                      <td className="p-3">{item.fecha}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <button
-            onClick={() => setView("home")}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
-          >
-            Volver al Inicio
-          </button>
-        </div>
-      );
-
-      // Renderizar la vista de resultados de objetivos
-      const renderObjectives = () => (
-        <div className="space-y-6">
-          <div className="header-container">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-wide header-3d">INTERFAZ - VTS - LLAN/AUT</h1>
-            <p className="text-sm sm:text-base text-blue-200 header-3d">
-              Información confidencial · Uso interno exclusivo · Prohibida su reproducción sin autorización
-            </p>
-          </div>
-          <button
-            onClick={() => setView("home")}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
-          >
-            Volver al Inicio
-          </button>
-          <div className="section-frame flex flex-col gap-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-blue-400 text-center section-title">Progreso General de la Empresa</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {companyProgress.map(({ category, sales, target, percentage }) => (
-                <div key={category} className="p-4 bg-gray-800 rounded-lg">
-                  <h3 className="text-lg font-semibold text-white">{category}</h3>
-                  <p className="text-sm text-gray-300">Ventas: {sales.toLocaleString()} / Objetivo: {target.toLocaleString()}</p>
-                  <div className="progress-bar mt-2">
-                    <div
-                      className="progress-bar-fill"
-                      style={{
-                        width: `${Math.min(parseFloat(percentage), 100)}%`,
-                        backgroundColor: categoryColors[category]
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-right text-sm font-semibold mt-1" style={{ color: categoryColors[category] }}>
-                    {percentage}%
-                  </p>
+            <nav class="flex-1 px-4 space-y-2">
+                <a href="#" class="flex items-center gap-3 px-4 py-3 bg-blue-600 rounded-lg text-white">
+                    <i class="fas fa-users"></i> Prospectos
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-slate-800 rounded-lg transition">
+                    <i class="fas fa-chart-pie"></i> Análisis de Zona
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-slate-800 rounded-lg transition">
+                    <i class="fas fa-map-marked-alt"></i> Mapa
+                </a>
+            </nav>
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">I</div>
+                    <div>
+                        <p class="text-sm font-medium">Impulsor</p>
+                        <p class="text-xs text-gray-400">En ruta</p>
+                    </div>
                 </div>
-              ))}
             </div>
-          </div>
-          <div className="section-frame flex flex-col gap-4">
-            <h2 className="text-2xl sm:text-3xl font-bold text-blue-400 text-center section-title">Progreso por Vendedor</h2>
-            <div className="flex justify-center">
-              <select
-                multiple
-                size="3"
-                className="p-3 rounded-lg text-white custom-select w-full sm:w-1/2"
-                value={objectivesFilterVend}
-                onChange={handleObjectivesVendorChange}
-              >
-                <option value="">Todos los Vendedores</option>
-                {Object.keys(vendorObjectives).map((code) => (
-                  <option key={code} value={code}>{vendorNames[code] || code}</option>
-                ))}
-              </select>
-            </div>
-            {error ? (
-              <p className="text-red-400 text-center">{error}</p>
-            ) : vendorProgress.length === 0 ? (
-              <p className="text-blue-300 text-center">No hay datos disponibles para los filtros seleccionados</p>
-            ) : (
-              vendorProgress.map(({ vendor, progress }) => (
-                <div key={vendor} className="p-4 bg-gray-800 rounded-lg">
-                  <h3 className="text-lg font-semibold" style={{ color: vendorColors[vendor] || '#FFFFFF' }}>
-                    {vendorNames[vendor] || vendor}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                    {progress.map(({ category, sales, target, percentage }) => (
-                      <div key={category}>
-                        <p className="text-sm text-gray-300">{category}</p>
-                        <p className="text-xs text-gray-400">Ventas: {sales.toLocaleString()} / Objetivo: {target.toLocaleString()}</p>
-                        <div className="progress-bar mt-1">
-                          <div
-                            className="progress-bar-fill"
-                            style={{
-                              width: `${Math.min(parseFloat(percentage), 100)}%`,
-                              backgroundColor: categoryColors[category]
-                            }}
-                          ></div>
+        </aside>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-gray-200 p-4 flex justify-between items-center md:hidden">
+                <h1 class="font-bold text-slate-800">Prospectos Hidalgo</h1>
+                <button class="text-gray-600"><i class="fas fa-bars"></i></button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-4 md:p-8">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-panel p-6 border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Total Prospectos</p>
+                                <h3 class="text-3xl font-bold text-gray-800 mt-1" id="totalProspects">0</h3>
+                            </div>
+                            <div class="p-2 bg-blue-50 rounded-lg text-blue-600"><i class="fas fa-user-plus"></i></div>
                         </div>
-                        <p className="text-right text-xs font-semibold mt-1" style={{ color: categoryColors[category] }}>
-                          {percentage}%
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                    </div>
+                    
+                    <div class="glass-panel p-6 border-l-4 border-green-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Interés Alto</p>
+                                <h3 class="text-3xl font-bold text-gray-800 mt-1" id="highInterest">0</h3>
+                            </div>
+                            <div class="p-2 bg-green-50 rounded-lg text-green-600"><i class="fas fa-fire"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 border-l-4 border-purple-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Zonas Activas</p>
+                                <h3 class="text-3xl font-bold text-gray-800 mt-1" id="activeZones">0</h3>
+                            </div>
+                            <div class="p-2 bg-purple-50 rounded-lg text-purple-600"><i class="fas fa-map-marker-alt"></i></div>
+                        </div>
+                    </div>
                 </div>
-              ))
-            )}
-          </div>
-          <button
-            onClick={() => setView("home")}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
-          >
-            Volver al Inicio
-          </button>
-        </div>
-      );
 
-      return (
-        <div>
-          {view === "home" && renderHome()}
-          {view === "leaders" && renderLeaders()}
-          {view === "results" && renderResults()}
-          {view === "objectives" && renderObjectives()}
-        </div>
-      );
-    }
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div class="relative w-full md:w-96">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" placeholder="Buscar refaccionaria, zona o contacto..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="loadData()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition">
+                            <i class="fas fa-sync-alt mr-2"></i> Actualizar
+                        </button>
+                        <a href="https://docs.google.com/spreadsheets/d/1X... (TU LINK EDITABLE)" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
+                            <i class="fas fa-external-link-alt mr-2"></i> Ver Sheet
+                        </a>
+                    </div>
+                </div>
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<SalesTable />);
-  </script>
+                <div class="glass-panel overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider border-b border-gray-200">
+                                    <th class="p-4 font-semibold">Fecha</th>
+                                    <th class="p-4 font-semibold">Refaccionaria / Cliente</th>
+                                    <th class="p-4 font-semibold">Zona (Hidalgo)</th>
+                                    <th class="p-4 font-semibold">Contacto</th>
+                                    <th class="p-4 font-semibold">Potencial</th>
+                                    <th class="p-4 font-semibold text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="text-sm text-gray-700 divide-y divide-gray-100">
+                                <tr>
+                                    <td colspan="6" class="p-8 text-center text-gray-500">Cargando datos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
+                        <span id="showingText">Mostrando 0 resultados</span>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // TU URL DE CSV (PUBLISHED)
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
+
+        // DATOS DE EJEMPLO (Por si el sheet está vacío)
+        const MOCK_DATA = [
+            { timestamp: "20/01/2026", negocio: "Refaccionaria Los Tuzos", zona: "Pachuca Centro", contacto: "Juan Pérez", telefono: "771-123-4567", interes: "Alto" },
+            { timestamp: "19/01/2026", negocio: "Taller Mecánico El Rápido", zona: "Tulancingo", contacto: "María González", telefono: "775-987-6543", interes: "Medio" },
+            { timestamp: "18/01/2026", negocio: "AutoPartes Hidalgo", zona: "Actopan", contacto: "Pedro Ramirez", telefono: "772-555-8888", interes: "Bajo" },
+            { timestamp: "18/01/2026", negocio: "Frenos y Clutch El Güero", zona: "Mineral de la Reforma", contacto: "Luis Hernández", telefono: "771-444-3333", interes: "Alto" },
+            { timestamp: "17/01/2026", negocio: "Refacciones Diesel del Valle", zona: "Ixmiquilpan", contacto: "Ana Torres", telefono: "759-222-1111", interes: "Medio" }
+        ];
+
+        let allData = [];
+
+        function init() {
+            loadData();
+            
+            // Configurar buscador
+            document.getElementById('searchInput').addEventListener('keyup', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = allData.filter(item => 
+                    (item.negocio && item.negocio.toLowerCase().includes(term)) ||
+                    (item.zona && item.zona.toLowerCase().includes(term)) ||
+                    (item.contacto && item.contacto.toLowerCase().includes(term))
+                );
+                renderTable(filtered);
+            });
+        }
+
+        function loadData() {
+            Papa.parse(SHEET_URL, {
+                download: true,
+                header: true, // Asume que la fila 1 son encabezados
+                complete: function(results) {
+                    let data = results.data;
+                    
+                    // Si el sheet está vacío o solo tiene headers, usar Mock Data
+                    if(data.length === 0 || (data.length === 1 && !data[0]['Marca temporal'])) {
+                        console.log("Sheet vacío, cargando datos de ejemplo...");
+                        data = MOCK_DATA;
+                    } else {
+                        // NORMALIZACIÓN: Mapear columnas del Google Form a nuestro formato
+                        // Ajusta los nombres de la derecha ('Nombre de la Refaccionaria') según tu Form real
+                        data = data.map(row => ({
+                            timestamp: row['Marca temporal'] || row['Timestamp'], 
+                            negocio: row['Nombre del Negocio'] || row['Nombre'] || 'Sin Nombre',
+                            zona: row['Zona'] || row['Ubicación'] || 'Hidalgo',
+                            contacto: row['Nombre de Contacto'] || row['Encargado'] || '--',
+                            telefono: row['Teléfono'] || row['WhatsApp'] || '--',
+                            interes: row['Nivel de Interés'] || 'Medio' // Asumiendo que hay una pregunta de interés
+                        })).filter(r => r.timestamp); // Filtrar filas vacías
+                    }
+
+                    allData = data;
+                    updateStats(data);
+                    renderTable(data);
+                },
+                error: function(err) {
+                    console.error("Error cargando CSV:", err);
+                    alert("No se pudo conectar al Sheet. Cargando ejemplo.");
+                    allData = MOCK_DATA;
+                    renderTable(MOCK_DATA);
+                    updateStats(MOCK_DATA);
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">No se encontraron prospectos.</td></tr>';
+                return;
+            }
+
+            data.forEach(row => {
+                // Determinar estilo de badge según interés
+                let badgeClass = 'status-medio';
+                let interesText = row.interes || 'Pendiente';
+                
+                if(interesText.toLowerCase().includes('alto')) badgeClass = 'status-alto';
+                if(interesText.toLowerCase().includes('bajo')) badgeClass = 'status-bajo';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-blue-50 transition border-b border-gray-100 group';
+                tr.innerHTML = `
+                    <td class="p-4 text-gray-500 whitespace-nowrap">${formatDate(row.timestamp)}</td>
+                    <td class="p-4 font-medium text-gray-900">
+                        ${row.negocio}
+                        <div class="text-xs text-gray-400 md:hidden">${row.zona}</div>
+                    </td>
+                    <td class="p-4 text-gray-600 hidden md:table-cell">${row.zona}</td>
+                    <td class="p-4 text-gray-600">
+                        <div class="flex flex-col">
+                            <span>${row.contacto}</span>
+                            <span class="text-xs text-blue-500">${row.telefono}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="status-badge ${badgeClass}">${interesText}</span>
+                    </td>
+                    <td class="p-4 text-right">
+                        <button class="text-gray-400 hover:text-blue-600 transition p-2">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('showingText').innerText = `Mostrando ${data.length} resultados`;
+        }
+
+        function updateStats(data) {
+            document.getElementById('totalProspects').innerText = data.length;
+            
+            // Contar zonas únicas
+            const zones = new Set(data.map(d => d.zona));
+            document.getElementById('activeZones').innerText = zones.size;
+
+            // Contar interés alto
+            const high = data.filter(d => d.interes && d.interes.toLowerCase().includes('alto')).length;
+            document.getElementById('highInterest').innerText = high;
+        }
+
+        function formatDate(dateString) {
+            // Intenta formatear la fecha si viene del form
+            if(!dateString) return '--';
+            const date = new Date(dateString);
+            return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('es-MX');
+        }
+
+        // Iniciar
+        init();
+    </script>
 </body>
 </html>
