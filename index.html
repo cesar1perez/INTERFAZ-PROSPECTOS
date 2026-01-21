@@ -3,79 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - V2.1</title>
+    <title>LLANTERAMA CRM - FIX</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
-        :root { --marino: #001f3f; --mostaza: #FFB800; --fondo: #e2e8f0; }
-        body { font-family: 'Arial Black', sans-serif; background-color: var(--fondo); margin: 0; color: #000; overflow-x: hidden; }
+        :root { --marino: #001f3f; --mostaza: #FFB800; }
+        body { font-family: 'Arial Black', sans-serif; background-color: #e2e8f0; margin: 0; padding: 0; }
         
-        .view-section { display: none; width: 100%; min-height: 100vh; position: absolute; top: 0; left: 0; background: var(--fondo); }
-        .active-view { display: block !important; position: relative; }
+        /* PORTADA FIJA Y CENTRADA */
+        #homeView { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; width: 100vw; background: var(--marino); 
+            position: fixed; top: 0; left: 0; z-index: 1000;
+        }
 
-        .header-marino { background: var(--marino); padding: 15px; display: flex; align-items: center; gap: 15px; position: sticky; top: 0; z-index: 100; border-bottom: 4px solid var(--mostaza); }
-        .header-title { color: #FFF; font-weight: 900; text-transform: uppercase; font-style: italic; font-size: 14px; }
-        .btn-regreso { background: var(--mostaza); color: var(--marino); font-weight: 900; padding: 8px 15px; border-radius: 8px; border: none; cursor: pointer; }
+        .view-section { display: none; width: 100%; min-height: 100vh; background: #e2e8f0; }
+        .active-view { display: block !important; }
 
-        .btn-home { background: #FFF; border: 4px solid var(--marino); padding: 25px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; box-shadow: 0 10px 0 var(--marino); margin-bottom: 10px; transition: 0.1s; }
-        .btn-home:active { transform: translateY(5px); box-shadow: 0 5px 0 var(--marino); }
-        .btn-home span { font-weight: 900; color: var(--marino); font-size: 14px; }
-
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
-        th { background: #003366; color: var(--mostaza); padding: 12px; border: 1px solid #FFF; font-size: 10px; text-transform: uppercase; text-align: left; }
-        td { padding: 10px; border: 1px solid #cbd5e1; font-size: 11px; color: #000; font-weight: 700; }
-        tr:nth-child(even) { background: #f8fafc; }
-
-        #map { height: 60vh; width: 100%; border: 4px solid var(--marino); border-radius: 15px; }
+        .header-marino { background: var(--marino); padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 200; }
         
-        #detailPanel { position: fixed; inset: 0; background: #FFF; z-index: 1000; transform: translateX(100%); transition: 0.3s; border-left: 10px solid var(--mostaza); }
+        /* BOTONES PORTADA */
+        .btn-home { 
+            background: #FFF; border: 4px solid var(--marino); padding: 20px; border-radius: 15px; 
+            display: flex; flex-direction: column; align-items: center; gap: 8px; 
+            width: 280px; box-shadow: 0 8px 0 #000; margin-bottom: 15px;
+        }
+
+        /* TABLA REFORZADA */
+        .tabla-container { padding: 10px; background: #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; background: white; border: 2px solid var(--marino); }
+        th { background: var(--marino); color: var(--mostaza); padding: 10px; font-size: 10px; text-transform: uppercase; border: 1px solid #FFF; }
+        td { padding: 8px; border: 1px solid #cbd5e1; font-size: 11px; font-weight: bold; color: #000; }
+
+        #detailPanel { position: fixed; inset: 0; background: #FFF; z-index: 2000; transform: translateX(100%); transition: 0.3s; border-left: 10px solid var(--mostaza); }
         .panel-open { transform: translateX(0) !important; }
-        .observaciones-box { background: var(--marino); color: #FFF; padding: 20px; border-radius: 15px; margin-top: 15px; border-left: 6px solid var(--mostaza); }
+        
+        #map { height: 60vh; width: 100%; border: 4px solid var(--marino); }
     </style>
 </head>
 <body>
 
-    <section id="homeView" class="view-section active-view bg-[#001f3f] flex flex-col items-center justify-center p-6">
-        <div class="w-24 h-24 bg-[#FFB800] flex items-center justify-center text-[#001f3f] text-6xl font-black italic rounded-3xl mb-8 shadow-2xl">LL</div>
-        <h1 class="text-3xl font-black text-white text-center leading-none italic mb-12">PROSPECTOS<br><span class="text-[#FFB800] not-italic text-xl">TULANCINGO - POZA RICA</span></h1>
-        <div class="w-full max-w-xs space-y-6">
-            <button onclick="switchView('money')" class="btn-home"><i class="fas fa-hand-holding-usd text-3xl text-emerald-600"></i><span>COMISIONES</span></button>
-            <button onclick="switchView('list')" class="btn-home"><i class="fas fa-clipboard-list text-3xl text-blue-600"></i><span>LISTADO Y ESTATUS</span></button>
-            <button onclick="switchView('map')" class="btn-home"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span>MAPA POR ZONAS</span></button>
-        </div>
-        <button onclick="loadData()" class="mt-10 text-white/40 text-[10px] font-bold uppercase underline">Sincronizar Datos 2026</button>
+    <section id="homeView">
+        <div class="w-20 h-20 bg-[#FFB800] flex items-center justify-center text-[#001f3f] text-5xl font-black italic rounded-2xl mb-6">LL</div>
+        <h1 class="text-2xl font-black text-white text-center leading-tight mb-8">PROSPECTOS<br><span class="text-[#FFB800]">TULANCINGO - POZA RICA</span></h1>
+        
+        <button onclick="switchView('money')" class="btn-home"><i class="fas fa-dollar-sign text-2xl text-emerald-600"></i><span class="text-sm">COMISIONES</span></button>
+        <button onclick="switchView('list')" class="btn-home"><i class="fas fa-list-ol text-2xl text-blue-600"></i><span class="text-sm">LISTADO Y ESTATUS</span></button>
+        <button onclick="switchView('map')" class="btn-home"><i class="fas fa-map-marker-alt text-2xl text-orange-600"></i><span class="text-sm">MAPA POR ZONAS</span></button>
+        
+        <button onclick="loadData()" class="mt-8 text-white/50 text-[10px] underline uppercase">Sincronizar Datos</button>
     </section>
 
     <section id="moneyView" class="view-section">
         <div class="header-marino">
-            <button onclick="switchView('home')" class="btn-regreso"><i class="fas fa-home"></i></button>
-            <span class="header-title italic">Pagos Impulsores</span>
+            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded font-black text-marino">INICIO</button>
+            <span class="text-white font-black italic uppercase">Comisiones $20</span>
         </div>
-        <div class="p-4">
-            <div class="bg-white p-4 rounded-xl border-4 border-marino mb-6">
-                <p class="font-black text-marino text-xs">MONTO FIJO: $20.00 M.N. POR PROSPECTO</p>
-            </div>
-            <div id="comisionesContainer" class="space-y-6"></div>
-        </div>
+        <div id="comisionesContainer" class="p-4 space-y-6"></div>
     </section>
 
     <section id="listView" class="view-section">
         <div class="header-marino">
-            <button onclick="switchView('home')" class="btn-regreso"><i class="fas fa-arrow-left"></i> INICIO</button>
-            <span class="header-title italic">Estatus de Asignación</span>
+            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded font-black text-marino">INICIO</button>
+            <span class="text-white font-black italic uppercase">Listado de Prospectos</span>
         </div>
-        <div class="overflow-x-auto p-2">
+        <div class="tabla-container overflow-x-auto">
             <table>
                 <thead>
                     <tr>
-                        <th onclick="sortTable(0)">Fecha</th>
-                        <th onclick="sortTable(1)">Negocio</th>
-                        <th onclick="sortTable(2)">Estatus Asignación</th>
-                        <th onclick="sortTable(3)">Zona</th>
-                        <th onclick="sortTable(4)">Interés</th>
+                        <th>Fecha</th>
+                        <th>Negocio</th>
+                        <th>Estatus (Asignación)</th>
+                        <th>Zona</th>
+                        <th>Interés</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -85,84 +88,95 @@
 
     <section id="mapView" class="view-section">
         <div class="header-marino">
-            <button onclick="switchView('home')" class="btn-regreso"><i class="fas fa-arrow-left"></i> INICIO</button>
-            <span class="header-title italic">Mapa de Ruta</span>
+            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded font-black text-marino">INICIO</button>
+            <span class="text-white font-black italic uppercase">Mapa de Prospectos</span>
         </div>
-        <div class="flex flex-col md:flex-row h-[calc(100vh-70px)]">
-            <div class="w-full md:w-72 bg-white border-r-4 border-marino overflow-y-auto p-4" id="mapZonasContainer"></div>
-            <div class="flex-1 p-2 bg-slate-300">
-                <div id="map"></div>
-            </div>
+        <div class="flex flex-col h-[calc(100vh-70px)]">
+            <div id="map"></div>
+            <div class="flex-1 bg-white overflow-y-auto p-4" id="mapZonasContainer"></div>
         </div>
     </section>
 
     <div id="detailPanel">
         <div class="p-6 h-full flex flex-col">
-            <div class="flex justify-between items-center border-b-4 border-marino pb-4 mb-6">
-                <span class="text-xl font-black text-marino italic underline">FICHA TÉCNICA</span>
-                <button onclick="closeDetail()" class="text-4xl text-marino font-bold">&times;</button>
+            <div class="flex justify-between items-center border-b-4 border-marino pb-4 mb-4">
+                <span class="font-black text-marino italic">DETALLE DEL CLIENTE</span>
+                <button onclick="closeDetail()" class="text-3xl font-bold">&times;</button>
             </div>
-            <div id="detailContent" class="overflow-y-auto flex-1 space-y-6"></div>
+            <div id="detailContent" class="overflow-y-auto flex-1 space-y-4"></div>
         </div>
     </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
-        let allData = [], map, markersLayer, markerObjects = {}, sortDir = true;
+        let allData = [], map, markersLayer;
 
-        const zonaColores = { "Tulancingo": "#ef4444", "Poza Rica": "#3b82f6" };
+        // Función inteligente para buscar columnas
+        function getVal(row, name) {
+            const keys = Object.keys(row);
+            const target = name.toLowerCase().trim();
+            const key = keys.find(k => k.toLowerCase().trim().includes(target));
+            return key ? row[key].toString().trim() : "";
+        }
 
         function switchView(v) {
-            document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active-view'));
-            const target = document.getElementById(v + 'View');
-            target.classList.add('active-view');
+            // Ocultar todas
+            document.getElementById('homeView').style.display = 'none';
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
+            
+            if(v === 'home') {
+                document.getElementById('homeView').style.display = 'flex';
+            } else {
+                document.getElementById(v + 'View').classList.add('active-view');
+            }
+
             if(v === 'map') {
                 if(!map) initMap();
                 setTimeout(() => map.invalidateSize(), 300);
             }
         }
 
-        function getVal(row, kw) {
-            const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(kw.toLowerCase().trim()));
-            return key ? row[key].trim() : "";
-        }
-
         function loadData() {
             Papa.parse(CSV_URL, {
                 download: true, header: true,
-                complete: function(r) { 
-                    allData = r.data.filter(f => f['Marca temporal']); 
-                    renderComisiones();
-                    renderListado();
-                    if(map) renderMapa();
+                complete: function(results) {
+                    allData = results.data.filter(r => r['Marca temporal'] || r['Timestamp']);
+                    renderAll();
                 }
             });
+        }
+
+        function renderAll() {
+            renderComisiones();
+            renderListado();
+            if(map) renderMapa();
         }
 
         function renderComisiones() {
             const container = document.getElementById('comisionesContainer');
             container.innerHTML = '';
             const meses = ["Enero", "Febrero", "Marzo"];
-            const impulsores = ["Marco A. Hernández", "Josue Jimárez"];
+            const impulsores = ["Marco", "Josue"]; // Buscamos solo el nombre clave
 
-            meses.forEach((mes, idx) => {
+            meses.forEach((mesNom, idx) => {
                 const mesNum = (idx + 1).toString().padStart(2, '0');
-                let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded shadow-md mb-3">${mes.toUpperCase()}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">`;
+                let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded">${mesNom.toUpperCase()}</div><div class="grid grid-cols-1 gap-4 mt-2 mb-6">`;
                 
                 impulsores.forEach(imp => {
-                    const buscado = imp.split(' ')[0].toLowerCase();
-                    const prospectos = allData.filter(r => {
-                        const fecha = r['Marca temporal'] || "";
-                        const impulsorFila = getVal(r, 'Impulsor').toLowerCase();
-                        // Lógica de detección de mes más flexible (21/01/2026 o 2026-01-21)
-                        return impulsorFila.includes(buscado) && (fecha.includes(`/${mesNum}/`) || fecha.includes(`-0${idx+1}-`));
+                    const filtrados = allData.filter(r => {
+                        const fecha = (r['Marca temporal'] || "").toString();
+                        const impulsorRow = getVal(r, "Impulsor").toLowerCase();
+                        // BUSCADOR FLEXIBLE: Que la fecha contenga "/01/" y el nombre contenga "marco"
+                        const coincideMes = fecha.includes(`/${mesNum}/`) || fecha.includes(`-0${idx+1}-`);
+                        const coincideNombre = impulsorRow.includes(imp.toLowerCase());
+                        return coincideMes && coincideNombre;
                     });
 
                     html += `
-                        <div class="bg-white p-5 rounded-xl border-4 border-marino shadow-lg">
-                            <p class="text-[10px] font-black text-slate-500 uppercase underline mb-1">${imp}</p>
-                            <p class="text-5xl font-black text-emerald-600">$${prospectos.length * 20}</p>
-                            <p class="text-xl font-black text-blue-600 mt-1 italic uppercase">${prospectos.length} PROSPECTOS</p>
+                        <div class="bg-white p-4 border-4 border-marino rounded-xl shadow-lg">
+                            <p class="text-[10px] text-slate-400 font-black uppercase">Impulsor: ${imp} A. Hernández</p>
+                            <p class="text-4xl font-black text-emerald-600">$${filtrados.length * 20}</p>
+                            <p class="text-lg font-black text-blue-600 uppercase italic">${filtrados.length} PROSPECTOS HECHOS</p>
                         </div>`;
                 });
                 html += `</div>`;
@@ -174,43 +188,22 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             allData.forEach((row, i) => {
-                const estatus = getVal(row, 'Estatus'); // Columna ESTATUS
+                const estatus = getVal(row, "ESTATUS"); // Busca la columna que agregaste
+                const negocio = getVal(row, "negocio");
+                const zona = getVal(row, "Zona");
+                const interes = getVal(row, "interés");
+                const fecha = (row['Marca temporal'] || "").split(' ')[0];
+
                 tbody.innerHTML += `
                     <tr onclick="showDetail(${i})">
-                        <td>${row['Marca temporal'].split(' ')[0]}</td>
-                        <td class="font-black text-marino uppercase">${getVal(row, 'negocio')}</td>
-                        <td class="${estatus.includes('SIN') ? 'text-red-600' : 'text-emerald-600'} font-black">${estatus || 'SIN DESIGNAR'}</td>
-                        <td>${getVal(row, 'Zona')}</td>
-                        <td class="text-marino italic font-black">${getVal(row, 'interés')}</td>
+                        <td>${fecha}</td>
+                        <td class="text-marino uppercase font-black">${negocio}</td>
+                        <td class="${estatus.toLowerCase().includes('sin') ? 'text-red-600' : 'text-emerald-600'}">
+                            ${estatus || "SIN DESIGNAR"}
+                        </td>
+                        <td>${zona}</td>
+                        <td class="italic">${interes}</td>
                     </tr>`;
-            });
-        }
-
-        function initMap() {
-            map = L.map('map', {zoomControl: true}).setView([20.10, -98.75], 10);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-            markersLayer = L.layerGroup().addTo(map);
-            renderMapa();
-        }
-
-        function renderMapa() {
-            if(!markersLayer) return;
-            markersLayer.clearLayers();
-            const side = document.getElementById('mapZonasContainer');
-            side.innerHTML = '';
-            
-            const zonas = [...new Set(allData.map(r => getVal(r, 'Zona')))];
-            zonas.forEach(z => {
-                const pros = allData.filter(r => getVal(r, 'Zona') === z);
-                side.innerHTML += `<div class="bg-marino text-mostaza p-2 font-black text-[10px] uppercase mb-2 mt-4 rounded flex justify-between"><span>${z}</span><span>${pros.length}</span></div>`;
-                pros.forEach(row => {
-                    const gps = getVal(row, 'GPS');
-                    if(gps && gps.includes(',')) {
-                        const c = gps.replace(/[^\d.,-]/g, '').split(',').map(parseFloat);
-                        L.circleMarker([c[0], c[1]], { radius: 10, color: '#FFF', weight: 2, fillOpacity: 1, fillColor: zonaColores[z] || "#000" }).addTo(markersLayer);
-                        side.innerHTML += `<div onclick="map.flyTo([${c[0]},${c[1]}], 16)" class="p-2 border-b font-black text-marino text-[10px] uppercase cursor-pointer hover:bg-yellow-50">${getVal(row, 'negocio')}</div>`;
-                    }
-                });
             });
         }
 
@@ -218,48 +211,63 @@
             const r = allData[i];
             const content = document.getElementById('detailContent');
             const comp = getVal(r, 'competencia').toLowerCase().includes('si');
-            const check = (v) => v.toLowerCase().includes('si') ? '✔' : '✘';
-
+            
             content.innerHTML = `
-                <h3 class="text-3xl font-black text-marino uppercase italic leading-none">${getVal(r, 'negocio')}</h3>
-                <div class="bg-slate-100 p-4 rounded-xl border-4 border-marino text-marino font-black text-sm">
-                    <p>ENCARGADO: ${getVal(r, 'encargado')}</p>
-                    <p>TELÉFONO: <a href="tel:${getVal(r, 'Teléfono')}" class="underline">${getVal(r, 'Teléfono')}</a></p>
-                    <p>CORREO: ${getVal(r, 'Correo')}</p>
+                <h3 class="text-2xl font-black text-marino uppercase">${getVal(r, 'negocio')}</h3>
+                <div class="bg-slate-100 p-3 border-2 border-marino text-xs font-bold">
+                    <p>DUEÑO: ${getVal(r, 'encargado')}</p>
+                    <p>TEL: ${getVal(r, 'Teléfono')}</p>
+                    <p>EMAIL: ${getVal(r, 'Correo')}</p>
                 </div>
-
-                <div class="p-4 rounded-xl font-black text-center ${comp ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}">
-                    ${comp ? '⚠️ DISTRIBUYE COMPETENCIA (CONTRATO)' : '✅ OPORTUNIDAD LIBRE'}
+                <div class="p-3 font-black text-center ${comp ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}">
+                    ${comp ? 'TIENE COMPETENCIA' : 'OPORTUNIDAD LIBRE'}
                 </div>
-
-                <div class="grid grid-cols-2 gap-2 text-[10px] font-black">
-                    <div class="p-2 border-2 border-marino rounded flex justify-between">ACUMULADORES <span>${check(getVal(r, 'acumuladores'))}</span></div>
-                    <div class="p-2 border-2 border-marino rounded flex justify-between">LUBRICANTES <span>${check(getVal(r, 'lubricante'))}</span></div>
-                    <div class="p-2 border-2 border-marino rounded flex justify-between">MOTO <span>${check(getVal(r, 'motobatería'))}</span></div>
-                    <div class="p-2 border-2 border-marino rounded flex justify-between">FILTROS <span>${check(getVal(r, 'filtros'))}</span></div>
+                <div class="grid grid-cols-2 gap-2 text-[10px] font-black uppercase">
+                    <div class="p-2 border border-marino">Acumuladores: ${getVal(r, 'acumuladores')}</div>
+                    <div class="p-2 border border-marino">Lubricantes: ${getVal(r, 'lubricante')}</div>
+                    <div class="p-2 border border-marino">Filtros: ${getVal(r, 'filtros')}</div>
+                    <div class="p-2 border border-marino">Moto: ${getVal(r, 'motobatería')}</div>
                 </div>
-
-                <div class="observaciones-box">
-                    <p class="text-mostaza font-black uppercase text-[10px] mb-2 underline underline-offset-4 tracking-widest">Observaciones del Impulsor</p>
-                    <p class="text-sm font-bold italic leading-relaxed text-white">"${getVal(r, 'Observaciones') || 'Sin comentarios.'}"</p>
+                <div class="bg-marino text-white p-4 rounded-xl">
+                    <p class="text-mostaza text-[10px] uppercase font-black mb-2 underline">Observaciones</p>
+                    <p class="text-sm italic">"${getVal(r, 'Observaciones') || 'Sin notas.'}"</p>
                 </div>
-                
-                <div class="mt-4 p-4 border-t-2 border-marino italic font-black text-marino text-xs">
-                    ESTATUS: ${getVal(r, 'Estatus') || 'SIN DESIGNAR'}
+                <div class="p-3 bg-slate-200 font-black text-marino text-center uppercase">
+                    Estatus: ${getVal(r, 'ESTATUS') || 'SIN DESIGNAR'}
                 </div>
             `;
             document.getElementById('detailPanel').classList.add('panel-open');
         }
 
-        function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
-        function sortTable(n) {
-            sortDir = !sortDir;
-            allData.sort((a, b) => {
-                let v1 = Object.values(a)[n] || "", v2 = Object.values(b)[n] || "";
-                return sortDir ? v1.localeCompare(v2) : v2.localeCompare(v1);
-            });
-            renderListado();
+        function initMap() {
+            map = L.map('map').setView([20.10, -98.75], 10);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+            markersLayer = L.layerGroup().addTo(map);
+            renderMapa();
         }
+
+        function renderMapa() {
+            markersLayer.clearLayers();
+            const side = document.getElementById('mapZonasContainer');
+            side.innerHTML = '';
+            const zonas = [...new Set(allData.map(r => getVal(r, "Zona")))];
+            
+            zonas.forEach(z => {
+                if(!z) return;
+                const pros = allData.filter(r => getVal(r, "Zona") === z);
+                side.innerHTML += `<div class="bg-marino text-white p-1 px-3 text-xs font-black mt-4">${z.toUpperCase()} (${pros.length})</div>`;
+                pros.forEach(row => {
+                    const gps = getVal(row, "GPS");
+                    if(gps && gps.includes(',')) {
+                        const c = gps.split(',').map(parseFloat);
+                        L.marker([c[0], c[1]]).addTo(markersLayer);
+                    }
+                    side.innerHTML += `<div class="p-2 border-b text-[10px] font-bold uppercase text-slate-600">${getVal(row, 'negocio')}</div>`;
+                });
+            });
+        }
+
+        function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
         window.onload = loadData;
     </script>
 </body>
