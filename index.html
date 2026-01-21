@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - FIX</title>
+    <title>LLANTERAMA CRM - FINAL FIX</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,72 +11,75 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         :root { --marino: #001f3f; --mostaza: #FFB800; }
-        body { font-family: 'Arial Black', sans-serif; background-color: #e2e8f0; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background-color: #f1f5f9; margin: 0; }
         
-        /* PORTADA FIJA Y CENTRADA */
-        #homeView { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; width: 100vw; background: var(--marino); 
-            position: fixed; top: 0; left: 0; z-index: 1000;
-        }
+        /* Navegación */
+        .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 100; }
+        .btn-nav { background: var(--mostaza); color: var(--marino); font-weight: 900; padding: 8px 15px; border-radius: 8px; text-transform: uppercase; font-size: 12px; }
 
-        .view-section { display: none; width: 100%; min-height: 100vh; background: #e2e8f0; }
+        /* Vistas */
+        .view-section { display: none; min-height: 100vh; width: 100%; }
         .active-view { display: block !important; }
 
-        .header-marino { background: var(--marino); padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 200; }
-        
-        /* BOTONES PORTADA */
-        .btn-home { 
-            background: #FFF; border: 4px solid var(--marino); padding: 20px; border-radius: 15px; 
-            display: flex; flex-direction: column; align-items: center; gap: 8px; 
-            width: 280px; box-shadow: 0 8px 0 #000; margin-bottom: 15px;
-        }
+        /* Portada */
+        .home-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--marino); padding: 20px; text-center; }
+        .btn-main { background: white; border: 4px solid var(--marino); padding: 20px; border-radius: 15px; width: 100%; max-width: 300px; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; box-shadow: 0 6px 0 #000; }
+        .btn-main span { color: var(--marino); font-weight: 900; }
 
-        /* TABLA REFORZADA */
-        .tabla-container { padding: 10px; background: #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; background: white; border: 2px solid var(--marino); }
-        th { background: var(--marino); color: var(--mostaza); padding: 10px; font-size: 10px; text-transform: uppercase; border: 1px solid #FFF; }
-        td { padding: 8px; border: 1px solid #cbd5e1; font-size: 11px; font-weight: bold; color: #000; }
+        /* Tablas */
+        .table-wrapper { overflow-x: auto; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; background: white; min-width: 700px; }
+        th { background: var(--marino); color: var(--mostaza); padding: 12px; font-size: 11px; text-transform: uppercase; border: 1px solid #ddd; text-align: left; }
+        td { padding: 10px; border: 1px solid #eee; font-size: 12px; font-weight: bold; }
+        tr:nth-child(even) { background: #f9fafb; }
 
-        #detailPanel { position: fixed; inset: 0; background: #FFF; z-index: 2000; transform: translateX(100%); transition: 0.3s; border-left: 10px solid var(--mostaza); }
+        /* Mapa y Sidebar Izquierdo */
+        .map-layout { display: flex; height: calc(100vh - 65px); flex-direction: row; }
+        @media (max-width: 768px) { .map-layout { flex-direction: column; } .sidebar-map { width: 100% !important; height: 40% !important; } }
+        .sidebar-map { width: 350px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
+        #map { flex-grow: 1; height: 100%; }
+
+        /* Ficha Lateral (1/4 de pantalla en Desktop) */
+        #detailPanel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 400px; background: white; z-index: 1000; transform: translateX(100%); transition: 0.3s; border-left: 8px solid var(--mostaza); box-shadow: -5px 0 15px rgba(0,0,0,0.2); }
         .panel-open { transform: translateX(0) !important; }
-        
-        #map { height: 60vh; width: 100%; border: 4px solid var(--marino); }
     </style>
 </head>
 <body>
 
-    <section id="homeView">
-        <div class="w-20 h-20 bg-[#FFB800] flex items-center justify-center text-[#001f3f] text-5xl font-black italic rounded-2xl mb-6">LL</div>
-        <h1 class="text-2xl font-black text-white text-center leading-tight mb-8">PROSPECTOS<br><span class="text-[#FFB800]">TULANCINGO - POZA RICA</span></h1>
-        
-        <button onclick="switchView('money')" class="btn-home"><i class="fas fa-dollar-sign text-2xl text-emerald-600"></i><span class="text-sm">COMISIONES</span></button>
-        <button onclick="switchView('list')" class="btn-home"><i class="fas fa-list-ol text-2xl text-blue-600"></i><span class="text-sm">LISTADO Y ESTATUS</span></button>
-        <button onclick="switchView('map')" class="btn-home"><i class="fas fa-map-marker-alt text-2xl text-orange-600"></i><span class="text-sm">MAPA POR ZONAS</span></button>
-        
-        <button onclick="loadData()" class="mt-8 text-white/50 text-[10px] underline uppercase">Sincronizar Datos</button>
+    <section id="homeView" class="view-section active-view">
+        <div class="home-container">
+            <div class="w-20 h-20 bg-mostaza flex items-center justify-center text-marino text-5xl font-black italic rounded-2xl mb-6">LL</div>
+            <h1 class="text-white text-2xl font-black italic text-center mb-10 leading-tight">PROSPECTOS<br><span class="text-mostaza">TULANCINGO - POZA RICA</span></h1>
+            
+            <button onclick="switchView('money')" class="btn-main"><i class="fas fa-coins text-3xl text-emerald-600"></i><span>COMISIONES</span></button>
+            <button onclick="switchView('list')" class="btn-main"><i class="fas fa-table text-3xl text-blue-600"></i><span>LISTADO COMPLETO</span></button>
+            <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span>MAPA POR ZONAS</span></button>
+            
+            <button onclick="loadData()" class="mt-6 text-white/40 text-[10px] uppercase font-bold tracking-widest underline">Actualizar Base de Datos</button>
+        </div>
     </section>
 
     <section id="moneyView" class="view-section">
-        <div class="header-marino">
-            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded font-black text-marino">INICIO</button>
-            <span class="text-white font-black italic uppercase">Comisiones $20</span>
+        <div class="header-app">
+            <button onclick="switchView('home')" class="btn-nav">Inicio</button>
+            <span class="font-black italic">COMISIONES POR MES</span>
         </div>
-        <div id="comisionesContainer" class="p-4 space-y-6"></div>
+        <div id="comisionesContainer" class="p-4 space-y-4"></div>
     </section>
 
     <section id="listView" class="view-section">
-        <div class="header-marino">
-            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded font-black text-marino">INICIO</button>
-            <span class="text-white font-black italic uppercase">Listado de Prospectos</span>
+        <div class="header-app">
+            <button onclick="switchView('home')" class="btn-nav">Inicio</button>
+            <span class="font-black italic">LISTADO Y ESTATUS</span>
         </div>
-        <div class="tabla-container overflow-x-auto">
+        <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
                         <th>Fecha</th>
                         <th>Negocio</th>
-                        <th>Estatus (Asignación)</th>
+                        <th>Competencia</th>
+                        <th>Estatus</th>
                         <th>Zona</th>
                         <th>Interés</th>
                     </tr>
@@ -87,20 +90,20 @@
     </section>
 
     <section id="mapView" class="view-section">
-        <div class="header-marino">
-            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded font-black text-marino">INICIO</button>
-            <span class="text-white font-black italic uppercase">Mapa de Prospectos</span>
+        <div class="header-app">
+            <button onclick="switchView('home')" class="btn-nav">Inicio</button>
+            <span class="font-black italic">MAPA POR ZONAS</span>
         </div>
-        <div class="flex flex-col h-[calc(100vh-70px)]">
+        <div class="map-layout">
+            <div class="sidebar-map" id="mapListContainer"></div>
             <div id="map"></div>
-            <div class="flex-1 bg-white overflow-y-auto p-4" id="mapZonasContainer"></div>
         </div>
     </section>
 
     <div id="detailPanel">
         <div class="p-6 h-full flex flex-col">
-            <div class="flex justify-between items-center border-b-4 border-marino pb-4 mb-4">
-                <span class="font-black text-marino italic">DETALLE DEL CLIENTE</span>
+            <div class="flex justify-between items-center border-b-4 border-marino pb-4 mb-6">
+                <span class="font-black text-marino italic">INFORMACIÓN COMPLETA</span>
                 <button onclick="closeDetail()" class="text-3xl font-bold">&times;</button>
             </div>
             <div id="detailContent" class="overflow-y-auto flex-1 space-y-4"></div>
@@ -111,36 +114,22 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
         let allData = [], map, markersLayer;
 
-        // Función inteligente para buscar columnas
         function getVal(row, name) {
-            const keys = Object.keys(row);
-            const target = name.toLowerCase().trim();
-            const key = keys.find(k => k.toLowerCase().trim().includes(target));
+            const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()));
             return key ? row[key].toString().trim() : "";
         }
 
         function switchView(v) {
-            // Ocultar todas
-            document.getElementById('homeView').style.display = 'none';
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
-            
-            if(v === 'home') {
-                document.getElementById('homeView').style.display = 'flex';
-            } else {
-                document.getElementById(v + 'View').classList.add('active-view');
-            }
-
-            if(v === 'map') {
-                if(!map) initMap();
-                setTimeout(() => map.invalidateSize(), 300);
-            }
+            document.getElementById(v + 'View').classList.add('active-view');
+            if(v === 'map') { if(!map) initMap(); setTimeout(() => map.invalidateSize(), 300); }
         }
 
         function loadData() {
             Papa.parse(CSV_URL, {
                 download: true, header: true,
                 complete: function(results) {
-                    allData = results.data.filter(r => r['Marca temporal'] || r['Timestamp']);
+                    allData = results.data.filter(r => r['Marca temporal']);
                     renderAll();
                 }
             });
@@ -156,31 +145,27 @@
             const container = document.getElementById('comisionesContainer');
             container.innerHTML = '';
             const meses = ["Enero", "Febrero", "Marzo"];
-            const impulsores = ["Marco", "Josue"]; // Buscamos solo el nombre clave
+            const impulsores = ["Marco A. Hernández", "Josue Jimárez"];
 
-            meses.forEach((mesNom, idx) => {
-                const mesNum = (idx + 1).toString().padStart(2, '0');
-                let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded">${mesNom.toUpperCase()}</div><div class="grid grid-cols-1 gap-4 mt-2 mb-6">`;
+            meses.forEach((m, i) => {
+                const mesNum = (i + 1).toString().padStart(2, '0');
+                let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded">${m.toUpperCase()}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 mb-6">`;
                 
                 impulsores.forEach(imp => {
-                    const filtrados = allData.filter(r => {
-                        const fecha = (r['Marca temporal'] || "").toString();
-                        const impulsorRow = getVal(r, "Impulsor").toLowerCase();
-                        // BUSCADOR FLEXIBLE: Que la fecha contenga "/01/" y el nombre contenga "marco"
-                        const coincideMes = fecha.includes(`/${mesNum}/`) || fecha.includes(`-0${idx+1}-`);
-                        const coincideNombre = impulsorRow.includes(imp.toLowerCase());
-                        return coincideMes && coincideNombre;
-                    });
+                    const count = allData.filter(r => {
+                        const impulsorSheet = getVal(r, "Impulsor de mercado");
+                        const fecha = r['Marca temporal'];
+                        return impulsorSheet === imp && (fecha.includes(`/${mesNum}/`) || fecha.includes(`-0${i+1}-`));
+                    }).length;
 
                     html += `
-                        <div class="bg-white p-4 border-4 border-marino rounded-xl shadow-lg">
-                            <p class="text-[10px] text-slate-400 font-black uppercase">Impulsor: ${imp} A. Hernández</p>
-                            <p class="text-4xl font-black text-emerald-600">$${filtrados.length * 20}</p>
-                            <p class="text-lg font-black text-blue-600 uppercase italic">${filtrados.length} PROSPECTOS HECHOS</p>
+                        <div class="bg-white p-4 border-l-8 border-marino rounded shadow flex justify-between items-center">
+                            <div><p class="text-[10px] text-gray-400 font-bold uppercase">${imp}</p>
+                            <p class="text-3xl font-black text-emerald-600">$${count * 20}</p></div>
+                            <div class="text-right"><p class="text-xl font-black text-marino">${count}</p><p class="text-[9px] font-bold">PROSPECTOS</p></div>
                         </div>`;
                 });
-                html += `</div>`;
-                container.innerHTML += html;
+                container.innerHTML += html + `</div>`;
             });
         }
 
@@ -188,55 +173,18 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             allData.forEach((row, i) => {
-                const estatus = getVal(row, "ESTATUS"); // Busca la columna que agregaste
-                const negocio = getVal(row, "negocio");
-                const zona = getVal(row, "Zona");
-                const interes = getVal(row, "interés");
-                const fecha = (row['Marca temporal'] || "").split(' ')[0];
-
+                const comp = getVal(row, "competencia").toLowerCase().includes("si");
+                const estatus = getVal(row, "estatus");
                 tbody.innerHTML += `
                     <tr onclick="showDetail(${i})">
-                        <td>${fecha}</td>
-                        <td class="text-marino uppercase font-black">${negocio}</td>
-                        <td class="${estatus.toLowerCase().includes('sin') ? 'text-red-600' : 'text-emerald-600'}">
-                            ${estatus || "SIN DESIGNAR"}
-                        </td>
-                        <td>${zona}</td>
-                        <td class="italic">${interes}</td>
+                        <td class="whitespace-nowrap">${row['Marca temporal'].split(' ')[0]}</td>
+                        <td class="text-marino uppercase font-black">${getVal(row, "negocio")}</td>
+                        <td class="${comp ? 'text-red-500':'text-green-500'}">${comp ? 'SI' : 'NO'}</td>
+                        <td class="${estatus.toLowerCase().includes('sin') ? 'text-orange-500':'text-blue-500'}">${estatus || 'S/D'}</td>
+                        <td>${getVal(row, "Zona")}</td>
+                        <td>${getVal(row, "interés")}</td>
                     </tr>`;
             });
-        }
-
-        function showDetail(i) {
-            const r = allData[i];
-            const content = document.getElementById('detailContent');
-            const comp = getVal(r, 'competencia').toLowerCase().includes('si');
-            
-            content.innerHTML = `
-                <h3 class="text-2xl font-black text-marino uppercase">${getVal(r, 'negocio')}</h3>
-                <div class="bg-slate-100 p-3 border-2 border-marino text-xs font-bold">
-                    <p>DUEÑO: ${getVal(r, 'encargado')}</p>
-                    <p>TEL: ${getVal(r, 'Teléfono')}</p>
-                    <p>EMAIL: ${getVal(r, 'Correo')}</p>
-                </div>
-                <div class="p-3 font-black text-center ${comp ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}">
-                    ${comp ? 'TIENE COMPETENCIA' : 'OPORTUNIDAD LIBRE'}
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-[10px] font-black uppercase">
-                    <div class="p-2 border border-marino">Acumuladores: ${getVal(r, 'acumuladores')}</div>
-                    <div class="p-2 border border-marino">Lubricantes: ${getVal(r, 'lubricante')}</div>
-                    <div class="p-2 border border-marino">Filtros: ${getVal(r, 'filtros')}</div>
-                    <div class="p-2 border border-marino">Moto: ${getVal(r, 'motobatería')}</div>
-                </div>
-                <div class="bg-marino text-white p-4 rounded-xl">
-                    <p class="text-mostaza text-[10px] uppercase font-black mb-2 underline">Observaciones</p>
-                    <p class="text-sm italic">"${getVal(r, 'Observaciones') || 'Sin notas.'}"</p>
-                </div>
-                <div class="p-3 bg-slate-200 font-black text-marino text-center uppercase">
-                    Estatus: ${getVal(r, 'ESTATUS') || 'SIN DESIGNAR'}
-                </div>
-            `;
-            document.getElementById('detailPanel').classList.add('panel-open');
         }
 
         function initMap() {
@@ -248,23 +196,47 @@
 
         function renderMapa() {
             markersLayer.clearLayers();
-            const side = document.getElementById('mapZonasContainer');
-            side.innerHTML = '';
+            const sidebar = document.getElementById('mapListContainer');
+            sidebar.innerHTML = '';
             const zonas = [...new Set(allData.map(r => getVal(r, "Zona")))];
-            
+
             zonas.forEach(z => {
-                if(!z) return;
                 const pros = allData.filter(r => getVal(r, "Zona") === z);
-                side.innerHTML += `<div class="bg-marino text-white p-1 px-3 text-xs font-black mt-4">${z.toUpperCase()} (${pros.length})</div>`;
+                sidebar.innerHTML += `<div class="bg-marino text-white p-2 font-black text-xs sticky top-0">${z.toUpperCase()} (${pros.length})</div>`;
                 pros.forEach(row => {
                     const gps = getVal(row, "GPS");
                     if(gps && gps.includes(',')) {
                         const c = gps.split(',').map(parseFloat);
-                        L.marker([c[0], c[1]]).addTo(markersLayer);
+                        L.circleMarker([c[0], c[1]], { radius: 8, fillColor: "#ff0000", color: "#fff", fillOpacity: 1 }).addTo(markersLayer);
                     }
-                    side.innerHTML += `<div class="p-2 border-b text-[10px] font-bold uppercase text-slate-600">${getVal(row, 'negocio')}</div>`;
+                    sidebar.innerHTML += `<div class="p-2 border-b text-[10px] font-bold uppercase hover:bg-slate-50 cursor-pointer" onclick="map.flyTo([${gps.split(',')[0]},${gps.split(',')[1]}], 16)">${getVal(row, 'negocio')}</div>`;
                 });
             });
+        }
+
+        function showDetail(i) {
+            const r = allData[i];
+            const content = document.getElementById('detailContent');
+            const comp = getVal(r, 'competencia').toLowerCase().includes('si');
+            content.innerHTML = `
+                <h2 class="text-2xl font-black text-marino uppercase leading-tight">${getVal(r, 'negocio')}</h2>
+                <div class="bg-slate-100 p-4 border-2 border-marino text-xs space-y-1 font-bold">
+                    <p>DUEÑO: ${getVal(r, 'encargado')}</p>
+                    <p>TEL: ${getVal(r, 'Teléfono')}</p>
+                    <p>ZONA: ${getVal(r, 'Zona')}</p>
+                </div>
+                <div class="p-3 text-center font-black ${comp ? 'bg-red-500 text-white':'bg-green-500 text-white'} rounded">
+                    COMPETENCIA: ${comp ? 'SI (OCUPADO)' : 'NO (LIBRE)'}
+                </div>
+                <div class="bg-marino text-white p-4 rounded-xl">
+                    <p class="text-mostaza text-[10px] font-black uppercase underline mb-2 tracking-widest">Observaciones del Impulsor</p>
+                    <p class="text-sm italic font-medium leading-relaxed">"${getVal(r, 'Observaciones') || 'Sin comentarios.'}"</p>
+                </div>
+                <div class="p-3 bg-gray-200 text-marino font-black text-center uppercase rounded">
+                    ESTATUS: ${getVal(r, 'estatus') || 'SIN DESIGNAR'}
+                </div>
+            `;
+            document.getElementById('detailPanel').classList.add('panel-open');
         }
 
         function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
