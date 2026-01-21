@@ -3,140 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA - Control de Prospección</title>
+    <title>LLANTERAMA CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --marino: #001f3f; --mostaza: #FFB800; --fondo: #f8fafc; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--fondo); color: #1e293b; margin: 0; }
+        :root { --marino: #001f3f; --mostaza: #FFB800; --fondo: #f1f5f9; }
+        body { font-family: sans-serif; background-color: var(--fondo); margin: 0; color: #1e293b; }
         
-        .view-section { display: none; min-height: 100vh; animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .view-section { display: none; min-height: 100vh; width: 100%; }
         .active-view { display: block !important; }
 
-        /* Colores de Zona para el Mapa */
-        .zona-color-1 { color: #ef4444; } /* Rojo */
-        .zona-color-2 { color: #3b82f6; } /* Azul */
-        .zona-color-3 { color: #10b981; } /* Verde */
-        .zona-color-4 { color: #f59e0b; } /* Naranja */
-        .zona-color-default { color: #64748b; }
-
-        .btn-home { background: white; padding: 25px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: all 0.3s; border: 1px solid #f1f5f9; display: flex; flex-direction: column; align-items: center; gap: 15px; text-align: center; }
-        .btn-home:hover { transform: translateY(-5px); box-shadow: 0 20px 35px rgba(0,31,63,0.1); border-color: var(--mostaza); }
+        /* Estilos de botones de inicio */
+        .btn-home { background: white; padding: 20px; border-radius: 15px; border-bottom: 4px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+        .btn-home:active { transform: translateY(2px); border-bottom-width: 2px; }
         
-        #map { height: 70vh; border-radius: 24px; z-index: 1; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 30px; }
+        /* Tabla mejorada para móvil */
+        th { cursor: pointer; user-select: none; position: relative; }
+        th:hover { background-color: #002d5c !important; }
+        th::after { content: ' ↕'; font-size: 10px; opacity: 0.5; }
+
+        #map { height: 60vh; width: 100%; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* Panel lateral sólido */
+        #detailPanel { position: fixed; inset: 0; background: white; z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease; }
+        @media (min-width: 768px) { #detailPanel { left: auto; width: 400px; border-left: 5px solid var(--mostaza); } }
+        .panel-open { transform: translateX(0) !important; }
     </style>
 </head>
 <body>
 
-    <section id="homeView" class="view-section active-view flex flex-col items-center justify-center p-6 bg-marino text-white">
-        <div class="max-w-4xl w-full text-center space-y-8">
-            <div class="inline-block border-4 border-mostaza p-4 rounded-3xl mb-4 italic font-black text-5xl tracking-tighter">LL</div>
-            <h1 class="text-4xl md:text-6xl font-black tracking-tighter leading-none">PROSPECTOS<br><span class="text-mostaza uppercase">Tulancingo - Poza Rica</span></h1>
-            <p class="text-slate-400 font-bold tracking-widest uppercase text-sm">Panel de Control Estratégico Llanterama</p>
+    <section id="homeView" class="view-section active-view bg-[#001f3f]">
+        <div class="p-6 flex flex-col items-center justify-center min-h-screen text-center">
+            <div class="w-20 h-20 border-4 border-[#FFB800] flex items-center justify-center text-[#FFB800] text-4xl font-black italic rounded-2xl mb-6">LL</div>
+            <h1 class="text-3xl font-bold text-white mb-2 italic">PROSPECTOS</h1>
+            <p class="text-[#FFB800] font-black tracking-widest text-sm mb-10">TULANCINGO - POZA RICA</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
-                <button onclick="switchView('money')" class="btn-home group">
-                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all"><i class="fas fa-hand-holding-dollar"></i></div>
-                    <span class="text-marino font-extrabold uppercase text-xs tracking-widest">Recaudado por Impulsores</span>
+            <div class="grid grid-cols-1 gap-4 w-full max-w-sm">
+                <button onclick="switchView('money')" class="btn-home">
+                    <i class="fas fa-dollar-sign text-2xl text-emerald-600"></i>
+                    <span class="font-bold text-marino text-sm uppercase">Comisiones Impulsores</span>
                 </button>
-                <button onclick="switchView('list')" class="btn-home group">
-                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-blue-500 group-hover:text-white transition-all"><i class="fas fa-address-book"></i></div>
-                    <span class="text-marino font-extrabold uppercase text-xs tracking-widest">Listado de Clientes</span>
+                <button onclick="switchView('list')" class="btn-home">
+                    <i class="fas fa-list text-2xl text-blue-600"></i>
+                    <span class="font-bold text-marino text-sm uppercase">Listado de Clientes</span>
                 </button>
-                <button onclick="switchView('map')" class="btn-home group">
-                    <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-amber-500 group-hover:text-white transition-all"><i class="fas fa-map-location-dot"></i></div>
-                    <span class="text-marino font-extrabold uppercase text-xs tracking-widest">Localizar en Mapa</span>
+                <button onclick="switchView('map')" class="btn-home">
+                    <i class="fas fa-map-marker-alt text-2xl text-orange-600"></i>
+                    <span class="font-bold text-marino text-sm uppercase">Mapa de Ubicaciones</span>
                 </button>
             </div>
-            <button onclick="loadData()" class="mt-8 text-mostaza/50 hover:text-mostaza font-bold text-xs uppercase transition-all"><i class="fas fa-sync-alt mr-2"></i> Sincronizar Datos</button>
+            
+            <button onclick="loadData()" class="mt-12 text-white/50 text-xs font-bold uppercase"><i class="fas fa-sync mr-2"></i> Sincronizar Sistema</button>
         </div>
     </section>
 
-    <section id="moneyView" class="view-section p-6 md:p-12">
-        <button onclick="switchView('home')" class="mb-8 font-black text-marino text-sm uppercase"><i class="fas fa-arrow-left mr-2"></i> Volver al Inicio</button>
-        <h2 class="text-4xl font-black text-marino mb-10 tracking-tighter">COMISIONES POR PROSPECCIÓN <span class="text-emerald-500">(ENE-MAR)</span></h2>
+    <section id="moneyView" class="view-section p-4 bg-slate-100">
+        <header class="flex items-center gap-4 mb-6">
+            <button onclick="switchView('home')" class="bg-white p-2 rounded-lg shadow-sm text-marino"><i class="fas fa-chevron-left"></i></button>
+            <h2 class="font-black text-marino uppercase italic">Dinero Recaudado</h2>
+        </header>
+
+        <div class="space-y-4">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-emerald-500">
+                <p class="text-xs font-bold text-slate-400 uppercase">Marco A. Hernández</p>
+                <p class="text-4xl font-black text-emerald-600 mt-1" id="pagoMarco">$0</p>
+                <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase" id="totalMarco">0 Prospectos</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-blue-500">
+                <p class="text-xs font-bold text-slate-400 uppercase">Josue Jimárez</p>
+                <p class="text-4xl font-black text-blue-600 mt-1" id="pagoJosue">$0</p>
+                <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase" id="totalJosue">0 Prospectos</p>
+            </div>
+            <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                <p class="text-xs font-medium text-amber-800 leading-tight italic">Nota: El cálculo se basa en $20 pesos por cada registro cargado en el sistema durante el trimestre Enero-Marzo.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="listView" class="view-section bg-white">
+        <header class="p-4 bg-marino text-white flex items-center justify-between sticky top-0 z-50">
+            <button onclick="switchView('home')" class="text-mostaza"><i class="fas fa-arrow-left mr-2"></i> INICIO</button>
+            <span class="font-black italic text-xs">LISTADO DE CLIENTES</span>
+        </header>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl">
-            <div class="bg-white p-8 rounded-[35px] border-b-8 border-emerald-500 shadow-xl">
-                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Impulsor</p>
-                <h3 class="text-2xl font-black text-marino uppercase">Marco A. Hernández</h3>
-                <div class="mt-6 flex items-end gap-2">
-                    <span class="text-5xl font-black text-emerald-600" id="pagoMarco">$0</span>
-                    <span class="text-slate-400 font-bold mb-2">M.N.</span>
-                </div>
-                <p class="text-xs font-bold text-slate-500 mt-2" id="totalMarco">0 prospectos realizados</p>
-            </div>
-            <div class="bg-white p-8 rounded-[35px] border-b-8 border-blue-500 shadow-xl">
-                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Impulsor</p>
-                <h3 class="text-2xl font-black text-marino uppercase">Josue Jimárez</h3>
-                <div class="mt-6 flex items-end gap-2">
-                    <span class="text-5xl font-black text-blue-600" id="pagoJosue">$0</span>
-                    <span class="text-slate-400 font-bold mb-2">M.N.</span>
-                </div>
-                <p class="text-xs font-bold text-slate-500 mt-2" id="totalJosue">0 prospectos realizados</p>
-            </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-marino text-white uppercase font-bold">
+                    <tr>
+                        <th onclick="sortTable(0)" class="p-3 border-b border-white/10">Fecha</th>
+                        <th onclick="sortTable(1)" class="p-3 border-b border-white/10">Negocio/Encargado</th>
+                        <th onclick="sortTable(2)" class="p-3 border-b border-white/10">Estatus</th>
+                        <th onclick="sortTable(3)" class="p-3 border-b border-white/10">Zona</th>
+                        <th onclick="sortTable(4)" class="p-3 border-b border-white/10">Interés</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-200"></tbody>
+            </table>
         </div>
     </section>
 
-    <section id="listView" class="view-section p-4 md:p-10">
-        <button onclick="switchView('home')" class="mb-6 font-black text-marino text-sm uppercase"><i class="fas fa-arrow-left mr-2"></i> Menu Principal</button>
-        <div class="bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-marino text-[10px] font-black uppercase tracking-widest">
-                        <tr>
-                            <th class="p-6">Fecha / Hora</th>
-                            <th class="p-6">Negocio / Encargado</th>
-                            <th class="p-6">Estatus Competencia</th>
-                            <th class="p-6">Zona</th>
-                            <th class="p-6">Interés</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-50"></tbody>
-                </table>
-            </div>
-        </div>
+    <section id="mapView" class="view-section p-4">
+        <button onclick="switchView('home')" class="mb-4 font-bold text-marino uppercase text-xs"><i class="fas fa-chevron-left mr-1"></i> Volver</button>
+        <div id="map"></div>
+        <div id="mapItemsContainer" class="mt-4 space-y-2 overflow-y-auto h-[30vh]"></div>
     </section>
 
-    <section id="mapView" class="view-section p-4 md:p-6 overflow-hidden flex flex-col">
-        <div class="flex flex-col md:flex-row gap-4 flex-1">
-            <div class="w-full md:w-80 space-y-4">
-                <button onclick="switchView('home')" class="font-black text-marino text-xs uppercase"><i class="fas fa-arrow-left mr-2"></i> Inicio</button>
-                <div class="bg-white p-4 rounded-3xl shadow-sm border">
-                    <input type="text" id="searchMap" onkeyup="filterMapList()" placeholder="Buscar cliente..." class="w-full bg-slate-50 p-3 rounded-2xl text-xs outline-none">
-                </div>
-                <div id="mapItemsContainer" class="overflow-y-auto max-h-[60vh] space-y-2 pr-2"></div>
+    <div id="detailPanel">
+        <div class="p-6 h-full flex flex-col">
+            <div class="flex justify-between items-center border-b pb-4 mb-6">
+                <span class="bg-marino text-mostaza px-3 py-1 font-black italic rounded">LL</span>
+                <button onclick="closeDetail()" class="text-2xl text-slate-400">&times;</button>
             </div>
-            <div id="map"></div>
-        </div>
-    </section>
-
-    <div id="detailPanel" class="fixed inset-y-4 right-4 w-[calc(100%-32px)] md:w-[450px] bg-white/95 backdrop-blur-xl shadow-2xl translate-x-[110%] transition-transform duration-500 z-[200] rounded-[40px] border border-white overflow-y-auto">
-        <div class="p-10">
-            <div class="flex justify-between items-start mb-10">
-                <div class="w-12 h-12 border-2 border-mostaza rounded-xl flex items-center justify-center font-black text-marino italic">LL</div>
-                <button onclick="closeDetail()" class="text-4xl text-slate-300 hover:text-marino">&times;</button>
-            </div>
-            <div id="detailContent" class="space-y-8"></div>
+            <div id="detailContent" class="flex-1 overflow-y-auto space-y-6"></div>
         </div>
     </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
-        let allData = [], map, markersLayer, markerObjects = {};
+        let allData = [], map, markersLayer, markerObjects = {}, sortDirection = true;
 
-        // Paleta por Zona
         const zonaColores = {
             "Tulancingo": "#ef4444",
             "Poza Rica": "#3b82f6",
-            "Zona 3": "#10b981",
-            "Zona 4": "#f59e0b"
+            "Zona Central": "#10b981",
+            "Pachuca": "#f59e0b"
         };
 
         function switchView(v) {
@@ -156,23 +149,23 @@
                 download: true, header: true,
                 complete: function(r) { 
                     allData = r.data.filter(f => f['Marca temporal']); 
-                    processMoney();
+                    updateCommissions();
                     render(); 
                 }
             });
         }
 
-        function processMoney() {
+        function updateCommissions() {
             let marco = 0, josue = 0;
             allData.forEach(row => {
-                const impulsor = getVal(row, 'Impulsor').toLowerCase();
-                if(impulsor.includes('marco')) marco++;
-                if(impulsor.includes('josue')) josue++;
+                const imp = getVal(row, 'Impulsor').toLowerCase();
+                if(imp.includes('marco')) marco++;
+                if(imp.includes('josue')) josue++;
             });
             document.getElementById('pagoMarco').innerText = `$${marco * 20}`;
-            document.getElementById('totalMarco').innerText = `${marco} prospectos registrados`;
+            document.getElementById('totalMarco').innerText = `${marco} PROSPECTOS`;
             document.getElementById('pagoJosue').innerText = `$${josue * 20}`;
-            document.getElementById('totalJosue').innerText = `${josue} prospectos registrados`;
+            document.getElementById('totalJosue').innerText = `${josue} PROSPECTOS`;
         }
 
         function render() {
@@ -185,42 +178,33 @@
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
                 markersLayer = L.layerGroup().addTo(map);
             }
-            markersLayer.clearLayers(); markerObjects = {};
+            markersLayer.clearLayers();
 
             allData.forEach((row, i) => {
-                const negocio = getVal(row, 'Nombre del negocio') || "Sin Nombre";
+                const negocio = getVal(row, 'negocio') || "S/N";
                 const encargado = getVal(row, 'encargado');
-                const zona = getVal(row, 'Zona');
                 const comp = getVal(row, 'competencia').toLowerCase().includes('si');
+                const zona = getVal(row, 'Zona');
                 const gps = getVal(row, 'GPS');
 
-                // TABLA
                 tbody.innerHTML += `
-                    <tr onclick="showDetail(${i})" class="hover:bg-slate-50 cursor-pointer transition-all">
-                        <td class="p-6 text-[11px] font-mono text-slate-400">${row['Marca temporal']}</td>
-                        <td class="p-6">
-                            <div class="font-black text-marino uppercase leading-none">${negocio}</div>
-                            <div class="text-[10px] text-slate-400 font-bold mt-1">${encargado}</div>
-                        </td>
-                        <td class="p-6">
-                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${comp ? 'bg-rose-100 text-rose-600':'bg-emerald-100 text-emerald-600'}">
-                                ${comp ? 'DE COMPETENCIA' : 'ESTA LIBRE'}
-                            </span>
-                        </td>
-                        <td class="p-6 font-bold text-slate-600 text-xs">${zona}</td>
-                        <td class="p-6 font-black text-marino text-xs uppercase">${getVal(row, 'interés')}</td>
+                    <tr onclick="showDetail(${i})" class="active:bg-slate-100">
+                        <td class="p-3 text-[9px] text-slate-400 whitespace-nowrap">${row['Marca temporal'].split(' ')[0]}</td>
+                        <td class="p-3"><div class="font-bold">${negocio}</div><div class="text-[10px] text-slate-500">${encargado}</div></td>
+                        <td class="p-3"><span class="font-bold ${comp ? 'text-rose-600':'text-emerald-600'}">${comp ? 'COMP':'LIBRE'}</span></td>
+                        <td class="p-3 text-slate-500">${zona}</td>
+                        <td class="p-3 font-bold text-marino">${getVal(row, 'interés')}</td>
                     </tr>`;
 
-                // MAPA
                 if(gps && gps.includes(',')) {
                     const c = gps.replace(/[^\d.,-]/g, '').split(',').map(parseFloat);
                     if(!isNaN(c[0])) {
-                        const markerColor = zonaColores[zona] || "#64748b";
-                        const m = L.circleMarker([c[0], c[1]], { radius: 8, color: 'white', weight: 2, fillOpacity: 1, fillColor: markerColor }).addTo(markersLayer);
+                        const color = zonaColores[zona] || "#000";
+                        const m = L.circleMarker([c[0], c[1]], { radius: 7, color: 'white', fillOpacity: 1, fillColor: color }).addTo(markersLayer);
                         markerObjects[i] = m;
                         mapItems.innerHTML += `
-                            <div class="bg-white p-4 rounded-2xl border-l-8 cursor-pointer shadow-sm hover:shadow-md transition-all" style="border-left-color: ${markerColor}" onclick="zoomTo(${i})">
-                                <div class="text-xs font-black text-marino uppercase">${negocio}</div>
+                            <div class="bg-white p-3 rounded-lg border-l-4" style="border-left-color:${color}" onclick="zoomTo(${i})">
+                                <div class="text-xs font-bold">${negocio}</div>
                                 <div class="text-[10px] text-slate-400">${zona}</div>
                             </div>`;
                     }
@@ -228,69 +212,65 @@
             });
         }
 
-        function zoomTo(id) {
-            const m = markerObjects[id];
-            if(m) { map.flyTo(m.getLatLng(), 16, { duration: 1.5 }); }
+        function sortTable(n) {
+            sortDirection = !sortDirection;
+            allData.sort((a, b) => {
+                let v1 = Object.values(a)[n], v2 = Object.values(b)[n];
+                return sortDirection ? v1.localeCompare(v2) : v2.localeCompare(v1);
+            });
+            render();
         }
 
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
             const comp = getVal(r, 'competencia').toLowerCase().includes('si');
-            const check = (v) => v.toLowerCase().includes('si') ? '<i class="fas fa-check-circle text-emerald-500"></i>' : '<i class="fas fa-times-circle text-slate-200"></i>';
-
+            
             content.innerHTML = `
-                <div>
-                    <h4 class="text-3xl font-black text-marino uppercase leading-tight">${getVal(r, 'Nombre del negocio') || getVal(r, 'encargado')}</h4>
-                    <p class="text-sm font-bold text-slate-400 mt-2 tracking-widest">${getVal(r, 'Zona')} | Estatus: ${getVal(r, 'Estatus') || 'Nuevo'}</p>
-                </div>
-
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="p-4 bg-slate-50 rounded-3xl space-y-2 border border-slate-100">
-                        <p class="text-[10px] font-black text-slate-400 uppercase">Datos del Dueño</p>
-                        <p class="text-sm font-bold">Encargado: <span class="text-slate-600">${getVal(r, 'encargado')}</span></p>
-                        <p class="text-sm font-bold">Teléfono: <span class="text-slate-600">${getVal(r, 'Teléfono') || 'No disponible'}</span></p>
-                        <p class="text-sm font-bold">Correo: <span class="text-slate-600">${getVal(r, 'Correo') || 'No disponible'}</span></p>
+                <div class="space-y-4">
+                    <h3 class="text-2xl font-black text-marino uppercase italic leading-tight">${getVal(r, 'negocio')}</h3>
+                    <div class="flex gap-2 text-[10px] font-bold">
+                        <span class="bg-marino text-white px-2 py-1 rounded">ZONA: ${getVal(r, 'Zona')}</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded">VISTAS: ${getVal(r, 'Visitas') || 1}</span>
                     </div>
 
-                    <div class="p-4 ${comp ? 'bg-rose-50 border-rose-100 text-rose-700':'bg-emerald-50 border-emerald-100 text-emerald-700'} rounded-3xl border flex items-center gap-4">
-                        <i class="fas ${comp ? 'fa-handshake-slash':'fa-door-open'} text-2xl"></i>
-                        <div>
-                            <p class="text-[10px] font-black uppercase">${comp ? 'Contrato Vigente':'Oportunidad Libre'}</p>
-                            <p class="text-xs font-bold leading-tight">${comp ? 'Este cliente ya tiene distribución de la competencia.':'Este cliente no cuenta con proveedores actuales registrados.'}</p>
+                    <div class="grid grid-cols-1 gap-2 border-t pt-4">
+                        <p class="text-xs font-bold uppercase text-slate-400">Contacto</p>
+                        <p class="text-sm"><b>Dueño:</b> ${getVal(r, 'encargado')}</p>
+                        <p class="text-sm"><b>Tel:</b> ${getVal(r, 'Teléfono') || 'No registrado'}</p>
+                        <p class="text-sm"><b>Mail:</b> ${getVal(r, 'Correo') || 'No registrado'}</p>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl space-y-3">
+                        <p class="text-xs font-bold uppercase text-slate-400">Líneas de Interés</p>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="${getVal(r, 'acumuladores').includes('Si') ? 'font-bold text-marino' : 'text-slate-300'}">● Baterías</div>
+                            <div class="${getVal(r, 'lubricante').includes('Si') ? 'font-bold text-marino' : 'text-slate-300'}">● Lubricantes</div>
+                            <div class="${getVal(r, 'motobatería').includes('Si') ? 'font-bold text-marino' : 'text-slate-300'}">● Moto</div>
+                            <div class="${getVal(r, 'filtros').includes('Si') ? 'font-bold text-marino' : 'text-slate-300'}">● Filtros</div>
                         </div>
                     </div>
-                </div>
 
-                <div class="space-y-4">
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">¿Qué productos compra?</p>
-                    <div class="grid grid-cols-1 gap-2">
-                        ${['Acumuladores','Lubricantes','Motobaterías','Filtros'].map(p => `
-                            <div class="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 shadow-sm">
-                                <span>${p}</span> ${check(getVal(r, p))}
-                            </div>
-                        `).join('')}
+                    <div class="p-4 ${comp ? 'bg-rose-100 text-rose-800':'bg-emerald-100 text-emerald-800'} rounded-xl text-xs font-bold">
+                        <i class="fas ${comp ? 'fa-exclamation-circle' : 'fa-check-circle'} mr-2"></i>
+                        ${comp ? 'CLIENTE CON COMPETENCIA' : 'OPORTUNIDAD LIBRE (SIN COMPETENCIA)'}
+                    </div>
+
+                    <div class="bg-marino text-white p-4 rounded-xl shadow-lg">
+                        <p class="text-[10px] text-mostaza font-black uppercase mb-1">Observaciones</p>
+                        <p class="text-sm italic font-light leading-relaxed">"${getVal(r, 'Observaciones') || 'Sin comentarios.'}"</p>
                     </div>
                 </div>
-
-                <div class="bg-marino p-6 rounded-[35px] text-white">
-                    <p class="text-[10px] text-mostaza font-black uppercase mb-2">Comentarios de Visita (${getVal(r, 'Visitas') || 1})</p>
-                    <p class="text-sm font-light leading-relaxed italic opacity-80">"${getVal(r, 'Observaciones') || 'Sin notas.'}"</p>
-                </div>
-
-                <button onclick="switchView('map'); setTimeout(() => zoomTo(${i}), 500);" class="w-full bg-mostaza text-marino p-5 rounded-2xl font-black shadow-xl hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3">
-                    <i class="fas fa-location-arrow"></i> VER EN EL MAPA
-                </button>
+                <button onclick="switchView('map'); setTimeout(() => zoomTo(${i}), 500);" class="w-full bg-mostaza text-marino p-4 rounded-xl font-black mt-10">LOCALIZAR EN MAPA</button>
             `;
-            document.getElementById('detailPanel').classList.remove('translate-x-[110%]');
+            document.getElementById('detailPanel').classList.add('panel-open');
         }
 
-        function closeDetail() { document.getElementById('detailPanel').classList.add('translate-x-[110%]'); }
-        function filterMapList() {
-            let val = document.getElementById('searchMap').value.toLowerCase();
-            document.querySelectorAll('#mapItemsContainer > div').forEach(item => {
-                item.style.display = item.innerText.toLowerCase().includes(val) ? 'block' : 'none';
-            });
+        function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
+        function zoomTo(id) {
+            const m = markerObjects[id];
+            if(m) { map.flyTo(m.getLatLng(), 17); m.openPopup(); }
+            closeDetail();
         }
         window.onload = loadData;
     </script>
