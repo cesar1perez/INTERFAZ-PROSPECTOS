@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Refaccionarias Hidalgo</title>
+    <title>Sistema de Gestión Hidalgo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,46 +13,46 @@
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .view-section { display: none; }
         .active-view { display: block !important; }
-        #map { height: 650px; width: 100%; border-radius: 12px; }
-        .status-alto { color: #166534; background: #dcfce7; }
-        .status-medio { color: #854d0e; background: #fef9c3; }
-        .status-bajo { color: #991b1b; background: #fee2e2; }
+        #map { height: 600px; width: 100%; border-radius: 12px; border: 2px solid #e2e8f0; }
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 10px; text-transform: uppercase; }
+        .bg-alto { background: #dcfce7; color: #166534; }
+        .bg-medio { background: #fef9c3; color: #854d0e; }
+        .bg-bajo { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
 
     <div class="flex h-screen overflow-hidden">
         <aside class="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-50">
-            <div class="p-6 border-b border-slate-800">
-                <h1 class="text-xl font-black text-blue-400 italic">AUTO-REFAC <span class="text-white">HIDALGO</span></h1>
+            <div class="p-6 border-b border-slate-800 text-center">
+                <h1 class="text-xl font-black text-blue-400">AUTO-REFAC <span class="text-white">HIDALGO</span></h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
-                <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold text-left">
-                    <i class="fas fa-list w-6"></i> Listado Prospectos
+                <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
+                    <i class="fas fa-list"></i> Listado Prospectos
                 </button>
-                <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold text-left">
-                    <i class="fas fa-map-marker-alt w-6"></i> Mapa de Ruta
+                <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
+                    <i class="fas fa-map-marked-alt"></i> Mapa Geográfico
                 </button>
             </nav>
-            <div class="p-6">
+            <div class="p-6 border-t border-slate-800">
                 <button onclick="loadData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black shadow-lg transition">
-                    <i class="fas fa-sync mr-2"></i> ACTUALIZAR DATOS
+                    <i class="fas fa-sync-alt mr-2"></i> ACTUALIZAR DATOS
                 </button>
             </div>
         </aside>
 
         <main class="flex-1 overflow-y-auto relative">
             <div id="listView" class="view-section active-view p-8">
-                <h2 class="text-2xl font-bold mb-6 text-slate-800">Registros del Impulsor</h2>
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left">
                         <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b">
                             <tr>
-                                <th class="p-4">Fecha / Hora</th>
-                                <th class="p-4">Impulsor</th>
+                                <th class="p-4">Fecha</th>
                                 <th class="p-4">Negocio / Encargado</th>
                                 <th class="p-4">Zona</th>
-                                <th class="p-4 text-center">Interés</th>
+                                <th class="p-4">Interés</th>
+                                <th class="p-4">GPS</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -68,7 +68,7 @@
 
             <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l overflow-y-auto">
                 <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-                    <h3 class="font-bold uppercase tracking-widest text-sm text-blue-400">Ficha del Cliente</h3>
+                    <h3 class="font-bold uppercase tracking-widest text-sm text-blue-400">Detalles del Cliente</h3>
                     <button onclick="closeDetail()" class="text-white text-2xl">&times;</button>
                 </div>
                 <div id="detailContent" class="p-6 space-y-6"></div>
@@ -86,12 +86,19 @@
             if(view === 'map' && map) setTimeout(() => map.invalidateSize(), 300);
         }
 
+        // Función para encontrar una columna aunque el nombre no sea exacto
+        function getVal(row, keyword) {
+            const key = Object.keys(row).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
+            return key ? row[key] : null;
+        }
+
         function loadData() {
             Papa.parse(CSV_URL, {
                 download: true,
                 header: true,
                 complete: function(results) {
-                    allData = results.data.filter(row => row['Marca temporal']);
+                    console.log("Columnas Reales detectadas:", Object.keys(results.data[0]));
+                    allData = results.data.filter(row => row['Marca temporal'] || getVal(row, 'Marca'));
                     render();
                 }
             });
@@ -102,7 +109,7 @@
             tbody.innerHTML = '';
             
             if(!map) {
-                map = L.map('map').setView([20.10, -98.75], 9);
+                map = L.map('map').setView([20.10, -98.75], 10);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
                 markersLayer = L.layerGroup().addTo(map);
             }
@@ -110,89 +117,75 @@
             const bounds = [];
 
             allData.forEach((row, index) => {
-                // PRIORIDAD DE NOMBRES SEGÚN TU SOLICITUD
-                const nombreNegocio = row['Nombre del negocio'] || "";
-                const nombreEncargado = row['Nombre del encargado / Dueño'] || "";
-                const nombreAMostrar = nombreNegocio.trim() !== "" ? nombreNegocio : (nombreEncargado.trim() !== "" ? nombreEncargado : "Sin nombre");
+                // LOGICA DE PRIORIDAD DE NOMBRE
+                const negocio = getVal(row, 'Nombre del negocio');
+                const encargado = getVal(row, 'encargado');
+                const nombreAMostrar = (negocio && negocio.trim() !== "") ? negocio : (encargado || "Sin Nombre");
 
-                const fechaFull = row['Marca temporal'] || "-";
-                const impulsor = row['Impulsor de mercado'] || "-";
-                const zona = row['Zona'] || "-";
-                const interes = row['¿Qué nivel de interés mostró el cliente?'] || "Medio";
-                const gps = row['Ubicación GPS (Copiar de Google Maps).'] || "";
+                const zona = getVal(row, 'Zona') || "-";
+                const interes = getVal(row, 'interés') || "Medio";
+                const gps = getVal(row, 'GPS') || "";
+                const fecha = row['Marca temporal'] || "-";
 
-                // Tabla
+                // Render Tabla
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-blue-50 transition-colors cursor-pointer";
                 tr.onclick = () => showDetail(index);
                 
-                let claseI = interes.toLowerCase().includes('alto') ? 'status-alto' : (interes.toLowerCase().includes('bajo') ? 'status-bajo' : 'status-medio');
+                let badgeClass = interes.toLowerCase().includes('alto') ? 'bg-alto' : (interes.toLowerCase().includes('bajo') ? 'bg-bajo' : 'bg-medio');
 
                 tr.innerHTML = `
-                    <td class="p-4 font-mono text-[11px]">${fechaFull}</td>
-                    <td class="p-4 font-bold text-slate-700">${impulsor}</td>
-                    <td class="p-4">
-                        <div class="font-bold text-blue-700">${nombreAMostrar}</div>
-                        <div class="text-[10px] text-slate-400 uppercase">${nombreEncargado}</div>
+                    <td class="p-4 text-xs font-mono text-slate-400">${fecha}</td>
+                    <td class="p-4 font-bold text-slate-800">
+                        ${nombreAMostrar}
+                        <div class="text-[10px] text-slate-400 font-normal uppercase italic">${encargado || ''}</div>
                     </td>
                     <td class="p-4 text-slate-600">${zona}</td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${claseI}">${interes}</span></td>
+                    <td class="p-4"><span class="status-badge ${badgeClass}">${interes}</span></td>
+                    <td class="p-4 text-[10px] font-mono text-blue-500">${gps}</td>
                 `;
                 tbody.appendChild(tr);
 
-                // GPS - Limpieza y formateo
-                if(gps.includes(',')) {
-                    const coords = gps.split(',').map(c => parseFloat(c.trim()));
-                    if(!isNaN(coords[0]) && !isNaN(coords[1])) {
-                        const marker = L.marker([coords[0], coords[1]]).addTo(markersLayer)
-                            .bindPopup(`<b>${nombreAMostrar}</b><br><button onclick="showDetail(${index})" style="color:blue">Ver Ficha Técnica</button>`);
+                // LÓGICA DE MAPA REFORZADA
+                if(gps && gps.includes(',')) {
+                    const coords = gps.replace(/[^\d.,-]/g, '').split(',').map(c => parseFloat(c.trim()));
+                    if(coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                        L.marker([coords[0], coords[1]]).addTo(markersLayer)
+                            .bindPopup(`<b>${nombreAMostrar}</b><br><small>${zona}</small>`);
                         bounds.push([coords[0], coords[1]]);
                     }
                 }
             });
 
-            if(bounds.length > 0 && map) map.fitBounds(bounds, {padding: [50, 50]});
+            if(bounds.length > 0) map.fitBounds(bounds, {padding: [50, 50]});
         }
 
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
             
-            const seccion = (titulo, compra, marcas) => {
-                const siCompra = compra && compra.toLowerCase().includes('si');
-                return `
-                <div class="p-4 rounded-xl border ${siCompra ? 'border-blue-200 bg-blue-50' : 'border-slate-100 bg-slate-50 opacity-60'}">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">${titulo}</p>
-                    <div class="flex justify-between items-center">
-                        <span class="font-bold ${siCompra ? 'text-blue-700' : 'text-slate-400'}">${siCompra ? 'SÍ COMPRA' : 'NO COMPRA'}</span>
-                    </div>
-                    ${siCompra ? `<p class="text-xs mt-2 text-slate-600"><b>Marcas:</b> ${marcas || 'No especifica'}</p>` : ''}
-                </div>`;
-            };
+            const checkIcon = (val) => (val && val.toLowerCase().includes('si')) ? 
+                '<i class="fas fa-check-circle text-green-500 mr-2"></i>' : 
+                '<i class="fas fa-times-circle text-slate-300 mr-2"></i>';
 
             content.innerHTML = `
-                <div class="mb-2">
-                    <h4 class="text-2xl font-black text-slate-800">${r['Nombre del negocio'] || r['Nombre del encargado / Dueño'] || 'Prospecto'}</h4>
-                    <p class="text-blue-600 font-bold uppercase text-xs tracking-widest">${r['Zona']}</p>
+                <div>
+                    <h4 class="text-2xl font-black text-slate-800">${getVal(r, 'negocio') || getVal(r, 'encargado')}</h4>
+                    <p class="text-blue-600 font-bold">${getVal(r, 'Zona')}</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-xs py-4 border-y border-slate-100">
-                    <div><p class="text-slate-400 font-bold uppercase">Dueño/Encargado</p><p class="font-medium">${r['Nombre del encargado / Dueño'] || '-'}</p></div>
-                    <div><p class="text-slate-400 font-bold uppercase">Teléfono</p><p class="font-medium">${r['Teléfono'] || '-'}</p></div>
+                <div class="space-y-4 pt-4">
+                    <h5 class="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2">Inventario</h5>
+                    <div class="text-sm space-y-3">
+                        <p>${checkIcon(getVal(r, '¿Compra acumuladores?'))} <b>Baterías:</b> ${getVal(r, 'marca de acumuladores') || '-'}</p>
+                        <p>${checkIcon(getVal(r, '¿Compra lubricantes?'))} <b>Aceites:</b> ${getVal(r, 'marca de lubricante') || '-'}</p>
+                        <p>${checkIcon(getVal(r, '¿Compra filtros?'))} <b>Filtros:</b> ${getVal(r, 'marca de filtros') || '-'}</p>
+                    </div>
                 </div>
 
-                <div class="space-y-3">
-                    <p class="text-[10px] font-black text-slate-800 uppercase tracking-tighter italic">Detalle de Productos</p>
-                    ${seccion('Acumuladores', r['¿Compra acumuladores?'], r['¿Qué marca de acumuladores?'])}
-                    ${seccion('Lubricantes', r['¿Compra lubricantes?'], r['¿Qué marca de lubricante?'])}
-                    ${seccion('Motobaterías', r['¿Compra motobaterías?'], r['¿Qué marca de motobatería?'])}
-                    ${seccion('Filtros', r['¿Compra filtros?'], r['¿Qué marca de filtros='])}
-                    ${seccion('Llantas', r['¿Compra llanta?'], r['¿Qué marca de llanta?'])}
-                </div>
-
-                <div class="p-4 bg-slate-100 rounded-xl">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase">Observaciones</p>
-                    <p class="text-sm text-slate-600 italic">${r['Observaciones / Información adicional.'] || 'Sin comentarios adicionales.'}</p>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-6">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Observaciones</p>
+                    <p class="text-sm text-slate-600">${getVal(r, 'Observaciones') || 'Sin notas'}</p>
                 </div>
             `;
             document.getElementById('detailPanel').classList.remove('translate-x-full');
