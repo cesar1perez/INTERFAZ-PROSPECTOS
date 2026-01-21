@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM</title>
+    <title>LLANTERAMA - Control de Prospección</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,101 +12,116 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --marino: #001f3f; --mostaza: #FFB800; --fondo: #f8fafc; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--fondo); color: #1e293b; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--fondo); color: #1e293b; margin: 0; }
         
-        /* Estética Ligera */
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 24px; border: 1px solid rgba(255,255,255,0.2); shadow: 0 4px 30px rgba(0,0,0,0.05); }
-        .view-section { display: none; height: calc(100vh - 80px); animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .active-view { display: flex !important; }
+        .view-section { display: none; min-height: 100vh; animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .active-view { display: block !important; }
 
-        /* Mapa y Sidebar */
-        #map { flex-grow: 1; height: 100%; border-radius: 24px; z-index: 1; margin: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-        .sidebar-map { width: 320px; background: transparent; display: none; flex-direction: column; padding: 10px; }
-        @media (min-width: 1024px) { .sidebar-map { display: flex; } }
+        /* Colores de Zona para el Mapa */
+        .zona-color-1 { color: #ef4444; } /* Rojo */
+        .zona-color-2 { color: #3b82f6; } /* Azul */
+        .zona-color-3 { color: #10b981; } /* Verde */
+        .zona-color-4 { color: #f59e0b; } /* Naranja */
+        .zona-color-default { color: #64748b; }
 
-        /* Navegación Flotante Móvil */
-        .mobile-nav { background: var(--marino); position: fixed; bottom: 20px; left: 20px; right: 20px; height: 65px; border-radius: 20px; display: flex; justify-content: space-around; align-items: center; z-index: 100; box-shadow: 0 15px 30px rgba(0,31,63,0.3); border: 2px solid var(--mostaza); }
-        @media (min-width: 768px) { .mobile-nav { display: none; } }
-
-        /* Sidebar Escritorio Slim */
-        .desktop-sidebar { width: 90px; background: var(--marino); display: none; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.1); }
-        @media (min-width: 768px) { .desktop-sidebar { display: flex; } }
-
-        .logo-box { width: 50px; height: 50px; border: 2px solid var(--mostaza); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--mostaza); font-weight: 800; italic: true; margin-bottom: 40px; }
+        .btn-home { background: white; padding: 25px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: all 0.3s; border: 1px solid #f1f5f9; display: flex; flex-direction: column; align-items: center; gap: 15px; text-align: center; }
+        .btn-home:hover { transform: translateY(-5px); box-shadow: 0 20px 35px rgba(0,31,63,0.1); border-color: var(--mostaza); }
         
-        /* Scrollbar suave */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #map { height: 70vh; border-radius: 24px; z-index: 1; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 30px; }
     </style>
 </head>
-<body class="flex flex-col md:flex-row h-screen">
+<body>
 
-    <aside class="desktop-sidebar shadow-2xl">
-        <div class="logo-box">LL</div>
-        <nav class="flex flex-col gap-10 mt-4">
-            <button onclick="switchView('list')" class="text-white/60 hover:text-mostaza transition-all text-xl"><i class="fas fa-columns"></i></button>
-            <button onclick="switchView('map')" class="text-white/60 hover:text-mostaza transition-all text-xl"><i class="fas fa-map-pin"></i></button>
-            <button onclick="loadData()" class="text-white/60 hover:text-mostaza transition-all text-xl"><i class="fas fa-sync-alt"></i></button>
-        </nav>
-    </aside>
-
-    <div class="flex-1 flex flex-col relative overflow-hidden">
-        
-        <header class="h-20 flex items-center justify-between px-6 md:px-10">
-            <div class="flex items-center gap-4">
-                <div class="md:hidden logo-box !mb-0 !w-10 !h-10 text-sm">LL</div>
-                <div>
-                    <h2 id="viewTitle" class="text-xl font-extrabold text-slate-800 tracking-tight">Cargando...</h2>
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Llanterama Business CRM</p>
-                </div>
+    <section id="homeView" class="view-section active-view flex flex-col items-center justify-center p-6 bg-marino text-white">
+        <div class="max-w-4xl w-full text-center space-y-8">
+            <div class="inline-block border-4 border-mostaza p-4 rounded-3xl mb-4 italic font-black text-5xl tracking-tighter">LL</div>
+            <h1 class="text-4xl md:text-6xl font-black tracking-tighter leading-none">PROSPECTOS<br><span class="text-mostaza uppercase">Tulancingo - Poza Rica</span></h1>
+            <p class="text-slate-400 font-bold tracking-widest uppercase text-sm">Panel de Control Estratégico Llanterama</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
+                <button onclick="switchView('money')" class="btn-home group">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-emerald-500 group-hover:text-white transition-all"><i class="fas fa-hand-holding-dollar"></i></div>
+                    <span class="text-marino font-extrabold uppercase text-xs tracking-widest">Recaudado por Impulsores</span>
+                </button>
+                <button onclick="switchView('list')" class="btn-home group">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-blue-500 group-hover:text-white transition-all"><i class="fas fa-address-book"></i></div>
+                    <span class="text-marino font-extrabold uppercase text-xs tracking-widest">Listado de Clientes</span>
+                </button>
+                <button onclick="switchView('map')" class="btn-home group">
+                    <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-amber-500 group-hover:text-white transition-all"><i class="fas fa-map-location-dot"></i></div>
+                    <span class="text-marino font-extrabold uppercase text-xs tracking-widest">Localizar en Mapa</span>
+                </button>
             </div>
-            <button onclick="loadData()" class="hidden md:flex items-center gap-3 bg-white text-marino px-5 py-2.5 rounded-2xl font-bold text-xs shadow-sm hover:shadow-md transition-all border border-slate-100">
-                <i class="fas fa-redo-alt text-mostaza"></i> ACTUALIZAR
-            </button>
-        </header>
+            <button onclick="loadData()" class="mt-8 text-mostaza/50 hover:text-mostaza font-bold text-xs uppercase transition-all"><i class="fas fa-sync-alt mr-2"></i> Sincronizar Datos</button>
+        </div>
+    </section>
 
-        <div id="listView" class="view-section active-view p-4 md:p-6 overflow-hidden">
-            <div class="w-full max-w-6xl mx-auto glass-card overflow-hidden flex flex-col shadow-xl">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50/50 text-slate-500 text-[10px] uppercase font-black">
-                            <tr>
-                                <th class="p-5">Información del Prospecto</th>
-                                <th class="p-5 hidden md:table-cell">Zona</th>
-                                <th class="p-5">Interés</th>
-                                <th class="p-5 text-center">Visitas</th>
-                                <th class="p-5">Estatus</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-50 text-sm"></tbody>
-                    </table>
+    <section id="moneyView" class="view-section p-6 md:p-12">
+        <button onclick="switchView('home')" class="mb-8 font-black text-marino text-sm uppercase"><i class="fas fa-arrow-left mr-2"></i> Volver al Inicio</button>
+        <h2 class="text-4xl font-black text-marino mb-10 tracking-tighter">COMISIONES POR PROSPECCIÓN <span class="text-emerald-500">(ENE-MAR)</span></h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl">
+            <div class="bg-white p-8 rounded-[35px] border-b-8 border-emerald-500 shadow-xl">
+                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Impulsor</p>
+                <h3 class="text-2xl font-black text-marino uppercase">Marco A. Hernández</h3>
+                <div class="mt-6 flex items-end gap-2">
+                    <span class="text-5xl font-black text-emerald-600" id="pagoMarco">$0</span>
+                    <span class="text-slate-400 font-bold mb-2">M.N.</span>
                 </div>
+                <p class="text-xs font-bold text-slate-500 mt-2" id="totalMarco">0 prospectos realizados</p>
+            </div>
+            <div class="bg-white p-8 rounded-[35px] border-b-8 border-blue-500 shadow-xl">
+                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-2">Impulsor</p>
+                <h3 class="text-2xl font-black text-marino uppercase">Josue Jimárez</h3>
+                <div class="mt-6 flex items-end gap-2">
+                    <span class="text-5xl font-black text-blue-600" id="pagoJosue">$0</span>
+                    <span class="text-slate-400 font-bold mb-2">M.N.</span>
+                </div>
+                <p class="text-xs font-bold text-slate-500 mt-2" id="totalJosue">0 prospectos realizados</p>
             </div>
         </div>
+    </section>
 
-        <div id="mapView" class="view-section p-2">
-            <div class="sidebar-map">
-                <div class="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 mb-4">
-                    <input type="text" id="searchMap" onkeyup="filterMapList()" placeholder="Buscar cliente..." class="w-full bg-slate-50 p-3 rounded-2xl text-xs outline-none focus:ring-2 focus:ring-mostaza/30">
+    <section id="listView" class="view-section p-4 md:p-10">
+        <button onclick="switchView('home')" class="mb-6 font-black text-marino text-sm uppercase"><i class="fas fa-arrow-left mr-2"></i> Menu Principal</button>
+        <div class="bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-marino text-[10px] font-black uppercase tracking-widest">
+                        <tr>
+                            <th class="p-6">Fecha / Hora</th>
+                            <th class="p-6">Negocio / Encargado</th>
+                            <th class="p-6">Estatus Competencia</th>
+                            <th class="p-6">Zona</th>
+                            <th class="p-6">Interés</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-50"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="mapView" class="view-section p-4 md:p-6 overflow-hidden flex flex-col">
+        <div class="flex flex-col md:flex-row gap-4 flex-1">
+            <div class="w-full md:w-80 space-y-4">
+                <button onclick="switchView('home')" class="font-black text-marino text-xs uppercase"><i class="fas fa-arrow-left mr-2"></i> Inicio</button>
+                <div class="bg-white p-4 rounded-3xl shadow-sm border">
+                    <input type="text" id="searchMap" onkeyup="filterMapList()" placeholder="Buscar cliente..." class="w-full bg-slate-50 p-3 rounded-2xl text-xs outline-none">
                 </div>
-                <div id="mapItemsContainer" class="space-y-3 overflow-y-auto pr-2"></div>
+                <div id="mapItemsContainer" class="overflow-y-auto max-h-[60vh] space-y-2 pr-2"></div>
             </div>
             <div id="map"></div>
         </div>
+    </section>
 
-        <nav class="mobile-nav">
-            <button onclick="switchView('list')" class="text-white/70 flex flex-col items-center"><i class="fas fa-list-ul"></i></button>
-            <button onclick="loadData()" class="bg-mostaza text-marino w-14 h-14 rounded-2xl flex items-center justify-center -mt-12 shadow-2xl border-4 border-[#001f3f]"><i class="fas fa-sync-alt text-xl"></i></button>
-            <button onclick="switchView('map')" class="text-white/70 flex flex-col items-center"><i class="fas fa-map-marked-alt"></i></button>
-        </nav>
-    </div>
-
-    <div id="detailPanel" class="fixed inset-y-4 right-4 w-[calc(100%-32px)] md:w-[420px] bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] translate-x-[110%] transition-transform duration-500 z-[200] rounded-[32px] border border-white overflow-y-auto">
-        <div class="p-8">
-            <div class="flex justify-between items-start mb-8">
-                <div class="logo-box !w-12 !h-12 !mb-0 text-lg">LL</div>
-                <button onclick="closeDetail()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:text-marino transition">&times;</button>
+    <div id="detailPanel" class="fixed inset-y-4 right-4 w-[calc(100%-32px)] md:w-[450px] bg-white/95 backdrop-blur-xl shadow-2xl translate-x-[110%] transition-transform duration-500 z-[200] rounded-[40px] border border-white overflow-y-auto">
+        <div class="p-10">
+            <div class="flex justify-between items-start mb-10">
+                <div class="w-12 h-12 border-2 border-mostaza rounded-xl flex items-center justify-center font-black text-marino italic">LL</div>
+                <button onclick="closeDetail()" class="text-4xl text-slate-300 hover:text-marino">&times;</button>
             </div>
             <div id="detailContent" class="space-y-8"></div>
         </div>
@@ -116,11 +131,19 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
         let allData = [], map, markersLayer, markerObjects = {};
 
+        // Paleta por Zona
+        const zonaColores = {
+            "Tulancingo": "#ef4444",
+            "Poza Rica": "#3b82f6",
+            "Zona 3": "#10b981",
+            "Zona 4": "#f59e0b"
+        };
+
         function switchView(v) {
             document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active-view'));
             document.getElementById(v + 'View').classList.add('active-view');
-            document.getElementById('viewTitle').innerText = v === 'list' ? 'Prospectos Recientes' : 'Mapa de Prospección';
             if(v === 'map' && map) setTimeout(() => map.invalidateSize(), 300);
+            window.scrollTo(0,0);
         }
 
         function getVal(row, kw) {
@@ -133,23 +156,23 @@
                 download: true, header: true,
                 complete: function(r) { 
                     allData = r.data.filter(f => f['Marca temporal']); 
+                    processMoney();
                     render(); 
                 }
             });
         }
 
-        // FUNCIÓN CORREGIDA PARA EL BOTÓN LOCALIZAR
-        function zoomTo(id) {
-            closeDetail(); // Cerramos panel para ver el mapa
-            switchView('map'); // Cambiamos a vista mapa
-            
-            setTimeout(() => {
-                const m = markerObjects[id];
-                if(m) {
-                    map.flyTo(m.getLatLng(), 17, { duration: 2, easeLinearity: 0.25 });
-                    setTimeout(() => m.openPopup(), 2100);
-                }
-            }, 500); // Pequeña espera para que el mapa se renderice
+        function processMoney() {
+            let marco = 0, josue = 0;
+            allData.forEach(row => {
+                const impulsor = getVal(row, 'Impulsor').toLowerCase();
+                if(impulsor.includes('marco')) marco++;
+                if(impulsor.includes('josue')) josue++;
+            });
+            document.getElementById('pagoMarco').innerText = `$${marco * 20}`;
+            document.getElementById('totalMarco').innerText = `${marco} prospectos registrados`;
+            document.getElementById('pagoJosue').innerText = `$${josue * 20}`;
+            document.getElementById('totalJosue').innerText = `${josue} prospectos registrados`;
         }
 
         function render() {
@@ -160,89 +183,103 @@
             if(!map) {
                 map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-                L.control.zoom({ position: 'topright' }).addTo(map);
                 markersLayer = L.layerGroup().addTo(map);
             }
             markersLayer.clearLayers(); markerObjects = {};
 
             allData.forEach((row, i) => {
-                const negocio = getVal(row, 'Nombre del negocio') || getVal(row, 'encargado') || "Sin Nombre";
-                const estatus = getVal(row, 'Estatus') || 'NUEVO';
+                const negocio = getVal(row, 'Nombre del negocio') || "Sin Nombre";
+                const encargado = getVal(row, 'encargado');
+                const zona = getVal(row, 'Zona');
+                const comp = getVal(row, 'competencia').toLowerCase().includes('si');
                 const gps = getVal(row, 'GPS');
 
+                // TABLA
                 tbody.innerHTML += `
-                    <tr onclick="showDetail(${i})" class="hover:bg-slate-50/50 cursor-pointer transition-all">
-                        <td class="p-5">
-                            <div class="font-bold text-slate-800 leading-tight">${negocio}</div>
-                            <div class="text-[10px] text-slate-400 font-medium">${getVal(row, 'encargado')}</div>
+                    <tr onclick="showDetail(${i})" class="hover:bg-slate-50 cursor-pointer transition-all">
+                        <td class="p-6 text-[11px] font-mono text-slate-400">${row['Marca temporal']}</td>
+                        <td class="p-6">
+                            <div class="font-black text-marino uppercase leading-none">${negocio}</div>
+                            <div class="text-[10px] text-slate-400 font-bold mt-1">${encargado}</div>
                         </td>
-                        <td class="p-5 hidden md:table-cell text-slate-500 font-medium">${getVal(row, 'Zona')}</td>
-                        <td class="p-5"><span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase ${getVal(row, 'interés').includes('Alto') ? 'bg-green-100 text-green-700':'bg-amber-100 text-amber-700'}">${getVal(row, 'interés')}</span></td>
-                        <td class="p-5 text-center font-bold text-marino">${getVal(row, 'Visitas') || 1}</td>
-                        <td class="p-5 text-[10px] font-extrabold text-marino tracking-tighter">${estatus}</td>
+                        <td class="p-6">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${comp ? 'bg-rose-100 text-rose-600':'bg-emerald-100 text-emerald-600'}">
+                                ${comp ? 'DE COMPETENCIA' : 'ESTA LIBRE'}
+                            </span>
+                        </td>
+                        <td class="p-6 font-bold text-slate-600 text-xs">${zona}</td>
+                        <td class="p-6 font-black text-marino text-xs uppercase">${getVal(row, 'interés')}</td>
                     </tr>`;
 
+                // MAPA
                 if(gps && gps.includes(',')) {
                     const c = gps.replace(/[^\d.,-]/g, '').split(',').map(parseFloat);
                     if(!isNaN(c[0])) {
-                        const m = L.marker([c[0], c[1]]).addTo(markersLayer)
-                                   .bindPopup(`<div class="font-bold text-marino text-xs uppercase">${negocio}</div>`);
+                        const markerColor = zonaColores[zona] || "#64748b";
+                        const m = L.circleMarker([c[0], c[1]], { radius: 8, color: 'white', weight: 2, fillOpacity: 1, fillColor: markerColor }).addTo(markersLayer);
                         markerObjects[i] = m;
-
                         mapItems.innerHTML += `
-                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-50 hover:border-mostaza cursor-pointer transition-all" onclick="zoomTo(${i})">
-                                <div class="text-xs font-extrabold text-slate-800 uppercase">${negocio}</div>
-                                <div class="text-[10px] text-slate-400">${getVal(row, 'Zona')}</div>
+                            <div class="bg-white p-4 rounded-2xl border-l-8 cursor-pointer shadow-sm hover:shadow-md transition-all" style="border-left-color: ${markerColor}" onclick="zoomTo(${i})">
+                                <div class="text-xs font-black text-marino uppercase">${negocio}</div>
+                                <div class="text-[10px] text-slate-400">${zona}</div>
                             </div>`;
                     }
                 }
             });
         }
 
+        function zoomTo(id) {
+            const m = markerObjects[id];
+            if(m) { map.flyTo(m.getLatLng(), 16, { duration: 1.5 }); }
+        }
+
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
-            const icon = (v) => v && v.toLowerCase().includes('si') ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-200';
+            const comp = getVal(r, 'competencia').toLowerCase().includes('si');
+            const check = (v) => v.toLowerCase().includes('si') ? '<i class="fas fa-check-circle text-emerald-500"></i>' : '<i class="fas fa-times-circle text-slate-200"></i>';
 
             content.innerHTML = `
                 <div>
-                    <h4 class="text-3xl font-black text-marino leading-none mb-4 uppercase tracking-tighter">${getVal(r, 'negocio') || getVal(r, 'encargado')}</h4>
-                    <div class="flex gap-2">
-                        <span class="bg-marino text-mostaza px-3 py-1 text-[10px] font-black rounded-full uppercase">${getVal(r, 'Estatus') || 'NUEVO'}</span>
-                        <span class="bg-slate-100 text-slate-500 px-3 py-1 text-[10px] font-black rounded-full uppercase">${getVal(r, 'Zona')}</span>
+                    <h4 class="text-3xl font-black text-marino uppercase leading-tight">${getVal(r, 'Nombre del negocio') || getVal(r, 'encargado')}</h4>
+                    <p class="text-sm font-bold text-slate-400 mt-2 tracking-widest">${getVal(r, 'Zona')} | Estatus: ${getVal(r, 'Estatus') || 'Nuevo'}</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="p-4 bg-slate-50 rounded-3xl space-y-2 border border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Datos del Dueño</p>
+                        <p class="text-sm font-bold">Encargado: <span class="text-slate-600">${getVal(r, 'encargado')}</span></p>
+                        <p class="text-sm font-bold">Teléfono: <span class="text-slate-600">${getVal(r, 'Teléfono') || 'No disponible'}</span></p>
+                        <p class="text-sm font-bold">Correo: <span class="text-slate-600">${getVal(r, 'Correo') || 'No disponible'}</span></p>
+                    </div>
+
+                    <div class="p-4 ${comp ? 'bg-rose-50 border-rose-100 text-rose-700':'bg-emerald-50 border-emerald-100 text-emerald-700'} rounded-3xl border flex items-center gap-4">
+                        <i class="fas ${comp ? 'fa-handshake-slash':'fa-door-open'} text-2xl"></i>
+                        <div>
+                            <p class="text-[10px] font-black uppercase">${comp ? 'Contrato Vigente':'Oportunidad Libre'}</p>
+                            <p class="text-xs font-bold leading-tight">${comp ? 'Este cliente ya tiene distribución de la competencia.':'Este cliente no cuenta con proveedores actuales registrados.'}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-50 p-5 rounded-3xl">
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Visitas</p>
-                        <p class="text-3xl font-black text-marino">${getVal(r, 'Visitas') || 1}</p>
-                    </div>
-                    <div class="bg-slate-50 p-5 rounded-3xl">
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Interés</p>
-                        <p class="text-xs font-bold text-marino uppercase">${getVal(r, 'interés')}</p>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Portafolio</p>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">¿Qué productos compra?</p>
                     <div class="grid grid-cols-1 gap-2">
-                        ${['Acumuladores','Lubricantes','Motobaterías','Filtros','Llanta'].map(p => `
-                            <div class="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
-                                <span class="text-sm font-bold text-slate-600">${p}</span>
-                                <i class="fas ${icon(getVal(r, p))} text-lg"></i>
+                        ${['Acumuladores','Lubricantes','Motobaterías','Filtros'].map(p => `
+                            <div class="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 shadow-sm">
+                                <span>${p}</span> ${check(getVal(r, p))}
                             </div>
                         `).join('')}
                     </div>
                 </div>
 
-                <div class="bg-marino p-6 rounded-[24px] text-white">
-                    <p class="text-[9px] text-mostaza font-black uppercase mb-2 italic">Notas del Impulsor</p>
-                    <p class="text-sm font-medium leading-relaxed opacity-90 italic">"${getVal(r, 'Observaciones') || 'Sin notas.'}"</p>
+                <div class="bg-marino p-6 rounded-[35px] text-white">
+                    <p class="text-[10px] text-mostaza font-black uppercase mb-2">Comentarios de Visita (${getVal(r, 'Visitas') || 1})</p>
+                    <p class="text-sm font-light leading-relaxed italic opacity-80">"${getVal(r, 'Observaciones') || 'Sin notas.'}"</p>
                 </div>
 
-                <button onclick="zoomTo(${i})" class="w-full bg-mostaza text-marino p-5 rounded-2xl font-black shadow-xl shadow-mostaza/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
-                    <i class="fas fa-location-arrow"></i> LOCALIZAR EN MAPA
+                <button onclick="switchView('map'); setTimeout(() => zoomTo(${i}), 500);" class="w-full bg-mostaza text-marino p-5 rounded-2xl font-black shadow-xl hover:translate-y-[-2px] transition-all flex items-center justify-center gap-3">
+                    <i class="fas fa-location-arrow"></i> VER EN EL MAPA
                 </button>
             `;
             document.getElementById('detailPanel').classList.remove('translate-x-[110%]');
