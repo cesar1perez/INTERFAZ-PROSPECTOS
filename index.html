@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - FINAL FIX</title>
+    <title>LLANTERAMA CRM - V3.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,77 +11,64 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         :root { --marino: #001f3f; --mostaza: #FFB800; }
-        body { font-family: 'Arial', sans-serif; background-color: #f1f5f9; margin: 0; }
-        
-        /* Navegación */
-        .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 100; }
-        .btn-nav { background: var(--mostaza); color: var(--marino); font-weight: 900; padding: 8px 15px; border-radius: 8px; text-transform: uppercase; font-size: 12px; }
-
-        /* Vistas */
-        .view-section { display: none; min-height: 100vh; width: 100%; }
+        body { font-family: 'Arial Black', sans-serif; background: #f1f5f9; }
+        .view-section { display: none; min-height: 100vh; }
         .active-view { display: block !important; }
+        .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 100; }
+        
+        /* Estilos Portada */
+        .home-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--marino); }
+        .logo-ll { width: 100px; height: 100px; border: 5px solid var(--mostaza); display: flex; align-items: center; justify-content: center; text-shadow: 2px 2px 0px #000; }
+        .btn-main { background: white; border: 4px solid var(--marino); padding: 20px; border-radius: 15px; width: 280px; display: flex; flex-direction: column; align-items: center; margin-bottom: 15px; box-shadow: 0 6px 0 #000; transition: 0.1s; }
+        .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
 
-        /* Portada */
-        .home-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--marino); padding: 20px; text-center; }
-        .btn-main { background: white; border: 4px solid var(--marino); padding: 20px; border-radius: 15px; width: 100%; max-width: 300px; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; box-shadow: 0 6px 0 #000; }
-        .btn-main span { color: var(--marino); font-weight: 900; }
+        /* Mapa y Sidebar */
+        .map-layout { display: flex; height: calc(100vh - 65px); }
+        .sidebar-map { width: 320px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
+        #map { flex-grow: 1; }
 
-        /* Tablas */
-        .table-wrapper { overflow-x: auto; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 700px; }
-        th { background: var(--marino); color: var(--mostaza); padding: 12px; font-size: 11px; text-transform: uppercase; border: 1px solid #ddd; text-align: left; }
-        td { padding: 10px; border: 1px solid #eee; font-size: 12px; font-weight: bold; }
-        tr:nth-child(even) { background: #f9fafb; }
-
-        /* Mapa y Sidebar Izquierdo */
-        .map-layout { display: flex; height: calc(100vh - 65px); flex-direction: row; }
-        @media (max-width: 768px) { .map-layout { flex-direction: column; } .sidebar-map { width: 100% !important; height: 40% !important; } }
-        .sidebar-map { width: 350px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
-        #map { flex-grow: 1; height: 100%; }
-
-        /* Ficha Lateral (1/4 de pantalla en Desktop) */
-        #detailPanel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 400px; background: white; z-index: 1000; transform: translateX(100%); transition: 0.3s; border-left: 8px solid var(--mostaza); box-shadow: -5px 0 15px rgba(0,0,0,0.2); }
+        /* Ficha Lateral */
+        #detailPanel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 450px; background: white; z-index: 1000; transform: translateX(100%); transition: 0.3s ease-out; border-left: 10px solid var(--mostaza); box-shadow: -10px 0 30px rgba(0,0,0,0.3); }
         .panel-open { transform: translateX(0) !important; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th { background: var(--marino); color: var(--mostaza); padding: 10px; font-size: 10px; text-align: left; border: 1px solid #ddd; }
+        td { padding: 8px; border: 1px solid #eee; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <section id="homeView" class="view-section active-view">
         <div class="home-container">
-            <div class="w-20 h-20 bg-mostaza flex items-center justify-center text-marino text-5xl font-black italic rounded-2xl mb-6">LL</div>
-            <h1 class="text-white text-2xl font-black italic text-center mb-10 leading-tight">PROSPECTOS<br><span class="text-mostaza">TULANCINGO - POZA RICA</span></h1>
-            
-            <button onclick="switchView('money')" class="btn-main"><i class="fas fa-coins text-3xl text-emerald-600"></i><span>COMISIONES</span></button>
-            <button onclick="switchView('list')" class="btn-main"><i class="fas fa-table text-3xl text-blue-600"></i><span>LISTADO COMPLETO</span></button>
-            <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span>MAPA POR ZONAS</span></button>
-            
-            <button onclick="loadData()" class="mt-6 text-white/40 text-[10px] uppercase font-bold tracking-widest underline">Actualizar Base de Datos</button>
+            <div class="logo-ll rounded-3xl mb-6">
+                <span class="text-6xl font-black italic text-[#FFB800]">LL</span>
+            </div>
+            <h1 class="text-white text-3xl font-black italic text-center mb-10">CRM ESTRATÉGICO</h1>
+            <button onclick="switchView('money')" class="btn-main"><i class="fas fa-wallet text-3xl text-emerald-600"></i><span class="font-bold text-marino mt-2">COMISIONES</span></button>
+            <button onclick="switchView('list')" class="btn-main"><i class="fas fa-list-ul text-3xl text-blue-600"></i><span class="font-bold text-marino mt-2">LISTADO DE CLIENTES</span></button>
+            <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span class="font-bold text-marino mt-2">MAPA POR ZONAS</span></button>
+            <button onclick="loadData()" class="mt-8 text-white/30 text-[10px] underline uppercase font-bold">Sincronizar Datos</button>
         </div>
     </section>
 
     <section id="moneyView" class="view-section">
         <div class="header-app">
-            <button onclick="switchView('home')" class="btn-nav">Inicio</button>
-            <span class="font-black italic">COMISIONES POR MES</span>
+            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded text-marino font-black text-xs">INICIO</button>
+            <span class="font-black italic">CONTROL DE PAGOS</span>
         </div>
-        <div id="comisionesContainer" class="p-4 space-y-4"></div>
+        <div id="comisionesContainer" class="p-4 space-y-6"></div>
     </section>
 
     <section id="listView" class="view-section">
         <div class="header-app">
-            <button onclick="switchView('home')" class="btn-nav">Inicio</button>
-            <span class="font-black italic">LISTADO Y ESTATUS</span>
+            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded text-marino font-black text-xs">INICIO</button>
+            <span class="font-black italic">LISTADO GENERAL</span>
         </div>
-        <div class="table-wrapper">
+        <div class="overflow-x-auto">
             <table>
                 <thead>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Negocio</th>
-                        <th>Competencia</th>
-                        <th>Estatus</th>
-                        <th>Zona</th>
-                        <th>Interés</th>
+                        <th>FECHA</th><th>NEGOCIO</th><th>COMPETENCIA</th><th>ESTATUS</th><th>ZONA</th><th>INTERÉS</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -91,7 +78,7 @@
 
     <section id="mapView" class="view-section">
         <div class="header-app">
-            <button onclick="switchView('home')" class="btn-nav">Inicio</button>
+            <button onclick="switchView('home')" class="bg-mostaza p-2 rounded text-marino font-black text-xs">INICIO</button>
             <span class="font-black italic">MAPA POR ZONAS</span>
         </div>
         <div class="map-layout">
@@ -102,9 +89,9 @@
 
     <div id="detailPanel">
         <div class="p-6 h-full flex flex-col">
-            <div class="flex justify-between items-center border-b-4 border-marino pb-4 mb-6">
-                <span class="font-black text-marino italic">INFORMACIÓN COMPLETA</span>
-                <button onclick="closeDetail()" class="text-3xl font-bold">&times;</button>
+            <div class="flex justify-between items-center border-b-4 border-marino pb-4 mb-4">
+                <span class="font-black text-marino italic text-xl">DETALLE DEL PROSPECTO</span>
+                <button onclick="closeDetail()" class="text-4xl font-bold">&times;</button>
             </div>
             <div id="detailContent" class="overflow-y-auto flex-1 space-y-4"></div>
         </div>
@@ -147,22 +134,20 @@
             const meses = ["Enero", "Febrero", "Marzo"];
             const impulsores = ["Marco A. Hernández", "Josue Jimárez"];
 
-            meses.forEach((m, i) => {
-                const mesNum = (i + 1).toString().padStart(2, '0');
-                let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded">${m.toUpperCase()}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 mb-6">`;
-                
+            meses.forEach(mes => {
+                let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded">${mes.toUpperCase()}</div><div class="grid grid-cols-1 gap-4 mt-2 mb-6">`;
                 impulsores.forEach(imp => {
                     const count = allData.filter(r => {
-                        const impulsorSheet = getVal(r, "Impulsor de mercado");
-                        const fecha = r['Marca temporal'];
-                        return impulsorSheet === imp && (fecha.includes(`/${mesNum}/`) || fecha.includes(`-0${i+1}-`));
+                        const mesCorres = getVal(r, "Mes correspondiente");
+                        const impulsor = getVal(r, "Impulsor de mercado");
+                        return impulsor === imp && mesCorres.toLowerCase().includes(mes.toLowerCase());
                     }).length;
 
                     html += `
                         <div class="bg-white p-4 border-l-8 border-marino rounded shadow flex justify-between items-center">
-                            <div><p class="text-[10px] text-gray-400 font-bold uppercase">${imp}</p>
-                            <p class="text-3xl font-black text-emerald-600">$${count * 20}</p></div>
-                            <div class="text-right"><p class="text-xl font-black text-marino">${count}</p><p class="text-[9px] font-bold">PROSPECTOS</p></div>
+                            <div><p class="text-[10px] text-slate-400 font-bold uppercase">${imp}</p>
+                            <p class="text-4xl font-black text-emerald-600">$${count * 20}</p></div>
+                            <div class="text-right font-black"><p class="text-2xl text-marino">${count}</p><p class="text-[9px]">HECHOS</p></div>
                         </div>`;
                 });
                 container.innerHTML += html + `</div>`;
@@ -173,18 +158,43 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             allData.forEach((row, i) => {
-                const comp = getVal(row, "competencia").toLowerCase().includes("si");
-                const estatus = getVal(row, "estatus");
+                const comp = getVal(row, "distribuye la competencia").toLowerCase().includes("si");
                 tbody.innerHTML += `
                     <tr onclick="showDetail(${i})">
-                        <td class="whitespace-nowrap">${row['Marca temporal'].split(' ')[0]}</td>
-                        <td class="text-marino uppercase font-black">${getVal(row, "negocio")}</td>
+                        <td>${row['Marca temporal'].split(' ')[0]}</td>
+                        <td class="text-marino uppercase">${getVal(row, "Nombre del negocio")}</td>
                         <td class="${comp ? 'text-red-500':'text-green-500'}">${comp ? 'SI' : 'NO'}</td>
-                        <td class="${estatus.toLowerCase().includes('sin') ? 'text-orange-500':'text-blue-500'}">${estatus || 'S/D'}</td>
+                        <td>${getVal(row, "ESTATUS") || 'S/D'}</td>
                         <td>${getVal(row, "Zona")}</td>
                         <td>${getVal(row, "interés")}</td>
                     </tr>`;
             });
+        }
+
+        function showDetail(i) {
+            const r = allData[i];
+            const content = document.getElementById('detailContent');
+            const campos = [
+                "Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño",
+                "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?",
+                "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?",
+                "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?",
+                "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?",
+                "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"
+            ];
+
+            let html = `<div class="space-y-3">`;
+            campos.forEach(campo => {
+                const valor = getVal(r, campo);
+                html += `
+                    <div class="border-b pb-1">
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">${campo}</p>
+                        <p class="text-sm font-black text-marino">${valor || '---'}</p>
+                    </div>`;
+            });
+            html += `</div>`;
+            content.innerHTML = html;
+            document.getElementById('detailPanel').classList.add('panel-open');
         }
 
         function initMap() {
@@ -195,48 +205,25 @@
         }
 
         function renderMapa() {
+            if(!markersLayer) return;
             markersLayer.clearLayers();
             const sidebar = document.getElementById('mapListContainer');
             sidebar.innerHTML = '';
+            
             const zonas = [...new Set(allData.map(r => getVal(r, "Zona")))];
-
             zonas.forEach(z => {
+                if(!z) return;
                 const pros = allData.filter(r => getVal(r, "Zona") === z);
-                sidebar.innerHTML += `<div class="bg-marino text-white p-2 font-black text-xs sticky top-0">${z.toUpperCase()} (${pros.length})</div>`;
+                sidebar.innerHTML += `<div class="bg-marino text-mostaza p-2 font-black text-xs sticky top-0 uppercase">${z} (${pros.length})</div>`;
                 pros.forEach(row => {
                     const gps = getVal(row, "GPS");
                     if(gps && gps.includes(',')) {
                         const c = gps.split(',').map(parseFloat);
                         L.circleMarker([c[0], c[1]], { radius: 8, fillColor: "#ff0000", color: "#fff", fillOpacity: 1 }).addTo(markersLayer);
                     }
-                    sidebar.innerHTML += `<div class="p-2 border-b text-[10px] font-bold uppercase hover:bg-slate-50 cursor-pointer" onclick="map.flyTo([${gps.split(',')[0]},${gps.split(',')[1]}], 16)">${getVal(row, 'negocio')}</div>`;
+                    sidebar.innerHTML += `<div class="p-2 border-b text-[10px] font-bold uppercase hover:bg-slate-50 cursor-pointer" onclick="map.flyTo([${gps.split(',')[0]},${gps.split(',')[1]}], 16)">${getVal(row, 'Nombre del negocio')}</div>`;
                 });
             });
-        }
-
-        function showDetail(i) {
-            const r = allData[i];
-            const content = document.getElementById('detailContent');
-            const comp = getVal(r, 'competencia').toLowerCase().includes('si');
-            content.innerHTML = `
-                <h2 class="text-2xl font-black text-marino uppercase leading-tight">${getVal(r, 'negocio')}</h2>
-                <div class="bg-slate-100 p-4 border-2 border-marino text-xs space-y-1 font-bold">
-                    <p>DUEÑO: ${getVal(r, 'encargado')}</p>
-                    <p>TEL: ${getVal(r, 'Teléfono')}</p>
-                    <p>ZONA: ${getVal(r, 'Zona')}</p>
-                </div>
-                <div class="p-3 text-center font-black ${comp ? 'bg-red-500 text-white':'bg-green-500 text-white'} rounded">
-                    COMPETENCIA: ${comp ? 'SI (OCUPADO)' : 'NO (LIBRE)'}
-                </div>
-                <div class="bg-marino text-white p-4 rounded-xl">
-                    <p class="text-mostaza text-[10px] font-black uppercase underline mb-2 tracking-widest">Observaciones del Impulsor</p>
-                    <p class="text-sm italic font-medium leading-relaxed">"${getVal(r, 'Observaciones') || 'Sin comentarios.'}"</p>
-                </div>
-                <div class="p-3 bg-gray-200 text-marino font-black text-center uppercase rounded">
-                    ESTATUS: ${getVal(r, 'estatus') || 'SIN DESIGNAR'}
-                </div>
-            `;
-            document.getElementById('detailPanel').classList.add('panel-open');
         }
 
         function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
