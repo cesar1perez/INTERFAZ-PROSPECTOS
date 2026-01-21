@@ -3,90 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Real - Prospectos Hidalgo</title>
+    <title>Sistema de Prospección - Hidalgo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .view-section { display: none; }
         .active-view { display: block !important; }
-        #map { height: 600px; width: 100%; border-radius: 12px; border: 2px solid #e2e8f0; }
-        .status-badge { padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; text-transform: uppercase; }
-        .interes-alto { background: #dcfce7; color: #166534; }
-        .interes-medio { background: #fef9c3; color: #854d0e; }
-        .interes-bajo { background: #fee2e2; color: #991b1b; }
+        #map { height: 650px; width: 100%; border-radius: 12px; }
+        .interes-alto { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .interes-medio { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+        .interes-bajo { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        tr { cursor: pointer; transition: all 0.2s; }
+        tr:hover { background-color: #f8fafc !important; transform: scale(1.002); }
     </style>
 </head>
 <body>
 
-    <div class="max-w-7xl mx-auto p-4 md:p-8">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div>
-                <h1 class="text-2xl font-black text-slate-800 tracking-tight">CRM PROSPECTOS <span class="text-blue-600">HIDALGO</span></h1>
-                <p class="text-slate-500 font-medium">Control de Impulsores de Mercado</p>
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-50">
+            <div class="p-6 border-b border-slate-800 text-center">
+                <h1 class="text-xl font-black tracking-tighter text-blue-400 italic">AUTO-REFAC <span class="text-white">HIDALGO</span></h1>
             </div>
-            <div class="flex gap-3 mt-4 md:mt-0">
-                <button onclick="loadData()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-lg shadow-blue-200">
-                    <i class="fas fa-sync-alt"></i> Actualizar Datos
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
+                    <i class="fas fa-users-viewfinder"></i> Listado Prospectos
+                </button>
+                <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
+                    <i class="fas fa-map-location-dot"></i> Mapa Geográfico
+                </button>
+            </nav>
+            <div class="p-6">
+                <button onclick="loadData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black shadow-lg shadow-blue-900/50 transition">
+                    <i class="fas fa-sync mr-2"></i> ACTUALIZAR
                 </button>
             </div>
-        </header>
+        </aside>
 
-        <div class="flex gap-2 mb-6 bg-white p-1.5 rounded-2xl shadow-sm w-fit border border-slate-200">
-            <button onclick="switchView('list')" id="btn-list" class="px-6 py-2.5 rounded-xl font-bold transition bg-slate-800 text-white">
-                <i class="fas fa-list mr-2"></i> Lista
-            </button>
-            <button onclick="switchView('map')" id="btn-map" class="px-6 py-2.5 rounded-xl font-bold transition text-slate-600 hover:bg-slate-100">
-                <i class="fas fa-map-marked-alt mr-2"></i> Mapa
-            </button>
-        </div>
-
-        <div id="listView" class="hidden active-view">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-widest border-b">
-                                <th class="p-5 font-bold">Negocio / Encargado</th>
-                                <th class="p-5 font-bold">Zona / Giro</th>
-                                <th class="p-5 font-bold">Interés</th>
-                                <th class="p-5 font-bold">Contacto</th>
-                                <th class="p-5 font-bold">GPS</th>
+        <main class="flex-1 overflow-y-auto relative">
+            
+            <div id="listView" class="view-section active-view p-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                    <i class="fas fa-clipboard-list text-blue-600"></i> Registro de Prospección
+                </h2>
+                
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-widest border-b">
+                            <tr>
+                                <th class="p-4">Fecha / Hora</th>
+                                <th class="p-4">Impulsor</th>
+                                <th class="p-4">Cliente / Encargado</th>
+                                <th class="p-4">Zona</th>
+                                <th class="p-4">Interés</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700">
+                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
                             </tbody>
                     </table>
                 </div>
             </div>
-        </div>
 
-        <div id="mapView" class="hidden">
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
-                <div id="map"></div>
+            <div id="mapView" class="view-section p-8">
+                <div class="bg-white p-3 rounded-2xl shadow-xl border border-slate-200">
+                    <div id="map"></div>
+                </div>
             </div>
-        </div>
+
+            <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l border-slate-200 overflow-y-auto">
+                <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
+                    <h3 class="font-bold uppercase tracking-widest text-sm">Ficha Técnica</h3>
+                    <button onclick="closeDetail()" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                <div id="detailContent" class="p-6 space-y-6">
+                    </div>
+            </div>
+        </main>
     </div>
 
-    <script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script>
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
-        
-        let map, markersLayer;
+        let map, markersLayer, allData = [];
 
         function switchView(view) {
-            document.getElementById('listView').classList.toggle('hidden', view !== 'list');
-            document.getElementById('mapView').classList.toggle('hidden', view !== 'map');
-            
-            // Estilo botones
-            const isList = view === 'list';
-            document.getElementById('btn-list').className = isList ? 'px-6 py-2.5 rounded-xl font-bold transition bg-slate-800 text-white' : 'px-6 py-2.5 rounded-xl font-bold transition text-slate-600 hover:bg-slate-100';
-            document.getElementById('btn-map').className = !isList ? 'px-6 py-2.5 rounded-xl font-bold transition bg-slate-800 text-white' : 'px-6 py-2.5 rounded-xl font-bold transition text-slate-600 hover:bg-slate-100';
-
-            if(view === 'map' && map) {
-                setTimeout(() => map.invalidateSize(), 300);
-            }
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            document.getElementById(view + 'View').classList.add('active-view');
+            if(view === 'map' && map) setTimeout(() => map.invalidateSize(), 300);
         }
 
         function loadData() {
@@ -94,18 +99,16 @@
                 download: true,
                 header: true,
                 complete: function(results) {
-                    renderData(results.data);
+                    allData = results.data.filter(row => row['Marca temporal']);
+                    render();
                 }
             });
         }
 
-        function renderData(rawData) {
-            // Filtrar solo filas con fecha (evitar vacíos)
-            const data = rawData.filter(row => row['Marca temporal']);
+        function render() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
-            // Inicializar mapa si no existe
             if(!map) {
                 map = L.map('map').setView([20.10, -98.75], 9);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
@@ -113,73 +116,101 @@
             }
             markersLayer.clearLayers();
 
-            data.forEach(row => {
-                // MAPEADO CON TUS TÍTULOS EXACTOS
-                const nombre = row['Nombre del negocio'] || 'S/N';
+            allData.forEach((row, index) => {
+                // Columnas
+                const fechaHora = row['Marca temporal'] || '-';
+                const impulsor = row['Impulsor de mercado'] || '-';
+                const negocio = row['Nombre del negocio'] || '-';
                 const encargado = row['Nombre del encargado / Dueño'] || '-';
                 const zona = row['Zona'] || '-';
-                const giro = row['Giro del negocio'] || '-';
-                const telefono = row['Teléfono'] || '-';
                 const interes = row['¿Qué nivel de interés mostró el cliente?'] || 'Medio';
                 const gps = row['Ubicación GPS (Copiar de Google Maps).'] || '';
 
-                // Definir color de interés
-                let claseInteres = 'interes-medio';
-                if(interes.toLowerCase().includes('alto')) claseInteres = 'interes-alto';
-                if(interes.toLowerCase().includes('bajo')) claseInteres = 'interes-bajo';
+                let badge = interes.toLowerCase().includes('alto') ? 'interes-alto' : 
+                            (interes.toLowerCase().includes('bajo') ? 'interes-bajo' : 'interes-medio');
 
-                // Insertar Fila
-                tbody.innerHTML += `
-                    <tr class="hover:bg-blue-50/50 transition">
-                        <td class="p-5">
-                            <div class="font-bold text-slate-800">${nombre}</div>
-                            <div class="text-xs text-slate-400 italic">${encargado}</div>
-                        </td>
-                        <td class="p-5 text-sm">
-                            <div class="text-slate-700">${zona}</div>
-                            <div class="text-xs text-blue-500 font-medium">${giro}</div>
-                        </td>
-                        <td class="p-5">
-                            <span class="status-badge ${claseInteres}">${interes}</span>
-                        </td>
-                        <td class="p-5 text-sm font-medium text-slate-600">
-                            ${telefono}
-                        </td>
-                        <td class="p-5">
-                            <span class="text-[10px] font-mono bg-slate-100 p-1 rounded text-slate-500">${gps || 'Sin GPS'}</span>
-                        </td>
-                    </tr>
+                // Crear fila de tabla
+                const tr = document.createElement('tr');
+                tr.onclick = () => showDetail(index);
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-xs text-slate-500">${fechaHora}</td>
+                    <td class="p-4 font-bold text-slate-700">${impulsor}</td>
+                    <td class="p-4">
+                        <div class="font-bold">${negocio}</div>
+                        <div class="text-xs text-slate-400">${encargado}</div>
+                    </td>
+                    <td class="p-4 text-slate-600">${zona}</td>
+                    <td class="p-4"><span class="px-3 py-1 rounded-md text-[10px] font-black uppercase ${badge}">${interes}</span></td>
                 `;
+                tbody.appendChild(tr);
 
                 // Agregar al Mapa
                 if(gps && gps.includes(',')) {
-                    // Limpieza por si hay espacios o paréntesis
-                    const coords = gps.replace(/[()]/g, '').split(',').map(c => parseFloat(c.trim()));
+                    const cleanGPS = gps.replace(/[^\d.,-]/g, ''); // Limpiar caracteres raros
+                    const coords = cleanGPS.split(',').map(c => parseFloat(c.trim()));
                     if(coords.length === 2 && !isNaN(coords[0])) {
-                        const markerColor = interes.toLowerCase().includes('alto') ? 'green' : (interes.toLowerCase().includes('bajo') ? 'red' : 'orange');
-                        
                         L.marker([coords[0], coords[1]]).addTo(markersLayer)
-                            .bindPopup(`
-                                <div style="font-family: sans-serif">
-                                    <b style="font-size:14px">${nombre}</b><br>
-                                    <small>${zona}</small><br>
-                                    <hr style="margin:5px 0">
-                                    <b>Interés:</b> ${interes}<br>
-                                    <b>Giro:</b> ${giro}
-                                </div>
-                            `);
+                            .bindPopup(`<b>${negocio}</b><br><button onclick="showDetail(${index})" style="color:blue; text-decoration:underline; cursor:pointer">Ver Detalles</button>`);
                     }
                 }
             });
-
-            if(data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-slate-400">Sin registros encontrados.</td></tr>';
-            }
         }
 
-        // Cargar al iniciar
+        function showDetail(index) {
+            const row = allData[index];
+            const content = document.getElementById('detailContent');
+            
+            // Lógica para marcas
+            const check = (val, marcas) => {
+                if(val && val.toLowerCase().includes('si')) {
+                    return `<div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <p class="text-[10px] text-blue-500 font-bold uppercase">SÍ TRABAJA</p>
+                                <p class="text-sm font-bold text-slate-800">${marcas || 'Sin marca especificada'}</p>
+                            </div>`;
+                }
+                return `<p class="text-sm text-slate-400 italic">No compra este producto</p>`;
+            };
+
+            content.innerHTML = `
+                <div>
+                    <h4 class="text-xl font-black text-slate-800">${row['Nombre del negocio']}</h4>
+                    <p class="text-blue-600 font-bold">${row['Zona']}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 border-y py-4 border-slate-100">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Encargado</p>
+                        <p class="text-sm font-medium">${row['Nombre del encargado / Dueño']}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Teléfono</p>
+                        <p class="text-sm font-medium">${row['Teléfono'] || '-'}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h5 class="text-xs font-black text-slate-500 uppercase tracking-widest italic">Análisis de Inventario</h5>
+                    
+                    <div><p class="text-xs font-bold text-slate-600 mb-1">Acumuladores</p> ${check(row['¿Compra acumuladores?'], row['¿Qué marca de acumuladores?'])}</div>
+                    <div><p class="text-xs font-bold text-slate-600 mb-1">Lubricantes</p> ${check(row['¿Compra lubricantes?'], row['¿Qué marca de lubricante?'])}</div>
+                    <div><p class="text-xs font-bold text-slate-600 mb-1">Motobaterías</p> ${check(row['¿Compra motobaterías?'], row['¿Qué marca de motobatería?'])}</div>
+                    <div><p class="text-xs font-bold text-slate-600 mb-1">Filtros</p> ${check(row['¿Compra filtros?'], row['¿Qué marca de filtros='])}</div>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl">
+                    <p class="text-xs font-bold text-slate-600 mb-1">Observaciones:</p>
+                    <p class="text-sm text-slate-600">${row['Observaciones / Información adicional.'] || 'Sin observaciones'}</p>
+                </div>
+            `;
+            
+            document.getElementById('detailPanel').classList.remove('translate-x-full');
+        }
+
+        function closeDetail() {
+            document.getElementById('detailPanel').classList.add('translate-x-full');
+        }
+
         window.onload = loadData;
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </body>
 </html>
