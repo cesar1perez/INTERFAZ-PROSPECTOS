@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - V3.5</title>
+    <title>LLANTERAMA CRM - V4.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -23,37 +23,36 @@
         .active-view { display: block !important; }
         .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 500; }
 
-        /* Mapa y Sidebar Adaptable */
+        /* Buscador */
+        .search-container { padding: 10px; background: white; border-bottom: 2px solid var(--marino); }
+        .search-input { width: 100%; padding: 12px; border: 3px solid var(--marino); border-radius: 10px; font-weight: bold; outline: none; }
+
+        /* Tabla Ordenable */
+        th { cursor: pointer; position: relative; transition: 0.2s; }
+        th:hover { background: #003366; }
+        th::after { content: ' ↕'; opacity: 0.3; font-size: 8px; }
+
+        /* Mapa y Sidebar */
         .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
-        
         @media (max-width: 768px) {
-            .sidebar-map { 
-                position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; 
-                z-index: 1000; transform: translateY(100%); transition: 0.4s; 
-                border-top: 5px solid var(--mostaza); border-right: none !important;
-            }
+            .sidebar-map { position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; z-index: 1000; transform: translateY(100%); transition: 0.4s; border-top: 5px solid var(--mostaza); }
             .sidebar-map.open { transform: translateY(0); }
             .btn-toggle-list { display: block !important; }
         }
-
         .sidebar-map { width: 320px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
         #map { flex-grow: 1; z-index: 10; }
-        .btn-toggle-list { display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1100; background: var(--marino); color: var(--mostaza); padding: 12px 24px; border-radius: 30px; font-weight: 900; border: 2px solid var(--mostaza); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .btn-toggle-list { display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1100; background: var(--marino); color: var(--mostaza); padding: 12px 24px; border-radius: 30px; font-weight: 900; border: 2px solid var(--mostaza); }
 
-        /* Estilos de Comisiones */
         .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
-
-        /* Ficha Lateral */
         #detailPanel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 450px; background: white; z-index: 2000; transform: translateX(100%); transition: 0.4s; border-left: 10px solid var(--mostaza); box-shadow: -10px 0 40px rgba(0,0,0,0.4); }
         .panel-open { transform: translateX(0) !important; }
-        .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
     </style>
 </head>
 <body>
 
     <section id="homeView" class="home-container">
         <div class="logo-ll mb-8"><span>LL</span></div>
-        <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter">CRM ESTRATÉGICO</h1>
+        <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter uppercase">Llanterama CRM</h1>
         <button onclick="switchView('money')" class="btn-main"><i class="fas fa-hand-holding-usd text-3xl text-emerald-600"></i><span class="font-black text-marino">COMISIONES POR MES</span></button>
         <button onclick="switchView('list')" class="btn-main"><i class="fas fa-clipboard-list text-3xl text-blue-600"></i><span class="font-black text-marino">LISTADO Y ESTATUS</span></button>
         <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span class="font-black text-marino">MAPA POR ZONAS</span></button>
@@ -70,18 +69,21 @@
     <section id="listView" class="view-section">
         <div class="header-app">
             <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Base de Prospectos</span>
+            <span class="font-black italic uppercase">Prospectos Registrados</span>
+        </div>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar por nombre, zona o estatus..." onkeyup="filterTable()">
         </div>
         <div class="overflow-x-auto p-2">
-            <table class="w-full bg-white border-2 border-marino">
+            <table class="w-full bg-white border-2 border-marino text-left">
                 <thead>
                     <tr class="bg-marino text-mostaza text-[10px]">
-                        <th class="p-2 border">FECHA</th>
-                        <th class="p-2 border">NEGOCIO</th>
-                        <th class="p-2 border">COMPETENCIA</th>
-                        <th class="p-2 border">ESTATUS</th>
-                        <th class="p-2 border">ZONA</th>
-                        <th class="p-2 border">INTERÉS</th>
+                        <th class="p-3 border" onclick="sortTable(0)">FECHA</th>
+                        <th class="p-3 border" onclick="sortTable(1)">NEGOCIO</th>
+                        <th class="p-3 border" onclick="sortTable(2)">COMPETENCIA</th>
+                        <th class="p-3 border" onclick="sortTable(3)">ESTATUS</th>
+                        <th class="p-3 border" onclick="sortTable(4)">ZONA</th>
+                        <th class="p-3 border" onclick="sortTable(5)">INTERÉS</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -104,7 +106,7 @@
     <div id="detailPanel">
         <div class="p-6 h-full flex flex-col">
             <div class="flex justify-between items-center border-b-4 border-marino pb-2 mb-4">
-                <span class="font-black text-marino italic text-xl uppercase">Ficha Prospecto</span>
+                <span class="font-black text-marino italic text-xl uppercase">Ficha Técnica</span>
                 <button onclick="closeDetail()" class="text-4xl font-bold">&times;</button>
             </div>
             <div id="detailContent" class="overflow-y-auto flex-1 pr-2"></div>
@@ -113,7 +115,7 @@
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
-        let allData = [], map, markersLayer;
+        let allData = [], map, markersLayer, sortDirection = {};
 
         function getVal(row, name) {
             const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()));
@@ -130,8 +132,6 @@
 
         function toggleMapList() {
             document.querySelector('.sidebar-map').classList.toggle('open');
-            const btn = document.querySelector('.btn-toggle-list');
-            btn.innerHTML = btn.innerHTML.includes('VER') ? '<i class="fas fa-times"></i> CERRAR LISTA' : '<i class="fas fa-list"></i> VER LISTA';
         }
 
         function loadData() {
@@ -146,7 +146,7 @@
 
         function renderAll() {
             renderComisiones();
-            renderListado();
+            renderListado(allData);
             if(map) renderMapa();
         }
 
@@ -160,16 +160,13 @@
                 let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded shadow uppercase italic tracking-widest">${mes}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 mb-8">`;
                 impulsores.forEach(imp => {
                     const filtrados = allData.filter(r => {
-                        const mesSheet = getVal(r, "Mes correspondiente");
-                        const impulsorSheet = getVal(r, "Impulsor de mercado");
-                        return impulsorSheet === imp && mesSheet.toLowerCase().includes(mes.toLowerCase());
+                        return getVal(r, "Impulsor de mercado") === imp && getVal(r, "Mes correspondiente").toLowerCase().includes(mes.toLowerCase());
                     });
                     html += `
                         <div class="bg-white p-6 border-l-[10px] border-marino rounded-2xl shadow-lg flex justify-between items-center">
                             <div class="flex-1">
                                 <p class="text-[10px] text-slate-400 font-bold uppercase mb-2 italic">${imp}</p>
                                 <p class="text-4xl font-black text-emerald-600">$${filtrados.length * 20}</p>
-                                <p class="text-[9px] font-black text-slate-500 uppercase mt-1">Ganancia Acumulada</p>
                             </div>
                             <div class="flex flex-col items-center">
                                 <div class="badge-count font-black">${filtrados.length}</div>
@@ -181,39 +178,52 @@
             });
         }
 
-        function renderListado() {
+        function renderListado(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-            allData.forEach((row, i) => {
+            data.forEach((row) => {
                 const comp = getVal(row, "distribuye la competencia").toLowerCase().includes("si");
-                tbody.innerHTML += `
-                    <tr onclick="showDetail(${i})" class="text-[11px] font-bold border-b">
-                        <td class="p-2 border">${row['Marca temporal'].split(' ')[0]}</td>
-                        <td class="p-2 border text-marino uppercase">${getVal(row, "Nombre del negocio")}</td>
-                        <td class="p-2 border text-center ${comp ? 'text-red-500':'text-green-600'}">${comp ? 'SI' : 'NO'}</td>
-                        <td class="p-2 border">${getVal(row, "ESTATUS") || 'S/D'}</td>
-                        <td class="p-2 border uppercase">${getVal(row, "Zona")}</td>
-                        <td class="p-2 border">${getVal(row, "interés")}</td>
-                    </tr>`;
+                const tr = document.createElement('tr');
+                tr.className = "text-[11px] font-bold border-b hover:bg-yellow-50 cursor-pointer";
+                tr.onclick = () => showDetail(allData.indexOf(row));
+                tr.innerHTML = `
+                    <td class="p-3 border">${row['Marca temporal'].split(' ')[0]}</td>
+                    <td class="p-3 border text-marino uppercase font-black">${getVal(row, "Nombre del negocio")}</td>
+                    <td class="p-3 border text-center ${comp ? 'text-red-500':'text-green-600'}">${comp ? 'SI' : 'NO'}</td>
+                    <td class="p-3 border">${getVal(row, "ESTATUS") || 'SIN DESIGNAR'}</td>
+                    <td class="p-3 border uppercase text-slate-500">${getVal(row, "Zona")}</td>
+                    <td class="p-3 border italic">${getVal(row, "interés")}</td>
+                `;
+                tbody.appendChild(tr);
             });
+        }
+
+        function filterTable() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allData.filter(r => {
+                return Object.values(r).some(v => v.toString().toLowerCase().includes(term));
+            });
+            renderListado(filtered);
+        }
+
+        function sortTable(idx) {
+            sortDirection[idx] = !sortDirection[idx];
+            const keys = ["Marca temporal", "Nombre del negocio", "distribuye la competencia", "ESTATUS", "Zona", "interés"];
+            const key = keys[idx];
+            
+            const sorted = [...allData].sort((a, b) => {
+                let v1 = getVal(a, key);
+                let v2 = getVal(b, key);
+                return sortDirection[idx] ? v1.localeCompare(v2) : v2.localeCompare(v1);
+            });
+            renderListado(sorted);
         }
 
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
-            const campos = [
-                "Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño",
-                "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?",
-                "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?",
-                "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?",
-                "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?",
-                "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"
-            ];
-            let html = '';
-            campos.forEach(campo => {
-                html += `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${campo}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, campo) || '---'}</p></div>`;
-            });
-            content.innerHTML = html;
+            const campos = ["Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño", "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?", "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?", "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?", "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?", "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"];
+            content.innerHTML = campos.map(c => `<div class="border-b py-2"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
             document.getElementById('detailPanel').classList.add('panel-open');
         }
 
@@ -227,8 +237,7 @@
         function renderMapa() {
             markersLayer.clearLayers();
             const sidebar = document.getElementById('mapListContainer');
-            sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">LISTADO DE PROSPECTOS</div>';
-            
+            sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">LOCALIZACIÓN POR ZONAS</div>';
             const zonas = [...new Set(allData.map(r => getVal(r, "Zona")).filter(z => z))];
             zonas.forEach(z => {
                 const pros = allData.filter(r => getVal(r, "Zona") === z);
@@ -239,17 +248,16 @@
                         const coords = gps.split(',').map(parseFloat);
                         L.circleMarker([coords[0], coords[1]], { radius: 9, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 }).addTo(markersLayer);
                     }
-                    sidebar.innerHTML += `<div class="p-3 px-6 border-b text-[10px] font-black uppercase hover:bg-slate-50 cursor-pointer text-slate-600" onclick="focusOnMap('${gps}', '${getVal(row, 'Nombre del negocio')}')">${getVal(row, 'Nombre del negocio')}</div>`;
+                    sidebar.innerHTML += `<div class="p-3 px-6 border-b text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gps}')">${getVal(row, 'Nombre del negocio')}</div>`;
                 });
             });
         }
 
-        function focusOnMap(gps, name) {
-            if(gps && gps.includes(',')) {
-                const coords = gps.split(',').map(parseFloat);
-                map.flyTo([coords[0], coords[1]], 16);
-                if(window.innerWidth <= 768) toggleMapList();
-            }
+        function focusOnMap(gps) {
+            if(!gps) return;
+            const coords = gps.split(',').map(parseFloat);
+            map.flyTo([coords[0], coords[1]], 16);
+            if(window.innerWidth <= 768) toggleMapList();
         }
 
         function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
