@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - FINAL</title>
+    <title>LLANTERAMA CRM - FINAL V5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,7 +13,6 @@
         :root { --marino: #001f3f; --mostaza: #FFB800; }
         body { font-family: 'Arial Black', sans-serif; background: #f1f5f9; color: #000; overflow-x: hidden; }
         
-        /* Portada Centrada */
         .home-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--marino); position: fixed; width: 100%; z-index: 1000; }
         .logo-ll { width: 110px; height: 110px; border: 6px solid var(--mostaza); display: flex; align-items: center; justify-content: center; border-radius: 25px; }
         .logo-ll span { color: var(--mostaza); font-size: 65px; font-style: italic; font-weight: 900; }
@@ -22,35 +21,44 @@
         .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
         .btn-main span { color: var(--marino); font-size: 14px; font-weight: 900; margin-top: 5px; text-transform: uppercase; }
 
-        /* Vistas App */
         .view-section { display: none; min-height: 100vh; background: #f1f5f9; }
         .active-view { display: block !important; }
         .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 500; }
 
-        /* Buscador y Tabla */
         .search-container { padding: 10px; background: white; border-bottom: 2px solid var(--marino); }
         .search-input { width: 100%; padding: 12px; border: 3px solid var(--marino); border-radius: 10px; font-weight: bold; outline: none; }
         th { cursor: pointer; background: var(--marino); color: var(--mostaza); padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #333; text-align: left; position: relative; }
-        th::after { content: ' ↕'; opacity: 0.3; }
         td { padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 900; }
 
-        /* Mapa e Interfaz Móvil */
         .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
         @media (max-width: 768px) {
-            .sidebar-map { position: absolute; bottom: 0; left: 0; width: 100%; height: 65%; z-index: 1000; transform: translateY(100%); transition: 0.4s; border-top: 5px solid var(--mostaza); }
+            .sidebar-map { position: absolute; bottom: 0; left: 0; width: 100%; height: 70%; z-index: 1000; transform: translateY(100%); transition: 0.4s; border-top: 5px solid var(--mostaza); }
             .sidebar-map.open { transform: translateY(0); }
             .btn-toggle-list { display: block !important; }
         }
         .sidebar-map { width: 320px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
         #map { flex-grow: 1; z-index: 10; }
-        .btn-toggle-list { display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1100; background: var(--marino); color: var(--mostaza); padding: 12px 24px; border-radius: 30px; font-weight: 900; border: 2px solid var(--mostaza); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        
+        /* Botón Ajustado: Arriba a la Izquierda */
+        .btn-toggle-list { 
+            display: none; 
+            position: absolute; 
+            top: 15px; 
+            left: 15px; 
+            z-index: 1100; 
+            background: var(--marino); 
+            color: var(--mostaza); 
+            padding: 10px 20px; 
+            border-radius: 12px; 
+            font-weight: 900; 
+            border: 3px solid var(--mostaza); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+            font-size: 12px;
+        }
 
-        /* Ficha Lateral Detalle */
         #detailPanel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 450px; background: white; z-index: 2000; transform: translateX(100%); transition: 0.4s; border-left: 10px solid var(--mostaza); box-shadow: -10px 0 40px rgba(0,0,0,0.4); }
         .panel-open { transform: translateX(0) !important; }
         .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
-
-        /* Badge de Conteo */
         .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
     </style>
 </head>
@@ -84,12 +92,7 @@
             <table class="w-full bg-white border-2 border-marino">
                 <thead>
                     <tr>
-                        <th onclick="sortTable(0)">Fecha</th>
-                        <th onclick="sortTable(1)">Negocio</th>
-                        <th onclick="sortTable(2)">Competencia</th>
-                        <th onclick="sortTable(3)">Estatus</th>
-                        <th onclick="sortTable(4)">Zona</th>
-                        <th onclick="sortTable(5)">Interés</th>
+                        <th onclick="sortTable(0)">Fecha</th><th onclick="sortTable(1)">Negocio</th><th onclick="sortTable(2)">Competencia</th><th onclick="sortTable(3)">Estatus</th><th onclick="sortTable(4)">Zona</th><th onclick="sortTable(5)">Interés</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -193,15 +196,9 @@
             data.forEach((row) => {
                 const comp = getVal(row, "distribuye la competencia").toLowerCase().includes("si");
                 const tr = document.createElement('tr');
-                tr.className = "text-[11px] font-bold border-b hover:bg-yellow-50 cursor-pointer";
+                tr.className = "text-[11px] font-bold border-b active:bg-yellow-50";
                 tr.onclick = () => showDetail(allData.indexOf(row));
-                tr.innerHTML = `
-                    <td class="p-3 border">${row['Marca temporal'].split(' ')[0]}</td>
-                    <td class="p-3 border text-marino uppercase font-black">${getVal(row, "Nombre del negocio")}</td>
-                    <td class="p-3 border text-center ${comp ? 'text-red-500':'text-green-600'}">${comp ? 'SI' : 'NO'}</td>
-                    <td class="p-3 border">${getVal(row, "ESTATUS") || 'SIN DESIGNAR'}</td>
-                    <td class="p-3 border uppercase text-slate-500">${getVal(row, "Zona")}</td>
-                    <td class="p-3 border italic">${getVal(row, "interés")}</td>`;
+                tr.innerHTML = `<td class="p-3 border">${row['Marca temporal'].split(' ')[0]}</td><td class="p-3 border text-marino uppercase font-black">${getVal(row, "Nombre del negocio")}</td><td class="p-3 border text-center ${comp ? 'text-red-500':'text-green-600'}">${comp ? 'SI' : 'NO'}</td><td class="p-3 border">${getVal(row, "ESTATUS") || 'S/D'}</td><td class="p-3 border uppercase text-slate-500">${getVal(row, "Zona")}</td><td class="p-3 border italic">${getVal(row, "interés")}</td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -232,8 +229,9 @@
         }
 
         function initMap() {
-            map = L.map('map').setView([20.10, -98.75], 10);
+            map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+            L.control.zoom({position: 'bottomright'}).addTo(map);
             markersLayer = L.layerGroup().addTo(map);
             renderMapa();
         }
@@ -241,7 +239,7 @@
         function renderMapa() {
             markersLayer.clearLayers();
             const sidebar = document.getElementById('mapListContainer');
-            sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">LOCALIZACIÓN POR ZONAS</div>';
+            sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">ZONAS</div>';
             const zonas = [...new Set(allData.map(r => getVal(r, "Zona")).filter(z => z))];
             zonas.forEach(z => {
                 const pros = allData.filter(r => getVal(r, "Zona") === z);
@@ -252,7 +250,7 @@
                         const coords = gps.split(',').map(parseFloat);
                         L.circleMarker([coords[0], coords[1]], { radius: 9, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 }).addTo(markersLayer);
                     }
-                    sidebar.innerHTML += `<div class="p-3 px-6 border-b text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gps}')">${getVal(row, 'Nombre del negocio')}</div>`;
+                    sidebar.innerHTML += `<div class="p-3 px-6 border-b text-[10px] font-black uppercase text-slate-600" onclick="focusOnMap('${gps}')">${getVal(row, 'Nombre del negocio')}</div>`;
                 });
             });
         }
