@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Prospección Hidalgo - Oficial</title>
+    <title>CRM Refaccionarias Hidalgo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,8 +14,9 @@
         .view-section { display: none; }
         .active-view { display: block !important; }
         #map { height: 650px; width: 100%; border-radius: 12px; }
-        tr:hover { background-color: #f8fafc !important; cursor: pointer; }
-        .detail-card { border-left: 4px solid #3b82f6; background: #f8fafc; padding: 12px; border-radius: 8px; }
+        .status-alto { color: #166534; background: #dcfce7; }
+        .status-medio { color: #854d0e; background: #fef9c3; }
+        .status-bajo { color: #991b1b; background: #fee2e2; }
     </style>
 </head>
 <body>
@@ -26,32 +27,32 @@
                 <h1 class="text-xl font-black text-blue-400 italic">AUTO-REFAC <span class="text-white">HIDALGO</span></h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
-                <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
-                    <i class="fas fa-list"></i> Ver Listado
+                <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold text-left">
+                    <i class="fas fa-list w-6"></i> Listado Prospectos
                 </button>
-                <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
-                    <i class="fas fa-map-marker-alt"></i> Ver Mapa
+                <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold text-left">
+                    <i class="fas fa-map-marker-alt w-6"></i> Mapa de Ruta
                 </button>
             </nav>
             <div class="p-6">
-                <button onclick="loadData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black transition shadow-lg">
-                    <i class="fas fa-sync mr-2"></i> ACTUALIZAR
+                <button onclick="loadData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black shadow-lg transition">
+                    <i class="fas fa-sync mr-2"></i> ACTUALIZAR DATOS
                 </button>
             </div>
         </aside>
 
         <main class="flex-1 overflow-y-auto relative">
             <div id="listView" class="view-section active-view p-8">
-                <h2 class="text-2xl font-bold mb-6 text-slate-800">Prospectos Realizados</h2>
+                <h2 class="text-2xl font-bold mb-6 text-slate-800">Registros del Impulsor</h2>
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <table class="w-full text-left">
+                    <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b">
                             <tr>
                                 <th class="p-4">Fecha / Hora</th>
                                 <th class="p-4">Impulsor</th>
                                 <th class="p-4">Negocio / Encargado</th>
                                 <th class="p-4">Zona</th>
-                                <th class="p-4">Interés</th>
+                                <th class="p-4 text-center">Interés</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -67,8 +68,8 @@
 
             <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l overflow-y-auto">
                 <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-                    <h3 class="font-bold uppercase tracking-widest text-sm text-blue-400">Detalles del Prospecto</h3>
-                    <button onclick="closeDetail()" class="text-white text-xl">&times;</button>
+                    <h3 class="font-bold uppercase tracking-widest text-sm text-blue-400">Ficha del Cliente</h3>
+                    <button onclick="closeDetail()" class="text-white text-2xl">&times;</button>
                 </div>
                 <div id="detailContent" class="p-6 space-y-6"></div>
             </div>
@@ -96,24 +97,6 @@
             });
         }
 
-        // FUNCIÓN CRÍTICA: Limpia y arregla coordenadas
-        function fixCoords(gps) {
-            if(!gps) return null;
-            let clean = gps.replace(/[^\d.,-]/g, '');
-            let parts = clean.split(',');
-            if(parts.length !== 2) return null;
-            
-            let lat = parseFloat(parts[0]);
-            let lng = parseFloat(parts[1]);
-
-            // Si el impulsor olvidó el punto decimal en la longitud (ej: -987523)
-            if(Math.abs(lng) > 180) {
-                lng = lng / 100000; // Intenta corregir la posición del punto
-            }
-
-            return (isNaN(lat) || isNaN(lng)) ? null : [lat, lng];
-        }
-
         function render() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -124,73 +107,92 @@
                 markersLayer = L.layerGroup().addTo(map);
             }
             markersLayer.clearLayers();
+            const bounds = [];
 
             allData.forEach((row, index) => {
-                // Buscamos el nombre en varias columnas por si una está vacía
-                const negocio = row['Nombre del negocio'] || row['Nombre del encargado / Dueño'] || "Sin nombre registrado";
-                const encargado = row['Nombre del encargado / Dueño'] || "-";
-                const fechaHora = row['Marca temporal'] || "-";
+                // PRIORIDAD DE NOMBRES SEGÚN TU SOLICITUD
+                const nombreNegocio = row['Nombre del negocio'] || "";
+                const nombreEncargado = row['Nombre del encargado / Dueño'] || "";
+                const nombreAMostrar = nombreNegocio.trim() !== "" ? nombreNegocio : (nombreEncargado.trim() !== "" ? nombreEncargado : "Sin nombre");
+
+                const fechaFull = row['Marca temporal'] || "-";
                 const impulsor = row['Impulsor de mercado'] || "-";
                 const zona = row['Zona'] || "-";
                 const interes = row['¿Qué nivel de interés mostró el cliente?'] || "Medio";
-                const gpsString = row['Ubicación GPS (Copiar de Google Maps).'];
+                const gps = row['Ubicación GPS (Copiar de Google Maps).'] || "";
 
                 // Tabla
                 const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors cursor-pointer";
                 tr.onclick = () => showDetail(index);
+                
+                let claseI = interes.toLowerCase().includes('alto') ? 'status-alto' : (interes.toLowerCase().includes('bajo') ? 'status-bajo' : 'status-medio');
+
                 tr.innerHTML = `
-                    <td class="p-4 text-xs font-mono">${fechaHora}</td>
-                    <td class="p-4 font-bold text-blue-600">${impulsor}</td>
+                    <td class="p-4 font-mono text-[11px]">${fechaFull}</td>
+                    <td class="p-4 font-bold text-slate-700">${impulsor}</td>
                     <td class="p-4">
-                        <div class="font-bold text-slate-800">${negocio}</div>
-                        <div class="text-xs text-slate-400 uppercase">${encargado}</div>
+                        <div class="font-bold text-blue-700">${nombreAMostrar}</div>
+                        <div class="text-[10px] text-slate-400 uppercase">${nombreEncargado}</div>
                     </td>
-                    <td class="p-4">${zona}</td>
-                    <td class="p-4 text-xs font-black uppercase">${interes}</td>
+                    <td class="p-4 text-slate-600">${zona}</td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded text-[10px] font-black uppercase ${claseI}">${interes}</span></td>
                 `;
                 tbody.appendChild(tr);
 
-                // Mapa
-                const coords = fixCoords(gpsString);
-                if(coords) {
-                    L.marker(coords).addTo(markersLayer).bindPopup(`<b>${negocio}</b><br><small>${zona}</small>`);
+                // GPS - Limpieza y formateo
+                if(gps.includes(',')) {
+                    const coords = gps.split(',').map(c => parseFloat(c.trim()));
+                    if(!isNaN(coords[0]) && !isNaN(coords[1])) {
+                        const marker = L.marker([coords[0], coords[1]]).addTo(markersLayer)
+                            .bindPopup(`<b>${nombreAMostrar}</b><br><button onclick="showDetail(${index})" style="color:blue">Ver Ficha Técnica</button>`);
+                        bounds.push([coords[0], coords[1]]);
+                    }
                 }
             });
+
+            if(bounds.length > 0 && map) map.fitBounds(bounds, {padding: [50, 50]});
         }
 
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
             
-            const item = (titulo, valor, marcas) => {
-                if(valor && valor.toLowerCase().includes('si')) {
-                    return `<div class="detail-card">
-                        <p class="text-[10px] font-black text-blue-600 uppercase">${titulo}</p>
-                        <p class="text-sm font-bold text-slate-800">SÍ COMPRA</p>
-                        <p class="text-xs text-slate-500">Marcas: ${marcas || 'No especificadas'}</p>
-                    </div>`;
-                }
-                return `<div class="p-3 bg-gray-50 rounded-lg text-xs text-gray-400 italic">${titulo}: No compra</div>`;
+            const seccion = (titulo, compra, marcas) => {
+                const siCompra = compra && compra.toLowerCase().includes('si');
+                return `
+                <div class="p-4 rounded-xl border ${siCompra ? 'border-blue-200 bg-blue-50' : 'border-slate-100 bg-slate-50 opacity-60'}">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">${titulo}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold ${siCompra ? 'text-blue-700' : 'text-slate-400'}">${siCompra ? 'SÍ COMPRA' : 'NO COMPRA'}</span>
+                    </div>
+                    ${siCompra ? `<p class="text-xs mt-2 text-slate-600"><b>Marcas:</b> ${marcas || 'No especifica'}</p>` : ''}
+                </div>`;
             };
 
             content.innerHTML = `
-                <div class="mb-6">
-                    <h4 class="text-2xl font-black text-slate-800">${r['Nombre del negocio'] || 'Negocio'}</h4>
-                    <p class="text-blue-500 font-bold tracking-widest uppercase text-xs">${r['Zona']}</p>
-                </div>
-                
-                <div class="space-y-4">
-                    <p class="text-xs font-bold text-slate-400 border-b pb-2 uppercase tracking-widest">Información de Mercado</p>
-                    ${item('Acumuladores', r['¿Compra acumuladores?'], r['¿Qué marca de acumuladores?'])}
-                    ${item('Lubricantes', r['¿Compra lubricantes?'], r['¿Qué marca de lubricante?'])}
-                    ${item('Motobaterías', r['¿Compra motobaterías?'], r['¿Qué marca de motobatería?'])}
-                    ${item('Filtros', r['¿Compra filtros?'], r['¿Qué marca de filtros='])}
-                    ${item('Llantas', r['¿Compra llanta?'], r['¿Qué marca de llanta?'])}
+                <div class="mb-2">
+                    <h4 class="text-2xl font-black text-slate-800">${r['Nombre del negocio'] || r['Nombre del encargado / Dueño'] || 'Prospecto'}</h4>
+                    <p class="text-blue-600 font-bold uppercase text-xs tracking-widest">${r['Zona']}</p>
                 </div>
 
-                <div class="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">Observaciones</p>
-                    <p class="text-sm text-slate-700">${r['Observaciones / Información adicional.'] || 'Sin notas adicionales'}</p>
+                <div class="grid grid-cols-2 gap-4 text-xs py-4 border-y border-slate-100">
+                    <div><p class="text-slate-400 font-bold uppercase">Dueño/Encargado</p><p class="font-medium">${r['Nombre del encargado / Dueño'] || '-'}</p></div>
+                    <div><p class="text-slate-400 font-bold uppercase">Teléfono</p><p class="font-medium">${r['Teléfono'] || '-'}</p></div>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-[10px] font-black text-slate-800 uppercase tracking-tighter italic">Detalle de Productos</p>
+                    ${seccion('Acumuladores', r['¿Compra acumuladores?'], r['¿Qué marca de acumuladores?'])}
+                    ${seccion('Lubricantes', r['¿Compra lubricantes?'], r['¿Qué marca de lubricante?'])}
+                    ${seccion('Motobaterías', r['¿Compra motobaterías?'], r['¿Qué marca de motobatería?'])}
+                    ${seccion('Filtros', r['¿Compra filtros?'], r['¿Qué marca de filtros='])}
+                    ${seccion('Llantas', r['¿Compra llanta?'], r['¿Qué marca de llanta?'])}
+                </div>
+
+                <div class="p-4 bg-slate-100 rounded-xl">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Observaciones</p>
+                    <p class="text-sm text-slate-600 italic">${r['Observaciones / Información adicional.'] || 'Sin comentarios adicionales.'}</p>
                 </div>
             `;
             document.getElementById('detailPanel').classList.remove('translate-x-full');
