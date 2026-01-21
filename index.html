@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - V4.0</title>
+    <title>LLANTERAMA CRM - FINAL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,39 +13,45 @@
         :root { --marino: #001f3f; --mostaza: #FFB800; }
         body { font-family: 'Arial Black', sans-serif; background: #f1f5f9; color: #000; overflow-x: hidden; }
         
+        /* Portada Centrada */
         .home-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--marino); position: fixed; width: 100%; z-index: 1000; }
         .logo-ll { width: 110px; height: 110px; border: 6px solid var(--mostaza); display: flex; align-items: center; justify-content: center; border-radius: 25px; }
         .logo-ll span { color: var(--mostaza); font-size: 65px; font-style: italic; font-weight: 900; }
         
-        .btn-main { background: white; border: 4px solid var(--marino); padding: 18px; border-radius: 15px; width: 290px; display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; box-shadow: 0 6px 0 #000; }
-        
+        .btn-main { background: white; border: 4px solid var(--marino); padding: 18px; border-radius: 15px; width: 290px; display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; box-shadow: 0 6px 0 #000; transition: 0.1s; }
+        .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
+        .btn-main span { color: var(--marino); font-size: 14px; font-weight: 900; margin-top: 5px; text-transform: uppercase; }
+
+        /* Vistas App */
         .view-section { display: none; min-height: 100vh; background: #f1f5f9; }
         .active-view { display: block !important; }
         .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 500; }
 
-        /* Buscador */
+        /* Buscador y Tabla */
         .search-container { padding: 10px; background: white; border-bottom: 2px solid var(--marino); }
         .search-input { width: 100%; padding: 12px; border: 3px solid var(--marino); border-radius: 10px; font-weight: bold; outline: none; }
+        th { cursor: pointer; background: var(--marino); color: var(--mostaza); padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #333; text-align: left; position: relative; }
+        th::after { content: ' ↕'; opacity: 0.3; }
+        td { padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 900; }
 
-        /* Tabla Ordenable */
-        th { cursor: pointer; position: relative; transition: 0.2s; }
-        th:hover { background: #003366; }
-        th::after { content: ' ↕'; opacity: 0.3; font-size: 8px; }
-
-        /* Mapa y Sidebar */
+        /* Mapa e Interfaz Móvil */
         .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
         @media (max-width: 768px) {
-            .sidebar-map { position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; z-index: 1000; transform: translateY(100%); transition: 0.4s; border-top: 5px solid var(--mostaza); }
+            .sidebar-map { position: absolute; bottom: 0; left: 0; width: 100%; height: 65%; z-index: 1000; transform: translateY(100%); transition: 0.4s; border-top: 5px solid var(--mostaza); }
             .sidebar-map.open { transform: translateY(0); }
             .btn-toggle-list { display: block !important; }
         }
         .sidebar-map { width: 320px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
         #map { flex-grow: 1; z-index: 10; }
-        .btn-toggle-list { display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1100; background: var(--marino); color: var(--mostaza); padding: 12px 24px; border-radius: 30px; font-weight: 900; border: 2px solid var(--mostaza); }
+        .btn-toggle-list { display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1100; background: var(--marino); color: var(--mostaza); padding: 12px 24px; border-radius: 30px; font-weight: 900; border: 2px solid var(--mostaza); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
 
-        .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
+        /* Ficha Lateral Detalle */
         #detailPanel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 450px; background: white; z-index: 2000; transform: translateX(100%); transition: 0.4s; border-left: 10px solid var(--mostaza); box-shadow: -10px 0 40px rgba(0,0,0,0.4); }
         .panel-open { transform: translateX(0) !important; }
+        .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
+
+        /* Badge de Conteo */
+        .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
     </style>
 </head>
 <body>
@@ -53,15 +59,15 @@
     <section id="homeView" class="home-container">
         <div class="logo-ll mb-8"><span>LL</span></div>
         <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter uppercase">Llanterama CRM</h1>
-        <button onclick="switchView('money')" class="btn-main"><i class="fas fa-hand-holding-usd text-3xl text-emerald-600"></i><span class="font-black text-marino">COMISIONES POR MES</span></button>
-        <button onclick="switchView('list')" class="btn-main"><i class="fas fa-clipboard-list text-3xl text-blue-600"></i><span class="font-black text-marino">LISTADO Y ESTATUS</span></button>
-        <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span class="font-black text-marino">MAPA POR ZONAS</span></button>
+        <button onclick="switchView('money')" class="btn-main"><i class="fas fa-hand-holding-usd text-3xl text-emerald-600"></i><span>Bonificaciones por mes</span></button>
+        <button onclick="switchView('list')" class="btn-main"><i class="fas fa-clipboard-list text-3xl text-blue-600"></i><span>Listado y Estatus</span></button>
+        <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span>Mapa por Zonas</span></button>
     </section>
 
     <section id="moneyView" class="view-section">
         <div class="header-app">
             <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Cálculo de Comisiones</span>
+            <span class="font-black italic uppercase">Bonificaciones por Mes</span>
         </div>
         <div id="comisionesContainer" class="p-4 space-y-6"></div>
     </section>
@@ -69,21 +75,21 @@
     <section id="listView" class="view-section">
         <div class="header-app">
             <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Prospectos Registrados</span>
+            <span class="font-black italic uppercase">Listado de Prospectos</span>
         </div>
         <div class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar por nombre, zona o estatus..." onkeyup="filterTable()">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar negocio, zona o estatus..." onkeyup="filterTable()">
         </div>
         <div class="overflow-x-auto p-2">
-            <table class="w-full bg-white border-2 border-marino text-left">
+            <table class="w-full bg-white border-2 border-marino">
                 <thead>
-                    <tr class="bg-marino text-mostaza text-[10px]">
-                        <th class="p-3 border" onclick="sortTable(0)">FECHA</th>
-                        <th class="p-3 border" onclick="sortTable(1)">NEGOCIO</th>
-                        <th class="p-3 border" onclick="sortTable(2)">COMPETENCIA</th>
-                        <th class="p-3 border" onclick="sortTable(3)">ESTATUS</th>
-                        <th class="p-3 border" onclick="sortTable(4)">ZONA</th>
-                        <th class="p-3 border" onclick="sortTable(5)">INTERÉS</th>
+                    <tr>
+                        <th onclick="sortTable(0)">Fecha</th>
+                        <th onclick="sortTable(1)">Negocio</th>
+                        <th onclick="sortTable(2)">Competencia</th>
+                        <th onclick="sortTable(3)">Estatus</th>
+                        <th onclick="sortTable(4)">Zona</th>
+                        <th onclick="sortTable(5)">Interés</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -94,11 +100,11 @@
     <section id="mapView" class="view-section">
         <div class="header-app">
             <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Mapa de Ruta</span>
+            <span class="font-black italic uppercase">Mapa de Prospectos</span>
         </div>
         <div class="map-layout">
             <button class="btn-toggle-list" onclick="toggleMapList()"><i class="fas fa-list"></i> VER LISTA</button>
-            <div class="sidebar-map shadow-2xl" id="mapListContainer"></div>
+            <div class="sidebar-map" id="mapListContainer"></div>
             <div id="map"></div>
         </div>
     </section>
@@ -107,7 +113,7 @@
         <div class="p-6 h-full flex flex-col">
             <div class="flex justify-between items-center border-b-4 border-marino pb-2 mb-4">
                 <span class="font-black text-marino italic text-xl uppercase">Ficha Técnica</span>
-                <button onclick="closeDetail()" class="text-4xl font-bold">&times;</button>
+                <button onclick="closeDetail()" class="text-4xl font-bold text-marino">&times;</button>
             </div>
             <div id="detailContent" class="overflow-y-auto flex-1 pr-2"></div>
         </div>
@@ -115,7 +121,7 @@
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
-        let allData = [], map, markersLayer, sortDirection = {};
+        let allData = [], map, markersLayer, sortDir = {};
 
         function getVal(row, name) {
             const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()));
@@ -132,6 +138,8 @@
 
         function toggleMapList() {
             document.querySelector('.sidebar-map').classList.toggle('open');
+            const btn = document.querySelector('.btn-toggle-list');
+            btn.innerHTML = btn.innerHTML.includes('VER') ? '<i class="fas fa-times"></i> CERRAR' : '<i class="fas fa-list"></i> VER LISTA';
         }
 
         function loadData() {
@@ -145,12 +153,12 @@
         }
 
         function renderAll() {
-            renderComisiones();
+            renderBonificaciones();
             renderListado(allData);
             if(map) renderMapa();
         }
 
-        function renderComisiones() {
+        function renderBonificaciones() {
             const container = document.getElementById('comisionesContainer');
             container.innerHTML = '';
             const meses = ["Enero", "Febrero", "Marzo"];
@@ -159,18 +167,19 @@
             meses.forEach(mes => {
                 let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded shadow uppercase italic tracking-widest">${mes}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 mb-8">`;
                 impulsores.forEach(imp => {
-                    const filtrados = allData.filter(r => {
-                        return getVal(r, "Impulsor de mercado") === imp && getVal(r, "Mes correspondiente").toLowerCase().includes(mes.toLowerCase());
-                    });
+                    const filtrados = allData.filter(r => 
+                        getVal(r, "Impulsor de mercado") === imp && 
+                        getVal(r, "Mes correspondiente").toLowerCase().includes(mes.toLowerCase())
+                    );
                     html += `
                         <div class="bg-white p-6 border-l-[10px] border-marino rounded-2xl shadow-lg flex justify-between items-center">
-                            <div class="flex-1">
+                            <div>
                                 <p class="text-[10px] text-slate-400 font-bold uppercase mb-2 italic">${imp}</p>
                                 <p class="text-4xl font-black text-emerald-600">$${filtrados.length * 20}</p>
                             </div>
                             <div class="flex flex-col items-center">
                                 <div class="badge-count font-black">${filtrados.length}</div>
-                                <p class="text-[10px] font-black mt-2 text-blue-700">HECHOS</p>
+                                <p class="text-[10px] font-black mt-2 text-blue-700 uppercase">Hechos</p>
                             </div>
                         </div>`;
                 });
@@ -192,29 +201,24 @@
                     <td class="p-3 border text-center ${comp ? 'text-red-500':'text-green-600'}">${comp ? 'SI' : 'NO'}</td>
                     <td class="p-3 border">${getVal(row, "ESTATUS") || 'SIN DESIGNAR'}</td>
                     <td class="p-3 border uppercase text-slate-500">${getVal(row, "Zona")}</td>
-                    <td class="p-3 border italic">${getVal(row, "interés")}</td>
-                `;
+                    <td class="p-3 border italic">${getVal(row, "interés")}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
         function filterTable() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allData.filter(r => {
-                return Object.values(r).some(v => v.toString().toLowerCase().includes(term));
-            });
+            const filtered = allData.filter(r => Object.values(r).some(v => v.toString().toLowerCase().includes(term)));
             renderListado(filtered);
         }
 
         function sortTable(idx) {
-            sortDirection[idx] = !sortDirection[idx];
+            sortDir[idx] = !sortDir[idx];
             const keys = ["Marca temporal", "Nombre del negocio", "distribuye la competencia", "ESTATUS", "Zona", "interés"];
             const key = keys[idx];
-            
             const sorted = [...allData].sort((a, b) => {
-                let v1 = getVal(a, key);
-                let v2 = getVal(b, key);
-                return sortDirection[idx] ? v1.localeCompare(v2) : v2.localeCompare(v1);
+                let v1 = getVal(a, key), v2 = getVal(b, key);
+                return sortDir[idx] ? v1.localeCompare(v2) : v2.localeCompare(v1);
             });
             renderListado(sorted);
         }
@@ -223,7 +227,7 @@
             const r = allData[i];
             const content = document.getElementById('detailContent');
             const campos = ["Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño", "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?", "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?", "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?", "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?", "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"];
-            content.innerHTML = campos.map(c => `<div class="border-b py-2"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
+            content.innerHTML = campos.map(c => `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
             document.getElementById('detailPanel').classList.add('panel-open');
         }
 
