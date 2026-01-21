@@ -2,84 +2,123 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hidalgo CRM - Mapa Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LLANTERAMA - CRM de Prospección</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
-        :root { --azul-marino: #001f3f; --amarillo-mostaza: #FFB800; }
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; overflow: hidden; }
-        .bg-marino { background-color: var(--azul-marino); }
-        .text-mostaza { color: var(--amarillo-mostaza); }
-        .view-section { display: none; height: calc(100vh - 80px); }
+        :root { --marino: #001f3f; --mostaza: #FFB800; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; overflow: hidden; }
+        
+        /* Colores Bandera Llanterama */
+        .bg-marino { background-color: var(--marino); }
+        .text-mostaza { color: var(--mostaza); }
+        .border-mostaza { border-color: var(--mostaza); }
+
+        /* Vistas */
+        .view-section { display: none; height: calc(100vh - 64px); }
+        @media (min-width: 768px) { .view-section { height: 100vh; } }
         .active-view { display: flex !important; }
-        #map { flex-grow: 1; height: 100%; border-radius: 0 12px 12px 0; }
-        .sidebar-map { width: 320px; background: white; border-right: 1px solid #e2e8f0; overflow-y: auto; }
-        .item-mapa { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
-        .item-mapa:hover { background-color: #fffbeb; border-left: 4px solid var(--amarillo-mostaza); }
+
+        /* Mapa y Sidebar */
+        #map { flex-grow: 1; height: 100%; z-index: 1; }
+        .sidebar-map { width: 350px; background: white; border-right: 1px solid #e2e8f0; display: none; flex-direction: column; }
+        @media (min-width: 1024px) { .sidebar-map { display: flex; } }
+
+        /* Estilo de Tabla y Cards */
+        .status-pill { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .interes-alto { background: #dcfce7; color: #166534; }
+        .interes-medio { background: var(--mostaza); color: var(--marino); }
+        
+        /* Navegación Móvil */
+        .mobile-nav { height: 64px; background: var(--marino); position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; align-items: center; z-index: 100; border-top: 2px solid var(--mostaza); }
+        @media (min-width: 768px) { .mobile-nav { display: none; } }
+        
+        /* Sidebar Escritorio */
+        .desktop-sidebar { width: 80px; background: var(--marino); display: none; flex-direction: column; align-items: center; py: 2rem; border-right: 3px solid var(--mostaza); }
+        @media (min-width: 768px) { .desktop-sidebar { display: flex; } }
+
+        .logo-ll { font-size: 28px; font-weight: 900; italic: true; color: var(--mostaza); margin-bottom: 2rem; margin-top: 1rem; border: 2px solid var(--mostaza); padding: 5px; line-height: 1; }
     </style>
 </head>
-<body>
+<body class="flex flex-col md:flex-row">
 
-    <div class="flex h-screen">
-        <aside class="w-20 bg-marino text-white flex flex-col items-center py-6 shadow-2xl z-50">
-            <div class="mb-10 text-mostaza text-2xl font-black italic">H</div>
-            <nav class="space-y-8">
-                <button onclick="switchView('list')" title="Lista" class="text-xl hover:text-mostaza transition"><i class="fas fa-table-list"></i></button>
-                <button onclick="switchView('map')" title="Mapa" class="text-xl hover:text-mostaza transition"><i class="fas fa-map-location-dot"></i></button>
-                <button onclick="loadData()" title="Recargar" class="text-xl hover:text-mostaza transition"><i class="fas fa-sync-alt"></i></button>
-            </nav>
-        </aside>
+    <aside class="desktop-sidebar h-screen sticky top-0">
+        <div class="logo-ll">LL</div>
+        <nav class="flex flex-col gap-8 mt-10">
+            <button onclick="switchView('list')" class="text-white hover:text-mostaza transition text-xl"><i class="fas fa-th-list"></i></button>
+            <button onclick="switchView('map')" class="text-white hover:text-mostaza transition text-xl"><i class="fas fa-map-marked-alt"></i></button>
+            <button onclick="loadData()" class="text-white hover:text-mostaza transition text-xl"><i class="fas fa-sync-alt"></i></button>
+        </nav>
+    </aside>
 
-        <div class="flex-1 flex flex-col">
-            <header class="h-20 bg-white border-b flex items-center justify-between px-8">
-                <div>
-                    <h2 id="viewTitle" class="text-xl font-black text-marino uppercase">Panel de Control</h2>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-xs font-bold text-slate-400 uppercase">Estatus: Conectado</span>
-                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                </div>
-            </header>
+    <div class="flex-1 flex flex-col h-screen relative">
+        
+        <header class="h-16 bg-white border-b px-4 md:px-8 flex items-center justify-between shadow-sm z-10">
+            <div class="flex items-center gap-3">
+                <div class="md:hidden logo-ll !mb-0 text-xl px-2">LL</div>
+                <h2 id="viewTitle" class="font-black text-marino uppercase tracking-tight text-sm md:text-lg">Gestión Llanterama</h2>
+            </div>
+            <button onclick="loadData()" class="hidden md:flex items-center gap-2 bg-marino text-mostaza px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition">
+                <i class="fas fa-cloud-download-alt"></i> SINCRONIZAR
+            </button>
+        </header>
 
-            <div id="listView" class="view-section active-view p-6">
-                <div class="w-full bg-white rounded-xl shadow-sm border overflow-hidden overflow-y-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-marino text-xs uppercase font-black sticky top-0">
+        <div id="listView" class="view-section active-view p-4 md:p-8 overflow-y-auto">
+            <div class="w-full max-w-6xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs md:text-sm">
+                        <thead class="bg-marino text-white uppercase font-bold sticky top-0">
                             <tr>
-                                <th class="p-4">Negocio / Encargado</th>
-                                <th class="p-4">Zona</th>
+                                <th class="p-4">Prospecto</th>
+                                <th class="p-4 hidden md:table-cell">Zona</th>
                                 <th class="p-4">Interés</th>
                                 <th class="p-4 text-center">Visitas</th>
                                 <th class="p-4">Estatus</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                        <tbody id="tableBody" class="divide-y divide-slate-100">
+                            </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <div id="mapView" class="view-section overflow-hidden">
-                <div class="sidebar-map" id="mapList">
-                    <div class="p-4 bg-slate-50 border-b">
-                        <input type="text" id="searchMap" placeholder="Buscar negocio..." class="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-mostaza outline-none">
-                    </div>
-                    <div id="mapItemsContainer"></div>
+        <div id="mapView" class="view-section overflow-hidden">
+            <div class="sidebar-map shadow-inner">
+                <div class="p-4 border-b bg-slate-50">
+                    <input type="text" id="searchMap" onkeyup="filterMapList()" placeholder="Buscar negocio..." class="w-full p-2 border rounded-lg text-sm outline-none focus:border-mostaza">
                 </div>
-                <div id="map"></div>
+                <div id="mapItemsContainer" class="overflow-y-auto flex-1"></div>
             </div>
+            <div id="map"></div>
         </div>
 
-        <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l-4 border-mostaza overflow-y-auto">
-            <div class="p-6 bg-marino text-white flex justify-between items-center">
-                <h3 class="font-bold text-mostaza uppercase text-sm italic">Ficha Técnica</h3>
-                <button onclick="closeDetail()" class="text-white text-3xl">&times;</button>
+        <nav class="mobile-nav">
+            <button onclick="switchView('list')" class="text-white flex flex-col items-center gap-1">
+                <i class="fas fa-list text-lg"></i><span class="text-[10px] font-bold">LISTA</span>
+            </button>
+            <button onclick="loadData()" class="bg-mostaza text-marino w-12 h-12 rounded-full flex items-center justify-center -mt-8 shadow-xl border-4 border-marino">
+                <i class="fas fa-sync-alt text-xl"></i>
+            </button>
+            <button onclick="switchView('map')" class="text-white flex flex-col items-center gap-1">
+                <i class="fas fa-map-pin text-lg"></i><span class="text-[10px] font-bold">MAPA</span>
+            </button>
+        </nav>
+    </div>
+
+    <div id="detailPanel" class="fixed inset-y-0 right-0 w-full md:w-[400px] bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[200] border-l-4 border-mostaza overflow-y-auto">
+        <div class="p-6 bg-marino text-white flex justify-between items-center sticky top-0 shadow-lg">
+            <div class="flex items-center gap-2">
+                <span class="text-mostaza font-black border border-mostaza px-1 text-sm italic">LL</span>
+                <h3 class="font-bold uppercase text-xs tracking-widest">Ficha Técnica</h3>
             </div>
-            <div id="detailContent" class="p-6 space-y-6"></div>
+            <button onclick="closeDetail()" class="text-white text-3xl">&times;</button>
         </div>
+        <div id="detailContent" class="p-6 space-y-6"></div>
     </div>
 
     <script>
@@ -89,8 +128,9 @@
         function switchView(v) {
             document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active-view'));
             document.getElementById(v + 'View').classList.add('active-view');
-            document.getElementById('viewTitle').innerText = v === 'list' ? 'Listado de Prospectos' : 'Mapa Interactivo de Ruta';
+            document.getElementById('viewTitle').innerText = v === 'list' ? 'Listado de Prospectos' : 'Mapa de Ruta';
             if(v === 'map' && map) setTimeout(() => map.invalidateSize(), 300);
+            closeDetail();
         }
 
         function getVal(row, kw) {
@@ -101,14 +141,18 @@
         function loadData() {
             Papa.parse(CSV_URL, {
                 download: true, header: true,
-                complete: function(r) { allData = r.data.filter(f => f['Marca temporal']); render(); }
+                complete: function(r) { 
+                    allData = r.data.filter(f => f['Marca temporal']); 
+                    render(); 
+                }
             });
         }
 
         function zoomTo(id) {
             const m = markerObjects[id];
             if(m) {
-                map.flyTo(m.getLatLng(), 18, { duration: 1.5 });
+                if(window.innerWidth < 1024) switchView('map');
+                map.flyTo(m.getLatLng(), 17, { duration: 1.5 });
                 setTimeout(() => m.openPopup(), 1600);
             }
         }
@@ -129,30 +173,39 @@
                 const negocio = getVal(row, 'Nombre del negocio') || getVal(row, 'encargado') || "Sin Nombre";
                 const zona = getVal(row, 'Zona');
                 const gps = getVal(row, 'GPS');
-                const estatus = getVal(row, 'Estatus') || 'Nuevo';
+                const estatus = getVal(row, 'Estatus') || 'NUEVO';
+                const interes = getVal(row, 'interés');
 
-                // Render Tabla
+                // Fila Tabla
                 tbody.innerHTML += `
-                    <tr onclick="showDetail(${i})" class="hover:bg-slate-50 cursor-pointer">
-                        <td class="p-4"><b>${negocio}</b><br><span class="text-[10px] text-slate-400">${getVal(row, 'encargado')}</span></td>
-                        <td class="p-4 text-slate-600">${zona}</td>
-                        <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-black ${getVal(row, 'interés').includes('Alto') ? 'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'} uppercase">${getVal(row, 'interés')}</span></td>
-                        <td class="p-4 text-center font-bold">${getVal(row, 'Visitas') || '1'}</td>
-                        <td class="p-4 font-black text-marino text-xs uppercase">${estatus}</td>
+                    <tr onclick="showDetail(${i})" class="hover:bg-blue-50 cursor-pointer border-b">
+                        <td class="p-4">
+                            <div class="font-black text-marino uppercase leading-tight">${negocio}</div>
+                            <div class="text-[10px] text-slate-400 font-bold">${getVal(row, 'encargado')}</div>
+                        </td>
+                        <td class="p-4 hidden md:table-cell font-medium text-slate-600">${zona}</td>
+                        <td class="p-4">
+                            <span class="status-pill ${interes.includes('Alto') ? 'interes-alto':'interes-medio'}">${interes}</span>
+                        </td>
+                        <td class="p-4 text-center font-black text-marino italic">${getVal(row, 'Visitas') || 1}</td>
+                        <td class="p-4 text-[10px] font-black text-marino uppercase bg-slate-50">${estatus}</td>
                     </tr>`;
 
-                // Render Lista Mapa y Marcador
+                // Marcador y Sidebar Mapa
                 if(gps && gps.includes(',')) {
                     const c = gps.replace(/[^\d.,-]/g, '').split(',').map(parseFloat);
                     if(!isNaN(c[0])) {
-                        const m = L.marker([c[0], c[1]]).addTo(markersLayer).bindPopup(`<b>${negocio}</b><br>${zona}`);
+                        const m = L.marker([c[0], c[1]]).addTo(markersLayer)
+                                   .bindPopup(`<div class="font-bold text-marino uppercase text-xs">${negocio}</div>`);
                         markerObjects[i] = m;
 
                         mapItems.innerHTML += `
-                            <div class="item-mapa" onclick="zoomTo(${i})">
+                            <div class="p-4 border-b hover:bg-yellow-50 cursor-pointer transition" onclick="zoomTo(${i})">
                                 <div class="text-xs font-black text-marino uppercase">${negocio}</div>
-                                <div class="text-[10px] text-slate-400">${zona}</div>
-                                <div class="text-[9px] mt-1 font-bold text-mostaza uppercase">${estatus}</div>
+                                <div class="text-[10px] text-slate-500">${zona}</div>
+                                <div class="flex gap-2 mt-1">
+                                    <span class="text-[9px] font-bold text-mostaza bg-marino px-1 rounded uppercase">${estatus}</span>
+                                </div>
                             </div>`;
                     }
                 }
@@ -162,30 +215,60 @@
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
+            const si = (v) => v && v.toLowerCase().includes('si') ? 
+                '<span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> SÍ</span>' : 
+                '<span class="text-slate-300 font-bold"><i class="fas fa-times-circle"></i> NO</span>';
+
             content.innerHTML = `
-                <div class="mb-4">
-                    <h4 class="text-2xl font-black text-marino uppercase">${getVal(r, 'negocio') || getVal(r, 'encargado')}</h4>
-                    <span class="bg-mostaza text-marino px-2 py-1 text-[10px] font-black rounded uppercase">${getVal(r, 'Estatus') || 'Nuevo'}</span>
+                <div class="space-y-2">
+                    <h4 class="text-2xl font-black text-marino uppercase leading-tight">${getVal(r, 'negocio') || getVal(r, 'encargado')}</h4>
+                    <div class="flex gap-2">
+                        <span class="bg-mostaza text-marino px-2 py-0.5 text-[10px] font-black rounded uppercase">${getVal(r, 'Estatus') || 'NUEVO'}</span>
+                        <span class="bg-marino text-white px-2 py-0.5 text-[10px] font-black rounded uppercase">Zona: ${getVal(r, 'Zona')}</span>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 text-xs">
-                    <div class="bg-slate-50 p-3 rounded"><b>VISITAS</b><br><span class="text-lg font-black">${getVal(r, 'Visitas') || 1}</span></div>
-                    <div class="bg-slate-50 p-3 rounded"><b>ZONA</b><br><span class="text-sm font-bold">${getVal(r, 'Zona')}</span></div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-lg border">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Visitas</p>
+                        <p class="text-xl font-black text-marino">${getVal(r, 'Visitas') || 1}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Impulsor</p>
+                        <p class="text-xs font-bold text-slate-700 uppercase">${getVal(r, 'Impulsor')}</p>
+                    </div>
                 </div>
-                <div class="space-y-2 text-sm border-t pt-4">
-                    <p><b>Baterías:</b> ${getVal(r, 'marca de acumuladores') || 'No'}</p>
-                    <p><b>Aceites:</b> ${getVal(r, 'marca de lubricante') || 'No'}</p>
-                    <p><b>Moto:</b> ${getVal(r, 'marca de motobatería') || 'No'}</p>
-                    <p><b>Filtros:</b> ${getVal(r, 'marca de filtros') || 'No'}</p>
+
+                <div class="space-y-4 pt-2">
+                    <h5 class="text-xs font-black text-marino uppercase border-b-2 border-mostaza w-fit tracking-tighter italic">Líneas de Producto</h5>
+                    <div class="grid grid-cols-1 gap-2 text-sm">
+                        <div class="flex justify-between p-2 bg-slate-50 rounded"><span>Baterías</span>${si(getVal(r, '¿Compra acumuladores?'))}</div>
+                        <div class="flex justify-between p-2 bg-slate-50 rounded"><span>Lubricantes</span>${si(getVal(r, '¿Compra lubricantes?'))}</div>
+                        <div class="flex justify-between p-2 bg-slate-50 rounded"><span>Motobaterías</span>${si(getVal(r, '¿Compra motobaterías?'))}</div>
+                        <div class="flex justify-between p-2 bg-slate-50 rounded"><span>Filtros</span>${si(getVal(r, '¿Compra filtros?'))}</div>
+                        <div class="flex justify-between p-2 bg-slate-50 rounded"><span>Llantas</span>${si(getVal(r, '¿Compra llanta?'))}</div>
+                    </div>
                 </div>
-                <div class="bg-marino text-white p-4 rounded-xl text-xs italic">"${getVal(r, 'Observaciones') || 'Sin notas.'}"</div>
-                <button onclick="switchView('map'); setTimeout(() => zoomTo(${i}), 500);" class="w-full bg-slate-100 hover:bg-mostaza p-3 rounded-lg font-black text-marino transition">
-                    <i class="fas fa-location-crosshairs mr-2"></i> LOCALIZAR EN MAPA
+
+                <div class="p-4 bg-marino text-white rounded-xl shadow-inner border-b-4 border-mostaza">
+                    <p class="text-[9px] text-mostaza font-bold uppercase tracking-widest">Observaciones</p>
+                    <p class="text-xs mt-1 font-medium leading-relaxed italic">"${getVal(r, 'Observaciones') || 'Sin notas.'}"</p>
+                </div>
+
+                <button onclick="zoomTo(${i})" class="w-full bg-mostaza hover:bg-yellow-500 p-4 rounded-xl font-black text-marino transition shadow-lg flex items-center justify-center gap-3">
+                    <i class="fas fa-street-view text-xl"></i> LOCALIZAR EN MAPA
                 </button>
             `;
             document.getElementById('detailPanel').classList.remove('translate-x-full');
         }
 
         function closeDetail() { document.getElementById('detailPanel').classList.add('translate-x-full'); }
+        function filterMapList() {
+            let val = document.getElementById('searchMap').value.toLowerCase();
+            document.querySelectorAll('.item-mapa').forEach(item => {
+                item.style.display = item.innerText.toLowerCase().includes(val) ? 'block' : 'none';
+            });
+        }
         window.onload = loadData;
     </script>
 </body>
