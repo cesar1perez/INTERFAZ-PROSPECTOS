@@ -3,75 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión Hidalgo</title>
+    <title>Dashboard Oficial - Refaccionarias Hidalgo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        /* Paleta Oficial: Azul Marino (#001f3f) y Amarillo Mostaza (#FFB800) */
+        :root {
+            --azul-marino: #001f3f;
+            --amarillo-mostaza: #FFB800;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; }
+        
+        .bg-marino { background-color: var(--azul-marino); }
+        .bg-mostaza { background-color: var(--amarillo-mostaza); }
+        .text-marino { color: var(--azul-marino); }
+        .text-mostaza { color: var(--amarillo-mostaza); }
+        
         .view-section { display: none; }
         .active-view { display: block !important; }
-        #map { height: 600px; width: 100%; border-radius: 12px; border: 2px solid #e2e8f0; }
-        .status-badge { padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 10px; text-transform: uppercase; }
-        .bg-alto { background: #dcfce7; color: #166534; }
-        .bg-medio { background: #fef9c3; color: #854d0e; }
-        .bg-bajo { background: #fee2e2; color: #991b1b; }
+        
+        #map { height: 600px; width: 100%; border-radius: 12px; border: 3px solid var(--azul-marino); }
+        
+        /* Semáforo de Interés */
+        .status-alto { background-color: #22c55e; color: white; }
+        .status-medio { background-color: var(--amarillo-mostaza); color: var(--azul-marino); }
+        .status-bajo { background-color: #ef4444; color: white; }
+
+        tr:hover { background-color: #f0f4f8 !important; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="flex h-screen overflow-hidden">
-        <aside class="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-50">
-            <div class="p-6 border-b border-slate-800 text-center">
-                <h1 class="text-xl font-black text-blue-400">AUTO-REFAC <span class="text-white">HIDALGO</span></h1>
+        <aside class="w-72 bg-marino text-white flex flex-col shadow-2xl z-50">
+            <div class="p-8 border-b border-slate-700 text-center">
+                <h1 class="text-2xl font-black tracking-tighter text-mostaza italic">HIDALGO <span class="text-white">CRM</span></h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Control de Prospección</p>
             </div>
-            <nav class="flex-1 p-4 space-y-2">
-                <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
-                    <i class="fas fa-list"></i> Listado Prospectos
+            
+            <nav class="flex-1 p-4 space-y-3 mt-4">
+                <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-xl transition font-bold border-l-4 border-transparent hover:border-mostaza">
+                    <i class="fas fa-list text-mostaza"></i> Listado de Prospectos
                 </button>
-                <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
-                    <i class="fas fa-map-marked-alt"></i> Mapa Geográfico
+                <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-xl transition font-bold border-l-4 border-transparent hover:border-mostaza">
+                    <i class="fas fa-map-location-dot text-mostaza"></i> Mapa de Ubicaciones
                 </button>
             </nav>
-            <div class="p-6 border-t border-slate-800">
-                <button onclick="loadData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black shadow-lg transition">
-                    <i class="fas fa-sync-alt mr-2"></i> ACTUALIZAR DATOS
+
+            <div class="p-6">
+                <button onclick="loadData()" class="w-full bg-mostaza hover:bg-yellow-500 text-marino py-3 rounded-xl font-black shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fas fa-sync-alt"></i> ACTUALIZAR
                 </button>
             </div>
         </aside>
 
-        <main class="flex-1 overflow-y-auto relative">
+        <main class="flex-1 overflow-y-auto">
+            
             <div id="listView" class="view-section active-view p-8">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-marino uppercase">Prospectos</h2>
+                        <p class="text-slate-500">Registros de campo en tiempo real</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b">
+                        <thead class="bg-slate-50 text-marino text-xs uppercase font-black border-b">
                             <tr>
-                                <th class="p-4">Fecha</th>
-                                <th class="p-4">Negocio / Encargado</th>
-                                <th class="p-4">Zona</th>
-                                <th class="p-4">Interés</th>
-                                <th class="p-4">GPS</th>
+                                <th class="p-5">Fecha / Hora</th>
+                                <th class="p-5">Impulsor</th>
+                                <th class="p-5">Negocio / Encargado</th>
+                                <th class="p-5">Zona Correspondiente</th>
+                                <th class="p-5">Interés</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
+                            </tbody>
                     </table>
                 </div>
             </div>
 
             <div id="mapView" class="view-section p-8">
-                <div class="bg-white p-2 rounded-2xl shadow-xl border border-slate-200">
+                <div class="bg-white p-2 rounded-2xl shadow-2xl border border-slate-200">
                     <div id="map"></div>
                 </div>
             </div>
 
-            <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l overflow-y-auto">
-                <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-                    <h3 class="font-bold uppercase tracking-widest text-sm text-blue-400">Detalles del Cliente</h3>
-                    <button onclick="closeDetail()" class="text-white text-2xl">&times;</button>
+            <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l-4 border-mostaza overflow-y-auto">
+                <div class="p-6 bg-marino text-white flex justify-between items-center">
+                    <h3 class="font-bold uppercase tracking-widest text-sm text-mostaza">Ficha Técnica del Cliente</h3>
+                    <button onclick="closeDetail()" class="text-white text-3xl hover:text-mostaza transition">&times;</button>
                 </div>
-                <div id="detailContent" class="p-6 space-y-6"></div>
+                <div id="detailContent" class="p-6 space-y-6 text-slate-700">
+                    </div>
             </div>
         </main>
     </div>
@@ -86,10 +114,9 @@
             if(view === 'map' && map) setTimeout(() => map.invalidateSize(), 300);
         }
 
-        // Función para encontrar una columna aunque el nombre no sea exacto
         function getVal(row, keyword) {
             const key = Object.keys(row).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
-            return key ? row[key] : null;
+            return key ? row[key] : "";
         }
 
         function loadData() {
@@ -97,8 +124,7 @@
                 download: true,
                 header: true,
                 complete: function(results) {
-                    console.log("Columnas Reales detectadas:", Object.keys(results.data[0]));
-                    allData = results.data.filter(row => row['Marca temporal'] || getVal(row, 'Marca'));
+                    allData = results.data.filter(row => row['Marca temporal']);
                     render();
                 }
             });
@@ -109,7 +135,7 @@
             tbody.innerHTML = '';
             
             if(!map) {
-                map = L.map('map').setView([20.10, -98.75], 10);
+                map = L.map('map').setView([20.10, -98.75], 9);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
                 markersLayer = L.layerGroup().addTo(map);
             }
@@ -117,46 +143,44 @@
             const bounds = [];
 
             allData.forEach((row, index) => {
-                // LOGICA DE PRIORIDAD DE NOMBRE
                 const negocio = getVal(row, 'Nombre del negocio');
-                const encargado = getVal(row, 'encargado');
+                const encargado = getVal(row, 'Nombre del encargado');
                 const nombreAMostrar = (negocio && negocio.trim() !== "") ? negocio : (encargado || "Sin Nombre");
-
+                
                 const zona = getVal(row, 'Zona') || "-";
+                const impulsor = getVal(row, 'Impulsor') || "-";
+                const fecha = row['Marca temporal'] || "-";
                 const interes = getVal(row, 'interés') || "Medio";
                 const gps = getVal(row, 'GPS') || "";
-                const fecha = row['Marca temporal'] || "-";
 
-                // Render Tabla
+                // Tabla
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 transition-colors cursor-pointer";
                 tr.onclick = () => showDetail(index);
                 
-                let badgeClass = interes.toLowerCase().includes('alto') ? 'bg-alto' : (interes.toLowerCase().includes('bajo') ? 'bg-bajo' : 'bg-medio');
+                let badgeClass = interes.toLowerCase().includes('alto') ? 'status-alto' : (interes.toLowerCase().includes('bajo') ? 'status-bajo' : 'status-medio');
 
                 tr.innerHTML = `
-                    <td class="p-4 text-xs font-mono text-slate-400">${fecha}</td>
-                    <td class="p-4 font-bold text-slate-800">
-                        ${nombreAMostrar}
-                        <div class="text-[10px] text-slate-400 font-normal uppercase italic">${encargado || ''}</div>
+                    <td class="p-5 font-mono text-[11px] text-slate-500">${fecha}</td>
+                    <td class="p-5 font-bold text-marino">${impulsor}</td>
+                    <td class="p-5">
+                        <div class="font-black text-slate-800 uppercase tracking-tighter">${nombreAMostrar}</div>
+                        <div class="text-[10px] text-slate-400 font-medium">${encargado}</div>
                     </td>
-                    <td class="p-4 text-slate-600">${zona}</td>
-                    <td class="p-4"><span class="status-badge ${badgeClass}">${interes}</span></td>
-                    <td class="p-4 text-[10px] font-mono text-blue-500">${gps}</td>
+                    <td class="p-5 font-semibold text-slate-600">${zona}</td>
+                    <td class="p-5"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${badgeClass}">${interes}</span></td>
                 `;
                 tbody.appendChild(tr);
 
-                // LÓGICA DE MAPA REFORZADA
+                // Mapa
                 if(gps && gps.includes(',')) {
                     const coords = gps.replace(/[^\d.,-]/g, '').split(',').map(c => parseFloat(c.trim()));
-                    if(coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                    if(coords.length === 2 && !isNaN(coords[0])) {
                         L.marker([coords[0], coords[1]]).addTo(markersLayer)
-                            .bindPopup(`<b>${nombreAMostrar}</b><br><small>${zona}</small>`);
+                            .bindPopup(`<div class="text-marino font-bold">${nombreAMostrar}</div><button onclick="showDetail(${index})" class="text-xs text-blue-600 underline">Ver Detalles</button>`);
                         bounds.push([coords[0], coords[1]]);
                     }
                 }
             });
-
             if(bounds.length > 0) map.fitBounds(bounds, {padding: [50, 50]});
         }
 
@@ -164,28 +188,40 @@
             const r = allData[i];
             const content = document.getElementById('detailContent');
             
-            const checkIcon = (val) => (val && val.toLowerCase().includes('si')) ? 
-                '<i class="fas fa-check-circle text-green-500 mr-2"></i>' : 
-                '<i class="fas fa-times-circle text-slate-300 mr-2"></i>';
+            const seccion = (titulo, compra, marcas) => {
+                const si = compra && compra.toLowerCase().includes('si');
+                return `
+                <div class="p-4 rounded-xl border-l-4 ${si ? 'border-green-500 bg-green-50' : 'border-slate-300 bg-slate-50'}">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">${titulo}</p>
+                    <div class="font-bold text-sm ${si ? 'text-green-700' : 'text-slate-500'}">${si ? 'SÍ COMPRA' : 'NO COMPRA'}</div>
+                    ${si ? `<p class="text-xs mt-1 text-slate-600"><b>Marcas:</b> ${marcas || 'No especifica'}</p>` : ''}
+                </div>`;
+            };
 
             content.innerHTML = `
-                <div>
-                    <h4 class="text-2xl font-black text-slate-800">${getVal(r, 'negocio') || getVal(r, 'encargado')}</h4>
-                    <p class="text-blue-600 font-bold">${getVal(r, 'Zona')}</p>
+                <div class="mb-4">
+                    <h4 class="text-2xl font-black text-marino uppercase leading-none">${getVal(r, 'Nombre del negocio') || getVal(r, 'encargado')}</h4>
+                    <p class="text-mostaza font-black text-sm tracking-widest mt-2">${getVal(r, 'Zona')}</p>
                 </div>
 
-                <div class="space-y-4 pt-4">
-                    <h5 class="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2">Inventario</h5>
-                    <div class="text-sm space-y-3">
-                        <p>${checkIcon(getVal(r, '¿Compra acumuladores?'))} <b>Baterías:</b> ${getVal(r, 'marca de acumuladores') || '-'}</p>
-                        <p>${checkIcon(getVal(r, '¿Compra lubricantes?'))} <b>Aceites:</b> ${getVal(r, 'marca de lubricante') || '-'}</p>
-                        <p>${checkIcon(getVal(r, '¿Compra filtros?'))} <b>Filtros:</b> ${getVal(r, 'marca de filtros') || '-'}</p>
-                    </div>
+                <div class="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100">
+                    <p class="text-xs"><b>Encargado:</b> ${getVal(r, 'encargado')}</p>
+                    <p class="text-xs"><b>Teléfono:</b> ${getVal(r, 'Teléfono') || '-'}</p>
+                    <p class="text-xs"><b>Dirección:</b> ${getVal(r, 'Dirección') || '-'}</p>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-6">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Observaciones</p>
-                    <p class="text-sm text-slate-600">${getVal(r, 'Observaciones') || 'Sin notas'}</p>
+                <div class="space-y-3">
+                    <h5 class="text-xs font-black text-marino uppercase border-b-2 border-mostaza w-fit">Análisis de Productos</h5>
+                    ${seccion('Acumuladores', getVal(r, '¿Compra acumuladores?'), getVal(r, 'marca de acumuladores'))}
+                    ${seccion('Lubricantes', getVal(r, '¿Compra lubricantes?'), getVal(r, 'marca de lubricante'))}
+                    ${seccion('Motobaterías', getVal(r, '¿Compra motobaterías?'), getVal(r, 'marca de motobatería'))}
+                    ${seccion('Filtros', getVal(r, '¿Compra filtros?'), getVal(r, 'marca de filtros'))}
+                    ${seccion('Llantas', getVal(r, '¿Compra llanta?'), getVal(r, 'marca de llanta'))}
+                </div>
+
+                <div class="p-4 bg-marino text-white rounded-xl shadow-inner">
+                    <p class="text-[10px] font-bold text-mostaza uppercase tracking-widest">Observaciones</p>
+                    <p class="text-sm italic mt-1 font-light">${getVal(r, 'Observaciones') || 'Sin comentarios adicionales.'}</p>
                 </div>
             `;
             document.getElementById('detailPanel').classList.remove('translate-x-full');
