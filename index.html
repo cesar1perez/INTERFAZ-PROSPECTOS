@@ -3,119 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - Estratégico</title>
+    <title>LLANTERAMA CRM - V2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
-        :root { --marino: #001f3f; --mostaza: #FFB800; --fondo: #f1f5f9; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--fondo); margin: 0; color: #1e293b; }
+        :root { --marino: #001f3f; --mostaza: #FFB800; --fondo: #e2e8f0; }
+        body { font-family: 'Arial', sans-serif; background-color: var(--fondo); margin: 0; color: #000; }
         
-        /* Layout */
-        .view-section { display: none; min-height: 100vh; width: 100%; padding-bottom: 20px; }
+        /* Contraste en Títulos */
+        .header-title { color: #FFFFFF !important; font-weight: 900; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .nav-button { background-color: var(--mostaza) !important; color: var(--marino) !important; font-weight: 900; padding: 10px 15px; border-radius: 12px; }
+
+        .view-section { display: none; min-height: 100vh; width: 100%; }
         .active-view { display: block !important; }
 
-        /* Estilos Botones Inicio */
-        .btn-home { background: white; padding: 25px; border-radius: 20px; border-bottom: 5px solid #cbd5e1; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; transition: 0.2s; }
-        .btn-home:active { transform: translateY(3px); border-bottom-width: 2px; }
+        /* Botones de Inicio Sólidos */
+        .btn-home { background: #FFFFFF; border: 3px solid var(--marino); padding: 25px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+        .btn-home i { font-size: 40px; }
+        .btn-home span { color: var(--marino); font-weight: 900; font-size: 16px; }
+
+        /* Tabla con líneas marcadas */
+        table { width: 100%; border-collapse: collapse; background: white; border: 2px solid var(--marino); }
+        th { background: var(--marino) !important; color: var(--mostaza) !important; padding: 15px; border: 1px solid #fff; text-align: left; }
+        td { padding: 12px; border: 1px solid #cbd5e1; color: #000; font-weight: 500; }
+
+        #map { height: 60vh; width: 100%; border: 3px solid var(--marino); border-radius: 15px; }
         
-        /* Tabla con Formato */
-        .table-container { border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { background: var(--marino); color: white; padding: 15px; text-transform: uppercase; font-size: 11px; cursor: pointer; border: 1px solid #002d5c; }
-        td { padding: 12px 15px; border: 1px solid #e2e8f0; font-size: 13px; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-
-        /* Mapa y Sidebar Zonas */
-        #map { height: 65vh; width: 100%; border-radius: 15px; z-index: 1; }
-        .zona-group { background: #e2e8f0; padding: 8px 15px; font-weight: 900; font-size: 10px; color: var(--marino); text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Panel Detalle */
-        #detailPanel { position: fixed; inset: 0; background: white; z-index: 1000; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @media (min-width: 768px) { #detailPanel { left: auto; width: 450px; border-left: 6px solid var(--mostaza); } }
+        /* Panel lateral sin transparencias */
+        #detailPanel { position: fixed; inset: 0; background: #FFFFFF; z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease; border-left: 8px solid var(--mostaza); }
+        @media (min-width: 768px) { #detailPanel { left: auto; width: 450px; } }
         .panel-open { transform: translateX(0) !important; }
+        
+        .observaciones-box { background: var(--marino) !important; color: #FFFFFF !important; padding: 20px; border-radius: 15px; border-left: 5px solid var(--mostaza); }
     </style>
 </head>
 <body>
 
     <section id="homeView" class="view-section active-view bg-[#001f3f]">
         <div class="p-8 flex flex-col items-center justify-center min-h-screen">
-            <div class="w-24 h-24 border-4 border-[#FFB800] flex items-center justify-center text-[#FFB800] text-5xl font-black italic rounded-3xl mb-8 shadow-2xl">LL</div>
-            <h1 class="text-4xl font-black text-white mb-2 italic tracking-tighter text-center leading-none">PROSPECTOS<br><span class="text-2xl text-[#FFB800] not-italic tracking-normal">TULANCINGO - POZA RICA</span></h1>
+            <div class="w-24 h-24 bg-[#FFB800] flex items-center justify-center text-[#001f3f] text-6xl font-black italic rounded-3xl mb-8 shadow-2xl">LL</div>
+            <h1 class="text-4xl font-black text-white mb-2 italic tracking-tighter text-center leading-none header-title">PROSPECTOS<br><span class="text-[#FFB800]">TULANCINGO - POZA RICA</span></h1>
             
-            <div class="grid grid-cols-1 gap-5 w-full max-w-sm mt-12">
-                <button onclick="switchView('money')" class="btn-home shadow-lg">
-                    <i class="fas fa-coins text-3xl text-emerald-600"></i>
-                    <span class="font-black text-marino text-sm uppercase">Comisiones por Mes</span>
+            <div class="grid grid-cols-1 gap-6 w-full max-w-sm mt-12">
+                <button onclick="switchView('money')" class="btn-home">
+                    <i class="fas fa-money-bill-wave text-emerald-600"></i>
+                    <span>COMISIONES IMPULSORES</span>
                 </button>
-                <button onclick="switchView('list')" class="btn-home shadow-lg">
-                    <i class="fas fa-file-invoice text-3xl text-blue-600"></i>
-                    <span class="font-black text-marino text-sm uppercase">Listado de Prospectos</span>
+                <button onclick="switchView('list')" class="btn-home">
+                    <i class="fas fa-table text-blue-600"></i>
+                    <span>LISTADO DE CLIENTES</span>
                 </button>
-                <button onclick="switchView('map')" class="btn-home shadow-lg">
-                    <i class="fas fa-map-marked-alt text-3xl text-orange-600"></i>
-                    <span class="font-black text-marino text-sm uppercase">Mapa por Zonas</span>
+                <button onclick="switchView('map')" class="btn-home">
+                    <i class="fas fa-map-marked-alt text-orange-600"></i>
+                    <span>MAPA POR ZONAS</span>
                 </button>
             </div>
-            <button onclick="loadData()" class="mt-12 py-2 px-6 rounded-full border border-white/20 text-white/50 text-[10px] font-bold uppercase hover:bg-white/10 transition"><i class="fas fa-sync-alt mr-2"></i> Actualizar Base de Datos</button>
         </div>
     </section>
 
-    <section id="moneyView" class="view-section p-5">
-        <header class="flex items-center gap-4 mb-8">
-            <button onclick="switchView('home')" class="bg-marino text-white w-12 h-12 rounded-xl shadow-lg flex items-center justify-center"><i class="fas fa-home"></i></button>
-            <h2 class="text-xl font-black text-marino uppercase italic">Reporte de Pagos</h2>
+    <section id="moneyView" class="view-section p-4">
+        <header class="flex items-center gap-4 mb-6 bg-marino p-4 rounded-xl">
+            <button onclick="switchView('home')" class="nav-button"><i class="fas fa-home"></i></button>
+            <h2 class="header-title uppercase italic">Dinero por Prospecto</h2>
         </header>
-
-        <div class="bg-white p-5 rounded-2xl mb-6 shadow-sm border border-slate-200">
-            <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Nota de Pago</p>
-            <p class="text-sm font-bold text-slate-700 italic">Comisión de $20 por prospecto.</p>
+        <div class="bg-white p-4 rounded-xl mb-6 border-2 border-marino">
+            <p class="font-black text-marino italic underline">Nota: Comisión de $20 por cada prospecto generado.</p>
         </div>
-
-        <div id="comisionesContainer" class="space-y-8">
-            </div>
+        <div id="comisionesContainer" class="space-y-6"></div>
     </section>
 
     <section id="listView" class="view-section">
-        <header class="p-4 bg-marino text-white flex items-center sticky top-0 z-50 shadow-xl">
-            <button onclick="switchView('home')" class="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-arrow-left"></i></button>
-            <span class="font-black italic tracking-wider">REGISTRO DE PROSPECTOS</span>
+        <header class="p-4 bg-marino text-white flex items-center sticky top-0 z-50">
+            <button onclick="switchView('home')" class="nav-button mr-4"><i class="fas fa-arrow-left"></i> INICIO</button>
+            <span class="header-title italic">LISTADO OFICIAL</span>
         </header>
-        
-        <div class="p-4">
-            <div class="table-container overflow-x-auto">
-                <table id="mainTable">
-                    <thead>
-                        <tr>
-                            <th onclick="sortTable(0)">Fecha</th>
-                            <th onclick="sortTable(1)">Negocio / Encargado</th>
-                            <th onclick="sortTable(2)">Competencia</th>
-                            <th onclick="sortTable(3)">Zona</th>
-                            <th onclick="sortTable(4)">Interés</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
+        <div class="p-2 overflow-x-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Fecha</th>
+                        <th onclick="sortTable(1)">Negocio</th>
+                        <th onclick="sortTable(2)">Competencia</th>
+                        <th onclick="sortTable(3)">Zona</th>
+                        <th onclick="sortTable(4)">Interés</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
         </div>
     </section>
 
-    <section id="mapView" class="view-section">
-        <header class="p-4 bg-marino text-white flex items-center sticky top-0 z-50">
-            <button onclick="switchView('home')" class="bg-white/10 w-10 h-10 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-arrow-left"></i></button>
-            <span class="font-black italic">MAPA DE RUTA</span>
+    <section id="mapView" class="view-section h-screen flex flex-col">
+        <header class="p-4 bg-marino text-white flex items-center">
+            <button onclick="switchView('home')" class="nav-button mr-4"><i class="fas fa-arrow-left"></i> INICIO</button>
+            <span class="header-title italic">MAPA DE ZONAS</span>
         </header>
-        
-        <div class="flex flex-col md:flex-row gap-0 h-[calc(100vh-72px)] overflow-hidden">
-            <div class="w-full md:w-80 bg-white border-r overflow-y-auto order-2 md:order-1">
-                <div class="p-4 border-b bg-slate-50 sticky top-0 z-10">
-                    <input type="text" id="searchMap" onkeyup="filterMapList()" placeholder="Filtrar por nombre..." class="w-full p-3 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-marino/20">
-                </div>
+        <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+            <div class="w-full md:w-80 bg-white border-r-4 border-marino overflow-y-auto p-4">
                 <div id="mapZonasContainer"></div>
             </div>
-            <div class="flex-1 order-1 md:order-2 p-2">
+            <div class="flex-1 p-2 bg-slate-200">
                 <div id="map"></div>
             </div>
         </div>
@@ -123,14 +113,11 @@
 
     <div id="detailPanel">
         <div class="p-8 h-full flex flex-col">
-            <div class="flex justify-between items-center border-b-2 border-slate-100 pb-5 mb-8">
-                <div class="flex items-center gap-3">
-                    <span class="bg-marino text-mostaza px-3 py-1 font-black italic rounded-lg">LL</span>
-                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Ficha de Cliente</span>
-                </div>
-                <button onclick="closeDetail()" class="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-400 hover:text-marino transition">&times;</button>
+            <div class="flex justify-between items-center border-b-4 border-marino pb-4 mb-6">
+                <span class="text-2xl font-black text-marino italic">DETALLE CLIENTE</span>
+                <button onclick="closeDetail()" class="text-4xl text-marino font-bold">&times;</button>
             </div>
-            <div id="detailContent" class="flex-1 overflow-y-auto space-y-6"></div>
+            <div id="detailContent" class="space-y-6 overflow-y-auto"></div>
         </div>
     </div>
 
@@ -138,12 +125,7 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
         let allData = [], map, markersLayer, markerObjects = {}, sortDir = true;
 
-        const zonaColores = {
-            "Tulancingo": "#ef4444",
-            "Poza Rica": "#3b82f6",
-            "Zona 3": "#10b981",
-            "Zona 4": "#f59e0b"
-        };
+        const zonaColores = { "Tulancingo": "#ef4444", "Poza Rica": "#3b82f6" };
 
         function switchView(v) {
             document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active-view'));
@@ -153,7 +135,7 @@
         }
 
         function getVal(row, kw) {
-            const key = Object.keys(row).find(k => k.toLowerCase().includes(kw.toLowerCase()));
+            const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(kw.toLowerCase().trim()));
             return key ? row[key] : "";
         }
 
@@ -175,26 +157,28 @@
             const meses = ["Enero", "Febrero", "Marzo"];
             const impulsores = ["Marco A. Hernández", "Josue Jimárez"];
 
-            meses.forEach(mes => {
-                let htmlMes = `<div class="bg-slate-200 px-6 py-2 font-black text-marino text-xs uppercase tracking-[0.2em] rounded-lg">${mes}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 mb-10">`;
+            meses.forEach((mes, mIdx) => {
+                const mesNum = (mIdx + 1).toString().padStart(2, '0');
+                container.innerHTML += `<div class="bg-marino text-mostaza p-3 font-black uppercase text-center rounded-lg shadow-md mb-4">${mes}</div>`;
                 
+                let grid = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">`;
                 impulsores.forEach(imp => {
-                    const count = allData.filter(r => {
-                        const m = r['Marca temporal'].split('/')[1]; // Depende del formato del CSV
-                        const mesNum = (meses.indexOf(mes) + 1).toString().padStart(2, '0');
-                        return getVal(r, 'Impulsor').toLowerCase().includes(imp.split(' ')[0].toLowerCase()) && m === mesNum;
-                    }).length;
+                    const buscado = imp.split(' ')[0].toLowerCase(); // "marco" o "josue"
+                    const prospectos = allData.filter(r => {
+                        const fecha = r['Marca temporal'] || "";
+                        const impulsorFila = getVal(r, 'Impulsor').toLowerCase();
+                        return impulsorFila.includes(buscado) && fecha.includes(`/${mesNum}/`);
+                    });
 
-                    htmlMes += `
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-4 opacity-10 text-4xl"><i class="fas fa-user-tie"></i></div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase">${imp}</p>
-                            <p class="text-4xl font-black text-marino mt-1">$${count * 20}</p>
-                            <p class="text-[10px] font-bold text-slate-500 uppercase mt-1 italic">${count} Prospectos hechos</p>
+                    grid += `
+                        <div class="bg-white p-6 rounded-2xl border-4 border-marino shadow-xl">
+                            <p class="text-marino font-black text-xs uppercase underline mb-2">${imp}</p>
+                            <p class="text-5xl font-black text-emerald-600">$${prospectos.length * 20}</p>
+                            <p class="text-2xl font-black text-blue-600 mt-2 uppercase italic">${prospectos.length} Hechos</p>
                         </div>`;
                 });
-                htmlMes += `</div>`;
-                container.innerHTML += htmlMes;
+                grid += `</div>`;
+                container.innerHTML += grid;
             });
         }
 
@@ -204,12 +188,12 @@
             allData.forEach((row, i) => {
                 const comp = getVal(row, 'competencia').toLowerCase().includes('si');
                 tbody.innerHTML += `
-                    <tr onclick="showDetail(${i})">
-                        <td class="whitespace-nowrap font-mono text-[10px] text-slate-400">${row['Marca temporal'].split(' ')[0]}</td>
-                        <td><div class="font-black text-marino uppercase leading-tight">${getVal(row, 'negocio')}</div><div class="text-[10px] text-slate-400 font-bold italic">${getVal(row, 'encargado')}</div></td>
-                        <td><span class="px-2 py-0.5 rounded text-[10px] font-black uppercase ${comp ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}">${comp ? 'Competencia' : 'Libre'}</span></td>
-                        <td class="text-slate-500 font-bold text-xs">${getVal(row, 'Zona')}</td>
-                        <td><span class="font-black text-marino uppercase text-[10px]">${getVal(row, 'interés')}</span></td>
+                    <tr onclick="showDetail(${i})" class="active:bg-yellow-100">
+                        <td class="whitespace-nowrap font-bold">${row['Marca temporal'].split(' ')[0]}</td>
+                        <td class="font-black text-marino uppercase">${getVal(row, 'negocio')}</td>
+                        <td class="font-bold ${comp ? 'text-red-600' : 'text-green-600'}">${comp ? 'COMPETENCIA' : 'LIBRE'}</td>
+                        <td class="font-bold">${getVal(row, 'Zona')}</td>
+                        <td class="font-black text-marino italic">${getVal(row, 'interés')}</td>
                     </tr>`;
             });
         }
@@ -227,7 +211,7 @@
             const container = document.getElementById('mapZonasContainer');
             container.innerHTML = '';
             if(!map) {
-                map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
+                map = L.map('map', {zoomControl: true}).setView([20.10, -98.75], 10);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
                 markersLayer = L.layerGroup().addTo(map);
             }
@@ -235,103 +219,54 @@
 
             const zonas = [...new Set(allData.map(r => getVal(r, 'Zona')))];
             zonas.forEach(zona => {
-                const prospectosZona = allData.filter(r => getVal(r, 'Zona') === zona);
-                container.innerHTML += `<div class="zona-group flex justify-between"><span>${zona}</span><span class="bg-marino text-white px-2 rounded">${prospectosZona.length}</span></div>`;
-                
-                prospectosZona.forEach((row, i) => {
+                const pros = allData.filter(r => getVal(r, 'Zona') === zona);
+                container.innerHTML += `<div class="bg-marino text-mostaza p-2 font-black uppercase text-xs mt-4 mb-2 rounded flex justify-between"><span>${zona}</span><span>${pros.length}</span></div>`;
+                pros.forEach(row => {
                     const gps = getVal(row, 'GPS');
-                    const realIndex = allData.indexOf(row);
                     if(gps && gps.includes(',')) {
                         const c = gps.replace(/[^\d.,-]/g, '').split(',').map(parseFloat);
-                        const color = zonaColores[zona] || "#000";
-                        const m = L.circleMarker([c[0], c[1]], { radius: 8, color: 'white', weight: 2, fillOpacity: 1, fillColor: color }).addTo(markersLayer);
-                        markerObjects[realIndex] = m;
-
-                        container.innerHTML += `
-                            <div class="p-3 border-b hover:bg-slate-50 cursor-pointer flex items-center gap-3 item-mapa" onclick="zoomTo(${realIndex})">
-                                <div class="w-3 h-3 rounded-full" style="background:${color}"></div>
-                                <div class="flex-1">
-                                    <div class="text-[11px] font-black text-marino uppercase leading-tight">${getVal(row, 'negocio')}</div>
-                                    <div class="text-[10px] text-slate-400 font-bold uppercase">${getVal(row, 'encargado')}</div>
-                                </div>
-                            </div>`;
+                        const m = L.circleMarker([c[0], c[1]], { radius: 9, color: 'white', weight: 2, fillOpacity: 1, fillColor: zonaColores[zona] || "#000" }).addTo(markersLayer);
+                        container.innerHTML += `<div class="p-2 border-b-2 border-slate-100 text-[11px] font-black text-marino uppercase hover:bg-slate-100 cursor-pointer" onclick="map.flyTo([${c[0]},${c[1]}], 16)">${getVal(row, 'negocio')}</div>`;
                     }
                 });
             });
-        }
-
-        function zoomTo(id) {
-            const m = markerObjects[id];
-            if(m) { map.flyTo(m.getLatLng(), 17); m.openPopup(); }
-            closeDetail();
         }
 
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
             const comp = getVal(r, 'competencia').toLowerCase().includes('si');
-            const si = (v) => v.toLowerCase().includes('si') ? '<i class="fas fa-check-circle text-emerald-500"></i>' : '<i class="fas fa-times-circle text-slate-100"></i>';
 
             content.innerHTML = `
-                <div>
-                    <h3 class="text-3xl font-black text-marino uppercase italic leading-none mb-2">${getVal(r, 'negocio')}</h3>
-                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">${getVal(r, 'Zona')} | Registrado el ${r['Marca temporal']}</p>
-                </div>
+                <div class="space-y-4">
+                    <h3 class="text-3xl font-black text-marino uppercase italic leading-none">${getVal(r, 'negocio')}</h3>
+                    <div class="bg-slate-100 p-4 rounded-xl border-2 border-marino font-bold text-marino">
+                        <p>DUEÑO: ${getVal(r, 'encargado')}</p>
+                        <p>TEL: ${getVal(r, 'Teléfono')}</p>
+                        <p>MAIL: ${getVal(r, 'Correo')}</p>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl font-black text-center ${comp ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}">
+                        ${comp ? '⚠️ CLIENTE CON COMPETENCIA' : '✅ OPORTUNIDAD LIBRE'}
+                    </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-50 p-4 rounded-2xl border">
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Encargado</p>
-                        <p class="text-sm font-black text-marino uppercase">${getVal(r, 'encargado')}</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-black">
+                        <div class="p-2 border-2 border-marino rounded flex justify-between">ACUMULADORES <span>${getVal(r, 'acumuladores').includes('Si') ? '✔':'✘'}</span></div>
+                        <div class="p-2 border-2 border-marino rounded flex justify-between">LUBRICANTES <span>${getVal(r, 'lubricante').includes('Si') ? '✔':'✘'}</span></div>
+                        <div class="p-2 border-2 border-marino rounded flex justify-between">MOTO <span>${getVal(r, 'motobatería').includes('Si') ? '✔':'✘'}</span></div>
+                        <div class="p-2 border-2 border-marino rounded flex justify-between">FILTROS <span>${getVal(r, 'filtros').includes('Si') ? '✔':'✘'}</span></div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-2xl border">
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Visitas</p>
-                        <p class="text-sm font-black text-marino uppercase">${getVal(r, 'Visitas') || 1}</p>
-                    </div>
-                </div>
 
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between p-4 bg-white border-2 rounded-2xl">
-                        <span class="text-sm font-bold text-slate-600">Teléfono:</span>
-                        <a href="tel:${getVal(r, 'Teléfono')}" class="text-sm font-black text-marino underline">${getVal(r, 'Teléfono') || 'S/D'}</a>
-                    </div>
-                    <div class="flex items-center justify-between p-4 bg-white border-2 rounded-2xl">
-                        <span class="text-sm font-bold text-slate-600">Correo:</span>
-                        <span class="text-sm font-black text-slate-500">${getVal(r, 'Correo') || 'S/D'}</span>
+                    <div class="observaciones-box">
+                        <p class="text-mostaza font-black uppercase text-[10px] mb-2 underline tracking-widest">Observaciones del Impulsor</p>
+                        <p class="text-sm font-bold italic leading-relaxed text-white">"${getVal(r, 'Observaciones') || 'Sin comentarios registrados.'}"</p>
                     </div>
                 </div>
-
-                <div class="p-4 rounded-2xl border-2 ${comp ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}">
-                    <p class="text-[10px] font-black uppercase mb-1"><i class="fas ${comp ? 'fa-hand-paper':'fa-check-circle'} mr-2"></i>Estatus de Competencia</p>
-                    <p class="text-sm font-bold">${comp ? 'Este cliente cuenta con contratos vigentes con la competencia.' : 'No se detectó competencia. Oportunidad abierta.'}</p>
-                </div>
-
-                <div class="bg-slate-100 p-6 rounded-3xl space-y-3">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Líneas de Interés</p>
-                    <div class="grid grid-cols-2 gap-y-3 gap-x-6 text-xs font-bold text-marino">
-                        <div class="flex items-center gap-2">${si(getVal(r, 'acumuladores'))} ACUMULADORES</div>
-                        <div class="flex items-center gap-2">${si(getVal(r, 'lubricante'))} LUBRICANTES</div>
-                        <div class="flex items-center gap-2">${si(getVal(r, 'motobatería'))} MOTOBATERÍAS</div>
-                        <div class="flex items-center gap-2">${si(getVal(r, 'filtros'))} FILTROS</div>
-                    </div>
-                </div>
-
-                <div class="bg-marino text-white p-6 rounded-3xl shadow-xl">
-                    <p class="text-[10px] text-mostaza font-black uppercase mb-2">Observaciones del Impulsor</p>
-                    <p class="text-sm italic font-light opacity-80 leading-relaxed">"${getVal(r, 'Observaciones') || 'Sin comentarios adicionales.'}"</p>
-                </div>
-
-                <button onclick="switchView('map'); setTimeout(() => zoomTo(${i}), 500);" class="w-full bg-mostaza text-marino p-5 rounded-2xl font-black shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">LOCALIZAR EN MAPA</button>
             `;
             document.getElementById('detailPanel').classList.add('panel-open');
         }
 
         function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
-        function filterMapList() {
-            let val = document.getElementById('searchMap').value.toLowerCase();
-            document.querySelectorAll('.item-mapa').forEach(item => {
-                item.style.display = item.innerText.toLowerCase().includes(val) ? 'flex' : 'none';
-            });
-        }
         window.onload = loadData;
     </script>
 </body>
