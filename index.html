@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Prospección - Hidalgo</title>
+    <title>CRM Prospección Hidalgo - Oficial</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,72 +14,63 @@
         .view-section { display: none; }
         .active-view { display: block !important; }
         #map { height: 650px; width: 100%; border-radius: 12px; }
-        .interes-alto { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .interes-medio { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-        .interes-bajo { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        tr { cursor: pointer; transition: all 0.2s; }
-        tr:hover { background-color: #f8fafc !important; transform: scale(1.002); }
+        tr:hover { background-color: #f8fafc !important; cursor: pointer; }
+        .detail-card { border-left: 4px solid #3b82f6; background: #f8fafc; padding: 12px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
     <div class="flex h-screen overflow-hidden">
         <aside class="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-50">
-            <div class="p-6 border-b border-slate-800 text-center">
-                <h1 class="text-xl font-black tracking-tighter text-blue-400 italic">AUTO-REFAC <span class="text-white">HIDALGO</span></h1>
+            <div class="p-6 border-b border-slate-800">
+                <h1 class="text-xl font-black text-blue-400 italic">AUTO-REFAC <span class="text-white">HIDALGO</span></h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
                 <button onclick="switchView('list')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
-                    <i class="fas fa-users-viewfinder"></i> Listado Prospectos
+                    <i class="fas fa-list"></i> Ver Listado
                 </button>
                 <button onclick="switchView('map')" class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-blue-600 rounded-xl transition font-bold">
-                    <i class="fas fa-map-location-dot"></i> Mapa Geográfico
+                    <i class="fas fa-map-marker-alt"></i> Ver Mapa
                 </button>
             </nav>
             <div class="p-6">
-                <button onclick="loadData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black shadow-lg shadow-blue-900/50 transition">
+                <button onclick="loadData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-black transition shadow-lg">
                     <i class="fas fa-sync mr-2"></i> ACTUALIZAR
                 </button>
             </div>
         </aside>
 
         <main class="flex-1 overflow-y-auto relative">
-            
             <div id="listView" class="view-section active-view p-8">
-                <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                    <i class="fas fa-clipboard-list text-blue-600"></i> Registro de Prospección
-                </h2>
-                
+                <h2 class="text-2xl font-bold mb-6 text-slate-800">Prospectos Realizados</h2>
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-widest border-b">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b">
                             <tr>
                                 <th class="p-4">Fecha / Hora</th>
                                 <th class="p-4">Impulsor</th>
-                                <th class="p-4">Cliente / Encargado</th>
+                                <th class="p-4">Negocio / Encargado</th>
                                 <th class="p-4">Zona</th>
                                 <th class="p-4">Interés</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
-                            </tbody>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
             </div>
 
             <div id="mapView" class="view-section p-8">
-                <div class="bg-white p-3 rounded-2xl shadow-xl border border-slate-200">
+                <div class="bg-white p-2 rounded-2xl shadow-xl border border-slate-200">
                     <div id="map"></div>
                 </div>
             </div>
 
-            <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l border-slate-200 overflow-y-auto">
+            <div id="detailPanel" class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl translate-x-full transition-transform duration-300 z-[100] border-l overflow-y-auto">
                 <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-                    <h3 class="font-bold uppercase tracking-widest text-sm">Ficha Técnica</h3>
-                    <button onclick="closeDetail()" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                    <h3 class="font-bold uppercase tracking-widest text-sm text-blue-400">Detalles del Prospecto</h3>
+                    <button onclick="closeDetail()" class="text-white text-xl">&times;</button>
                 </div>
-                <div id="detailContent" class="p-6 space-y-6">
-                    </div>
+                <div id="detailContent" class="p-6 space-y-6"></div>
             </div>
         </main>
     </div>
@@ -105,6 +96,24 @@
             });
         }
 
+        // FUNCIÓN CRÍTICA: Limpia y arregla coordenadas
+        function fixCoords(gps) {
+            if(!gps) return null;
+            let clean = gps.replace(/[^\d.,-]/g, '');
+            let parts = clean.split(',');
+            if(parts.length !== 2) return null;
+            
+            let lat = parseFloat(parts[0]);
+            let lng = parseFloat(parts[1]);
+
+            // Si el impulsor olvidó el punto decimal en la longitud (ej: -987523)
+            if(Math.abs(lng) > 180) {
+                lng = lng / 100000; // Intenta corregir la posición del punto
+            }
+
+            return (isNaN(lat) || isNaN(lng)) ? null : [lat, lng];
+        }
+
         function render() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -117,99 +126,77 @@
             markersLayer.clearLayers();
 
             allData.forEach((row, index) => {
-                // Columnas
-                const fechaHora = row['Marca temporal'] || '-';
-                const impulsor = row['Impulsor de mercado'] || '-';
-                const negocio = row['Nombre del negocio'] || '-';
-                const encargado = row['Nombre del encargado / Dueño'] || '-';
-                const zona = row['Zona'] || '-';
-                const interes = row['¿Qué nivel de interés mostró el cliente?'] || 'Medio';
-                const gps = row['Ubicación GPS (Copiar de Google Maps).'] || '';
+                // Buscamos el nombre en varias columnas por si una está vacía
+                const negocio = row['Nombre del negocio'] || row['Nombre del encargado / Dueño'] || "Sin nombre registrado";
+                const encargado = row['Nombre del encargado / Dueño'] || "-";
+                const fechaHora = row['Marca temporal'] || "-";
+                const impulsor = row['Impulsor de mercado'] || "-";
+                const zona = row['Zona'] || "-";
+                const interes = row['¿Qué nivel de interés mostró el cliente?'] || "Medio";
+                const gpsString = row['Ubicación GPS (Copiar de Google Maps).'];
 
-                let badge = interes.toLowerCase().includes('alto') ? 'interes-alto' : 
-                            (interes.toLowerCase().includes('bajo') ? 'interes-bajo' : 'interes-medio');
-
-                // Crear fila de tabla
+                // Tabla
                 const tr = document.createElement('tr');
                 tr.onclick = () => showDetail(index);
                 tr.innerHTML = `
-                    <td class="p-4 font-mono text-xs text-slate-500">${fechaHora}</td>
-                    <td class="p-4 font-bold text-slate-700">${impulsor}</td>
+                    <td class="p-4 text-xs font-mono">${fechaHora}</td>
+                    <td class="p-4 font-bold text-blue-600">${impulsor}</td>
                     <td class="p-4">
-                        <div class="font-bold">${negocio}</div>
-                        <div class="text-xs text-slate-400">${encargado}</div>
+                        <div class="font-bold text-slate-800">${negocio}</div>
+                        <div class="text-xs text-slate-400 uppercase">${encargado}</div>
                     </td>
-                    <td class="p-4 text-slate-600">${zona}</td>
-                    <td class="p-4"><span class="px-3 py-1 rounded-md text-[10px] font-black uppercase ${badge}">${interes}</span></td>
+                    <td class="p-4">${zona}</td>
+                    <td class="p-4 text-xs font-black uppercase">${interes}</td>
                 `;
                 tbody.appendChild(tr);
 
-                // Agregar al Mapa
-                if(gps && gps.includes(',')) {
-                    const cleanGPS = gps.replace(/[^\d.,-]/g, ''); // Limpiar caracteres raros
-                    const coords = cleanGPS.split(',').map(c => parseFloat(c.trim()));
-                    if(coords.length === 2 && !isNaN(coords[0])) {
-                        L.marker([coords[0], coords[1]]).addTo(markersLayer)
-                            .bindPopup(`<b>${negocio}</b><br><button onclick="showDetail(${index})" style="color:blue; text-decoration:underline; cursor:pointer">Ver Detalles</button>`);
-                    }
+                // Mapa
+                const coords = fixCoords(gpsString);
+                if(coords) {
+                    L.marker(coords).addTo(markersLayer).bindPopup(`<b>${negocio}</b><br><small>${zona}</small>`);
                 }
             });
         }
 
-        function showDetail(index) {
-            const row = allData[index];
+        function showDetail(i) {
+            const r = allData[i];
             const content = document.getElementById('detailContent');
             
-            // Lógica para marcas
-            const check = (val, marcas) => {
-                if(val && val.toLowerCase().includes('si')) {
-                    return `<div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                <p class="text-[10px] text-blue-500 font-bold uppercase">SÍ TRABAJA</p>
-                                <p class="text-sm font-bold text-slate-800">${marcas || 'Sin marca especificada'}</p>
-                            </div>`;
+            const item = (titulo, valor, marcas) => {
+                if(valor && valor.toLowerCase().includes('si')) {
+                    return `<div class="detail-card">
+                        <p class="text-[10px] font-black text-blue-600 uppercase">${titulo}</p>
+                        <p class="text-sm font-bold text-slate-800">SÍ COMPRA</p>
+                        <p class="text-xs text-slate-500">Marcas: ${marcas || 'No especificadas'}</p>
+                    </div>`;
                 }
-                return `<p class="text-sm text-slate-400 italic">No compra este producto</p>`;
+                return `<div class="p-3 bg-gray-50 rounded-lg text-xs text-gray-400 italic">${titulo}: No compra</div>`;
             };
 
             content.innerHTML = `
-                <div>
-                    <h4 class="text-xl font-black text-slate-800">${row['Nombre del negocio']}</h4>
-                    <p class="text-blue-600 font-bold">${row['Zona']}</p>
+                <div class="mb-6">
+                    <h4 class="text-2xl font-black text-slate-800">${r['Nombre del negocio'] || 'Negocio'}</h4>
+                    <p class="text-blue-500 font-bold tracking-widest uppercase text-xs">${r['Zona']}</p>
                 </div>
-
-                <div class="grid grid-cols-2 gap-4 border-y py-4 border-slate-100">
-                    <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Encargado</p>
-                        <p class="text-sm font-medium">${row['Nombre del encargado / Dueño']}</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Teléfono</p>
-                        <p class="text-sm font-medium">${row['Teléfono'] || '-'}</p>
-                    </div>
-                </div>
-
+                
                 <div class="space-y-4">
-                    <h5 class="text-xs font-black text-slate-500 uppercase tracking-widest italic">Análisis de Inventario</h5>
-                    
-                    <div><p class="text-xs font-bold text-slate-600 mb-1">Acumuladores</p> ${check(row['¿Compra acumuladores?'], row['¿Qué marca de acumuladores?'])}</div>
-                    <div><p class="text-xs font-bold text-slate-600 mb-1">Lubricantes</p> ${check(row['¿Compra lubricantes?'], row['¿Qué marca de lubricante?'])}</div>
-                    <div><p class="text-xs font-bold text-slate-600 mb-1">Motobaterías</p> ${check(row['¿Compra motobaterías?'], row['¿Qué marca de motobatería?'])}</div>
-                    <div><p class="text-xs font-bold text-slate-600 mb-1">Filtros</p> ${check(row['¿Compra filtros?'], row['¿Qué marca de filtros='])}</div>
+                    <p class="text-xs font-bold text-slate-400 border-b pb-2 uppercase tracking-widest">Información de Mercado</p>
+                    ${item('Acumuladores', r['¿Compra acumuladores?'], r['¿Qué marca de acumuladores?'])}
+                    ${item('Lubricantes', r['¿Compra lubricantes?'], r['¿Qué marca de lubricante?'])}
+                    ${item('Motobaterías', r['¿Compra motobaterías?'], r['¿Qué marca de motobatería?'])}
+                    ${item('Filtros', r['¿Compra filtros?'], r['¿Qué marca de filtros='])}
+                    ${item('Llantas', r['¿Compra llanta?'], r['¿Qué marca de llanta?'])}
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl">
-                    <p class="text-xs font-bold text-slate-600 mb-1">Observaciones:</p>
-                    <p class="text-sm text-slate-600">${row['Observaciones / Información adicional.'] || 'Sin observaciones'}</p>
+                <div class="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Observaciones</p>
+                    <p class="text-sm text-slate-700">${r['Observaciones / Información adicional.'] || 'Sin notas adicionales'}</p>
                 </div>
             `;
-            
             document.getElementById('detailPanel').classList.remove('translate-x-full');
         }
 
-        function closeDetail() {
-            document.getElementById('detailPanel').classList.add('translate-x-full');
-        }
-
+        function closeDetail() { document.getElementById('detailPanel').classList.add('translate-x-full'); }
         window.onload = loadData;
     </script>
 </body>
