@@ -27,7 +27,8 @@
 
         /* Estilo para el Pop-up del mapa */
         .leaflet-popup-content-wrapper { background: white; border-radius: 12px; border: 2px solid var(--marino); }
-        .popup-title { font-size: 12px; font-weight: 900; color: var(--marino); text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+        .popup-title { font-size: 12px; font-weight: 900; color: var(--marino); text-transform: uppercase; margin-bottom: 2px; text-align: center; }
+        .popup-vendedor { font-size: 10px; font-weight: bold; color: #64748b; text-align: center; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; }
 
         .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
         @media (max-width: 768px) {
@@ -59,7 +60,7 @@
         .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
         .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
 
-        .btn-google-maps { background: #4285F4; color: white; padding: 4px 8px; border-radius: 5px; font-size: 9px; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; cursor: pointer; border: none; }
+        .btn-google-maps { background: #4285F4; color: white; padding: 6px 10px; border-radius: 5px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: none; font-weight: 900; }
     </style>
 </head>
 <body>
@@ -239,6 +240,7 @@
                 pros.forEach(row => {
                     const gps = getVal(row, "GPS");
                     const nombre = getVal(row, "Nombre del negocio");
+                    const impulsor = getVal(row, "Impulsor de mercado") || "S/A";
                     
                     if(gps && gps.includes(',')) {
                         const coords = gps.split(',').map(parseFloat);
@@ -246,10 +248,10 @@
                             radius: 10, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 
                         }).addTo(markersLayer);
                         
-                        // POPUP QUE APARECE AL HACER CLIC
                         const popupContent = `
-                            <div class="p-2">
+                            <div class="p-1">
                                 <div class="popup-title">${nombre}</div>
+                                <div class="popup-vendedor">Resp: ${impulsor}</div>
                                 <button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps w-full justify-center">
                                     <i class="fas fa-location-arrow"></i> IR AHORA
                                 </button>
