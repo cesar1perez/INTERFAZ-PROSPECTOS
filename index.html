@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LLANTERAMA CRM - FINAL V5</title>
+    <title>PROSPECTOS LLANTERAMA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -39,7 +39,6 @@
         .sidebar-map { width: 320px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
         #map { flex-grow: 1; z-index: 10; }
         
-        /* Botón Ajustado: Arriba a la Izquierda */
         .btn-toggle-list { 
             display: none; 
             position: absolute; 
@@ -60,13 +59,15 @@
         .panel-open { transform: translateX(0) !important; }
         .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
         .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
+
+        .btn-google-maps { background: #4285F4; color: white; padding: 4px 8px; border-radius: 5px; font-size: 9px; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <section id="homeView" class="home-container">
         <div class="logo-ll mb-8"><span>LL</span></div>
-        <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter uppercase">Llanterama CRM</h1>
+        <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter uppercase text-center">Prospectos Llanterama</h1>
         <button onclick="switchView('money')" class="btn-main"><i class="fas fa-hand-holding-usd text-3xl text-emerald-600"></i><span>Bonificaciones por mes</span></button>
         <button onclick="switchView('list')" class="btn-main"><i class="fas fa-clipboard-list text-3xl text-blue-600"></i><span>Listado y Estatus</span></button>
         <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span>Mapa por Zonas</span></button>
@@ -83,7 +84,7 @@
     <section id="listView" class="view-section">
         <div class="header-app">
             <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Listado de Prospectos</span>
+            <span class="font-black italic uppercase text-xs">Listado Prospectos Llanterama</span>
         </div>
         <div class="search-container">
             <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar negocio, zona o estatus..." onkeyup="filterTable()">
@@ -103,7 +104,7 @@
     <section id="mapView" class="view-section">
         <div class="header-app">
             <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Mapa de Prospectos</span>
+            <span class="font-black italic uppercase">Mapa de Ruta</span>
         </div>
         <div class="map-layout">
             <button class="btn-toggle-list" onclick="toggleMapList()"><i class="fas fa-list"></i> VER LISTA</button>
@@ -116,7 +117,7 @@
         <div class="p-6 h-full flex flex-col">
             <div class="flex justify-between items-center border-b-4 border-marino pb-2 mb-4">
                 <span class="font-black text-marino italic text-xl uppercase">Ficha Técnica</span>
-                <button onclick="closeDetail()" class="text-4xl font-bold text-marino">&times;</button>
+                <button onclick="closeDetail()" class="text-4xl font-bold text-marino">×</button>
             </div>
             <div id="detailContent" class="overflow-y-auto flex-1 pr-2"></div>
         </div>
@@ -223,9 +224,21 @@
         function showDetail(i) {
             const r = allData[i];
             const content = document.getElementById('detailContent');
+            const gps = getVal(r, "GPS");
             const campos = ["Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño", "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?", "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?", "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?", "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?", "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"];
-            content.innerHTML = campos.map(c => `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
+            
+            let html = campos.map(c => `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
+            
+            if(gps) {
+                html = `<button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
+            }
+            
+            content.innerHTML = html;
             document.getElementById('detailPanel').classList.add('panel-open');
+        }
+
+        function openInGoogleMaps(gps) {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${gps}`, '_blank');
         }
 
         function initMap() {
@@ -250,7 +263,11 @@
                         const coords = gps.split(',').map(parseFloat);
                         L.circleMarker([coords[0], coords[1]], { radius: 9, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 }).addTo(markersLayer);
                     }
-                    sidebar.innerHTML += `<div class="p-3 px-6 border-b text-[10px] font-black uppercase text-slate-600" onclick="focusOnMap('${gps}')">${getVal(row, 'Nombre del negocio')}</div>`;
+                    sidebar.innerHTML += `
+                    <div class="p-3 px-6 border-b flex justify-between items-center">
+                        <div class="text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gps}')">${getVal(row, 'Nombre del negocio')}</div>
+                        ${gps ? `<button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps"><i class="fas fa-location-arrow"></i> IR</button>` : ''}
+                    </div>`;
                 });
             });
         }
