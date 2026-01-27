@@ -25,10 +25,17 @@
         .active-view { display: block !important; }
         .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 500; }
 
-        .search-container { padding: 10px; background: white; border-bottom: 2px solid var(--marino); }
-        .search-input { width: 100%; padding: 12px; border: 3px solid var(--marino); border-radius: 10px; font-weight: bold; outline: none; }
-        th { cursor: pointer; background: var(--marino); color: var(--mostaza); padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #333; text-align: left; position: relative; }
-        td { padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 900; }
+        /* Estilo para etiquetas en el mapa */
+        .leaflet-tooltip-own {
+            background: var(--marino);
+            color: white;
+            border: 1px solid var(--mostaza);
+            font-weight: bold;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
 
         .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
         @media (max-width: 768px) {
@@ -162,30 +169,17 @@
             if(map) renderMapa();
         }
 
+        // Lógica de Bonificaciones y Listado igual que antes
         function renderBonificaciones() {
             const container = document.getElementById('comisionesContainer');
             container.innerHTML = '';
             const meses = ["Enero", "Febrero", "Marzo"];
             const impulsores = ["Marco A. Hernández", "Josue Jimárez"];
-
             meses.forEach(mes => {
                 let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded shadow uppercase italic tracking-widest">${mes}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 mb-8">`;
                 impulsores.forEach(imp => {
-                    const filtrados = allData.filter(r => 
-                        getVal(r, "Impulsor de mercado") === imp && 
-                        getVal(r, "Mes correspondiente").toLowerCase().includes(mes.toLowerCase())
-                    );
-                    html += `
-                        <div class="bg-white p-6 border-l-[10px] border-marino rounded-2xl shadow-lg flex justify-between items-center">
-                            <div>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase mb-2 italic">${imp}</p>
-                                <p class="text-4xl font-black text-emerald-600">$${filtrados.length * 20}</p>
-                            </div>
-                            <div class="flex flex-col items-center">
-                                <div class="badge-count font-black">${filtrados.length}</div>
-                                <p class="text-[10px] font-black mt-2 text-blue-700 uppercase">Hechos</p>
-                            </div>
-                        </div>`;
+                    const filtrados = allData.filter(r => getVal(r, "Impulsor de mercado") === imp && getVal(r, "Mes correspondiente").toLowerCase().includes(mes.toLowerCase()));
+                    html += `<div class="bg-white p-6 border-l-[10px] border-marino rounded-2xl shadow-lg flex justify-between items-center"><div><p class="text-[10px] text-slate-400 font-bold uppercase mb-2 italic">${imp}</p><p class="text-4xl font-black text-emerald-600">$${filtrados.length * 20}</p></div><div class="flex flex-col items-center"><div class="badge-count font-black">${filtrados.length}</div><p class="text-[10px] font-black mt-2 text-blue-700 uppercase">Hechos</p></div></div>`;
                 });
                 container.innerHTML += html + `</div>`;
             });
@@ -213,9 +207,8 @@
         function sortTable(idx) {
             sortDir[idx] = !sortDir[idx];
             const keys = ["Marca temporal", "Nombre del negocio", "distribuye la competencia", "ESTATUS", "Zona", "interés"];
-            const key = keys[idx];
             const sorted = [...allData].sort((a, b) => {
-                let v1 = getVal(a, key), v2 = getVal(b, key);
+                let v1 = getVal(a, keys[idx]), v2 = getVal(b, keys[idx]);
                 return sortDir[idx] ? v1.localeCompare(v2) : v2.localeCompare(v1);
             });
             renderListado(sorted);
@@ -226,20 +219,13 @@
             const content = document.getElementById('detailContent');
             const gps = getVal(r, "GPS");
             const campos = ["Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño", "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?", "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?", "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?", "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?", "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"];
-            
             let html = campos.map(c => `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
-            
-            if(gps) {
-                html = `<button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
-            }
-            
+            if(gps) html = `<button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
             content.innerHTML = html;
             document.getElementById('detailPanel').classList.add('panel-open');
         }
 
-        function openInGoogleMaps(gps) {
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${gps}`, '_blank');
-        }
+        function openInGoogleMaps(gps) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${gps}`, '_blank'); }
 
         function initMap() {
             map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
@@ -254,18 +240,34 @@
             const sidebar = document.getElementById('mapListContainer');
             sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">ZONAS</div>';
             const zonas = [...new Set(allData.map(r => getVal(r, "Zona")).filter(z => z))];
+            
             zonas.forEach(z => {
                 const pros = allData.filter(r => getVal(r, "Zona") === z);
                 sidebar.innerHTML += `<div class="bg-slate-100 text-marino p-2 px-4 font-black text-xs uppercase border-y flex justify-between"><span>${z}</span><span class="bg-marino text-white px-2 rounded-full">${pros.length}</span></div>`;
+                
                 pros.forEach(row => {
                     const gps = getVal(row, "GPS");
+                    const nombre = getVal(row, "Nombre del negocio");
+                    
                     if(gps && gps.includes(',')) {
                         const coords = gps.split(',').map(parseFloat);
-                        L.circleMarker([coords[0], coords[1]], { radius: 9, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 }).addTo(markersLayer);
+                        // Creado el marcador con tooltip permanente
+                        const marker = L.circleMarker([coords[0], coords[1]], { 
+                            radius: 9, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 
+                        }).addTo(markersLayer);
+                        
+                        // ESTO AGREGA EL NOMBRE ARRIBA DEL PUNTO
+                        marker.bindTooltip(nombre, {
+                            permanent: true, 
+                            direction: 'top',
+                            className: 'leaflet-tooltip-own',
+                            offset: [0, -10]
+                        });
                     }
+                    
                     sidebar.innerHTML += `
                     <div class="p-3 px-6 border-b flex justify-between items-center">
-                        <div class="text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gps}')">${getVal(row, 'Nombre del negocio')}</div>
+                        <div class="text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gps}')">${nombre}</div>
                         ${gps ? `<button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps"><i class="fas fa-location-arrow"></i> IR</button>` : ''}
                     </div>`;
                 });
