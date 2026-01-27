@@ -25,17 +25,9 @@
         .active-view { display: block !important; }
         .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 500; }
 
-        /* Estilo para etiquetas en el mapa */
-        .leaflet-tooltip-own {
-            background: var(--marino);
-            color: white;
-            border: 1px solid var(--mostaza);
-            font-weight: bold;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
+        /* Estilo para el Pop-up del mapa */
+        .leaflet-popup-content-wrapper { background: white; border-radius: 12px; border: 2px solid var(--marino); }
+        .popup-title { font-size: 12px; font-weight: 900; color: var(--marino); text-transform: uppercase; margin-bottom: 8px; text-align: center; }
 
         .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
         @media (max-width: 768px) {
@@ -67,7 +59,7 @@
         .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
         .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
 
-        .btn-google-maps { background: #4285F4; color: white; padding: 4px 8px; border-radius: 5px; font-size: 9px; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; }
+        .btn-google-maps { background: #4285F4; color: white; padding: 4px 8px; border-radius: 5px; font-size: 9px; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; cursor: pointer; border: none; }
     </style>
 </head>
 <body>
@@ -169,7 +161,6 @@
             if(map) renderMapa();
         }
 
-        // Lógica de Bonificaciones y Listado igual que antes
         function renderBonificaciones() {
             const container = document.getElementById('comisionesContainer');
             container.innerHTML = '';
@@ -225,7 +216,7 @@
             document.getElementById('detailPanel').classList.add('panel-open');
         }
 
-        function openInGoogleMaps(gps) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${gps}`, '_blank'); }
+        function openInGoogleMaps(gps) { window.open(`https://www.google.com/maps/search/?api=1&query=${gps}`, '_blank'); }
 
         function initMap() {
             map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
@@ -251,18 +242,20 @@
                     
                     if(gps && gps.includes(',')) {
                         const coords = gps.split(',').map(parseFloat);
-                        // Creado el marcador con tooltip permanente
                         const marker = L.circleMarker([coords[0], coords[1]], { 
-                            radius: 9, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 
+                            radius: 10, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 
                         }).addTo(markersLayer);
                         
-                        // ESTO AGREGA EL NOMBRE ARRIBA DEL PUNTO
-                        marker.bindTooltip(nombre, {
-                            permanent: true, 
-                            direction: 'top',
-                            className: 'leaflet-tooltip-own',
-                            offset: [0, -10]
-                        });
+                        // POPUP QUE APARECE AL HACER CLIC
+                        const popupContent = `
+                            <div class="p-2">
+                                <div class="popup-title">${nombre}</div>
+                                <button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps w-full justify-center">
+                                    <i class="fas fa-location-arrow"></i> IR AHORA
+                                </button>
+                            </div>
+                        `;
+                        marker.bindPopup(popupContent);
                     }
                     
                     sidebar.innerHTML += `
