@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROSPECTOS LLANTERAMA</title>
+    <title>PROSPECCIÓN LLANTERAMA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -25,9 +25,9 @@
         .active-view { display: block !important; }
         .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 500; }
 
-        /* Estilo para el Pop-up del mapa */
         .leaflet-popup-content-wrapper { background: white; border-radius: 12px; border: 2px solid var(--marino); }
-        .popup-title { font-size: 12px; font-weight: 900; color: var(--marino); text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+        .popup-title { font-size: 12px; font-weight: 900; color: var(--marino); text-transform: uppercase; margin-bottom: 2px; text-align: center; }
+        .popup-vendedor { font-size: 10px; font-weight: bold; color: #64748b; text-align: center; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; }
 
         .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
         @media (max-width: 768px) {
@@ -59,14 +59,14 @@
         .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
         .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
 
-        .btn-google-maps { background: #4285F4; color: white; padding: 4px 8px; border-radius: 5px; font-size: 9px; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; cursor: pointer; border: none; }
+        .btn-google-maps { background: #4285F4; color: white; padding: 6px 10px; border-radius: 5px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: none; font-weight: 900; }
     </style>
 </head>
 <body>
 
     <section id="homeView" class="home-container">
         <div class="logo-ll mb-8"><span>LL</span></div>
-        <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter uppercase text-center">Prospectos Llanterama</h1>
+        <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter uppercase text-center">Prospección Llanterama</h1>
         <button onclick="switchView('money')" class="btn-main"><i class="fas fa-hand-holding-usd text-3xl text-emerald-600"></i><span>Bonificaciones por mes</span></button>
         <button onclick="switchView('list')" class="btn-main"><i class="fas fa-clipboard-list text-3xl text-blue-600"></i><span>Listado y Estatus</span></button>
         <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span>Mapa por Zonas</span></button>
@@ -83,16 +83,21 @@
     <section id="listView" class="view-section">
         <div class="header-app">
             <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase text-xs">Listado Prospectos Llanterama</span>
+            <span class="font-black italic uppercase text-xs">Listado Prospección Llanterama</span>
         </div>
         <div class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar negocio, zona o estatus..." onkeyup="filterTable()">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar por negocio, impulsor o zona..." onkeyup="filterTable()">
         </div>
         <div class="overflow-x-auto p-2">
             <table class="w-full bg-white border-2 border-marino">
                 <thead>
                     <tr>
-                        <th onclick="sortTable(0)">Fecha</th><th onclick="sortTable(1)">Negocio</th><th onclick="sortTable(2)">Competencia</th><th onclick="sortTable(3)">Estatus</th><th onclick="sortTable(4)">Zona</th><th onclick="sortTable(5)">Interés</th>
+                        <th onclick="sortTable(0)">Fecha</th>
+                        <th onclick="sortTable(1)">Negocio</th>
+                        <th onclick="sortTable(2)">Impulsor</th>
+                        <th onclick="sortTable(3)">Estatus</th>
+                        <th onclick="sortTable(4)">Zona</th>
+                        <th onclick="sortTable(5)">Interés</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -129,6 +134,16 @@
         function getVal(row, name) {
             const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()));
             return key ? row[key].toString().trim() : "";
+        }
+
+        // FUNCIÓN CLAVE: Limpia coordenadas para que el mapa no falle
+        function cleanCoords(gpsStr) {
+            if(!gpsStr) return null;
+            const parts = gpsStr.split(',');
+            if(parts.length < 2) return null;
+            const lat = parseFloat(parts[0].replace(/[^-0.9.]/g, ''));
+            const lng = parseFloat(parts[1].replace(/[^-0.9.]/g, ''));
+            return (isNaN(lat) || isNaN(lng)) ? null : [lat, lng];
         }
 
         function switchView(v) {
@@ -180,11 +195,17 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             data.forEach((row) => {
-                const comp = getVal(row, "distribuye la competencia").toLowerCase().includes("si");
                 const tr = document.createElement('tr');
                 tr.className = "text-[11px] font-bold border-b active:bg-yellow-50";
                 tr.onclick = () => showDetail(allData.indexOf(row));
-                tr.innerHTML = `<td class="p-3 border">${row['Marca temporal'].split(' ')[0]}</td><td class="p-3 border text-marino uppercase font-black">${getVal(row, "Nombre del negocio")}</td><td class="p-3 border text-center ${comp ? 'text-red-500':'text-green-600'}">${comp ? 'SI' : 'NO'}</td><td class="p-3 border">${getVal(row, "ESTATUS") || 'S/D'}</td><td class="p-3 border uppercase text-slate-500">${getVal(row, "Zona")}</td><td class="p-3 border italic">${getVal(row, "interés")}</td>`;
+                tr.innerHTML = `
+                    <td class="p-3 border">${row['Marca temporal'] ? row['Marca temporal'].split(' ')[0] : '-'}</td>
+                    <td class="p-3 border text-marino uppercase font-black">${getVal(row, "Nombre del negocio")}</td>
+                    <td class="p-3 border uppercase text-blue-700">${getVal(row, "Impulsor de mercado")}</td>
+                    <td class="p-3 border">${getVal(row, "ESTATUS") || 'S/D'}</td>
+                    <td class="p-3 border uppercase text-slate-500">${getVal(row, "Zona")}</td>
+                    <td class="p-3 border italic">${getVal(row, "interés")}</td>
+                `;
                 tbody.appendChild(tr);
             });
         }
@@ -197,7 +218,7 @@
 
         function sortTable(idx) {
             sortDir[idx] = !sortDir[idx];
-            const keys = ["Marca temporal", "Nombre del negocio", "distribuye la competencia", "ESTATUS", "Zona", "interés"];
+            const keys = ["Marca temporal", "Nombre del negocio", "Impulsor de mercado", "ESTATUS", "Zona", "interés"];
             const sorted = [...allData].sort((a, b) => {
                 let v1 = getVal(a, keys[idx]), v2 = getVal(b, keys[idx]);
                 return sortDir[idx] ? v1.localeCompare(v2) : v2.localeCompare(v1);
@@ -216,7 +237,7 @@
             document.getElementById('detailPanel').classList.add('panel-open');
         }
 
-        function openInGoogleMaps(gps) { window.open(`https://www.google.com/maps/search/?api=1&query=${gps}`, '_blank'); }
+        function openInGoogleMaps(gps) { window.open(`https://www.google.com/maps?q=${gps}`, '_blank'); }
 
         function initMap() {
             map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
@@ -230,6 +251,7 @@
             markersLayer.clearLayers();
             const sidebar = document.getElementById('mapListContainer');
             sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">ZONAS</div>';
+            
             const zonas = [...new Set(allData.map(r => getVal(r, "Zona")).filter(z => z))];
             
             zonas.forEach(z => {
@@ -237,20 +259,21 @@
                 sidebar.innerHTML += `<div class="bg-slate-100 text-marino p-2 px-4 font-black text-xs uppercase border-y flex justify-between"><span>${z}</span><span class="bg-marino text-white px-2 rounded-full">${pros.length}</span></div>`;
                 
                 pros.forEach(row => {
-                    const gps = getVal(row, "GPS");
+                    const gpsRaw = getVal(row, "GPS");
+                    const coords = cleanCoords(gpsRaw);
                     const nombre = getVal(row, "Nombre del negocio");
+                    const impulsor = getVal(row, "Impulsor de mercado") || "S/A";
                     
-                    if(gps && gps.includes(',')) {
-                        const coords = gps.split(',').map(parseFloat);
-                        const marker = L.circleMarker([coords[0], coords[1]], { 
+                    if(coords) {
+                        const marker = L.circleMarker(coords, { 
                             radius: 10, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 
                         }).addTo(markersLayer);
                         
-                        // POPUP QUE APARECE AL HACER CLIC
                         const popupContent = `
-                            <div class="p-2">
+                            <div class="p-1">
                                 <div class="popup-title">${nombre}</div>
-                                <button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps w-full justify-center">
+                                <div class="popup-vendedor">Resp: ${impulsor}</div>
+                                <button onclick="openInGoogleMaps('${gpsRaw}')" class="btn-google-maps w-full justify-center">
                                     <i class="fas fa-location-arrow"></i> IR AHORA
                                 </button>
                             </div>
@@ -260,17 +283,17 @@
                     
                     sidebar.innerHTML += `
                     <div class="p-3 px-6 border-b flex justify-between items-center">
-                        <div class="text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gps}')">${nombre}</div>
-                        ${gps ? `<button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps"><i class="fas fa-location-arrow"></i> IR</button>` : ''}
+                        <div class="text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gpsRaw}')">${nombre}</div>
+                        ${gpsRaw ? `<button onclick="openInGoogleMaps('${gpsRaw}')" class="btn-google-maps"><i class="fas fa-location-arrow"></i> IR</button>` : ''}
                     </div>`;
                 });
             });
         }
 
         function focusOnMap(gps) {
-            if(!gps) return;
-            const coords = gps.split(',').map(parseFloat);
-            map.flyTo([coords[0], coords[1]], 16);
+            const coords = cleanCoords(gps);
+            if(!coords) return;
+            map.flyTo(coords, 16);
             if(window.innerWidth <= 768) toggleMapList();
         }
 
