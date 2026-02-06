@@ -136,11 +136,12 @@
             return key ? row[key].toString().trim() : "";
         }
 
-        // FUNCIÓN CLAVE: Limpia coordenadas para que el mapa no falle
+        // LIMPIEZA CORREGIDA: Ahora respeta el punto decimal "."
         function cleanCoords(gpsStr) {
             if(!gpsStr) return null;
             const parts = gpsStr.split(',');
             if(parts.length < 2) return null;
+            // Solo dejamos números, guiones para negativos y el punto decimal
             const lat = parseFloat(parts[0].replace(/[^-0.9.]/g, ''));
             const lng = parseFloat(parts[1].replace(/[^-0.9.]/g, ''));
             return (isNaN(lat) || isNaN(lng)) ? null : [lat, lng];
@@ -232,12 +233,13 @@
             const gps = getVal(r, "GPS");
             const campos = ["Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño", "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?", "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?", "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?", "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?", "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"];
             let html = campos.map(c => `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
-            if(gps) html = `<button onclick="openInGoogleMaps('${gps}')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
+            if(gps) {
+                const cleanStr = gps.replace(/\s/g, '');
+                html = `<button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${cleanStr}', '_blank')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
+            }
             content.innerHTML = html;
             document.getElementById('detailPanel').classList.add('panel-open');
         }
-
-        function openInGoogleMaps(gps) { window.open(`https://www.google.com/maps?q=${gps}`, '_blank'); }
 
         function initMap() {
             map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
@@ -251,7 +253,6 @@
             markersLayer.clearLayers();
             const sidebar = document.getElementById('mapListContainer');
             sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">ZONAS</div>';
-            
             const zonas = [...new Set(allData.map(r => getVal(r, "Zona")).filter(z => z))];
             
             zonas.forEach(z => {
@@ -273,7 +274,7 @@
                             <div class="p-1">
                                 <div class="popup-title">${nombre}</div>
                                 <div class="popup-vendedor">Resp: ${impulsor}</div>
-                                <button onclick="openInGoogleMaps('${gpsRaw}')" class="btn-google-maps w-full justify-center">
+                                <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${gpsRaw.replace(/\s/g, '')}', '_blank')" class="btn-google-maps w-full justify-center">
                                     <i class="fas fa-location-arrow"></i> IR AHORA
                                 </button>
                             </div>
@@ -284,7 +285,6 @@
                     sidebar.innerHTML += `
                     <div class="p-3 px-6 border-b flex justify-between items-center">
                         <div class="text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gpsRaw}')">${nombre}</div>
-                        ${gpsRaw ? `<button onclick="openInGoogleMaps('${gpsRaw}')" class="btn-google-maps"><i class="fas fa-location-arrow"></i> IR</button>` : ''}
                     </div>`;
                 });
             });
