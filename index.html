@@ -136,15 +136,13 @@
             return key ? row[key].toString().trim() : "";
         }
 
-        // LIMPIEZA CORREGIDA: Ahora respeta el punto decimal "."
-        function cleanCoords(gpsStr) {
-            if(!gpsStr) return null;
+        function parseGPS(gpsStr) {
+            if(!gpsStr || !gpsStr.includes(',')) return null;
             const parts = gpsStr.split(',');
-            if(parts.length < 2) return null;
-            // Solo dejamos números, guiones para negativos y el punto decimal
-            const lat = parseFloat(parts[0].replace(/[^-0.9.]/g, ''));
-            const lng = parseFloat(parts[1].replace(/[^-0.9.]/g, ''));
-            return (isNaN(lat) || isNaN(lng)) ? null : [lat, lng];
+            const lat = parseFloat(parts[0].trim());
+            const lng = parseFloat(parts[1].trim());
+            if(isNaN(lat) || isNaN(lng)) return null;
+            return [lat, lng];
         }
 
         function switchView(v) {
@@ -233,9 +231,8 @@
             const gps = getVal(r, "GPS");
             const campos = ["Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño", "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?", "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?", "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?", "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?", "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"];
             let html = campos.map(c => `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
-            if(gps) {
-                const cleanStr = gps.replace(/\s/g, '');
-                html = `<button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${cleanStr}', '_blank')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
+            if(gps && gps.includes(',')) {
+                html = `<button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${gps.trim()}', '_blank')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
             }
             content.innerHTML = html;
             document.getElementById('detailPanel').classList.add('panel-open');
@@ -261,7 +258,7 @@
                 
                 pros.forEach(row => {
                     const gpsRaw = getVal(row, "GPS");
-                    const coords = cleanCoords(gpsRaw);
+                    const coords = parseGPS(gpsRaw);
                     const nombre = getVal(row, "Nombre del negocio");
                     const impulsor = getVal(row, "Impulsor de mercado") || "S/A";
                     
@@ -274,7 +271,7 @@
                             <div class="p-1">
                                 <div class="popup-title">${nombre}</div>
                                 <div class="popup-vendedor">Resp: ${impulsor}</div>
-                                <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${gpsRaw.replace(/\s/g, '')}', '_blank')" class="btn-google-maps w-full justify-center">
+                                <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${gpsRaw.trim()}', '_blank')" class="btn-google-maps w-full justify-center">
                                     <i class="fas fa-location-arrow"></i> IR AHORA
                                 </button>
                             </div>
@@ -291,7 +288,7 @@
         }
 
         function focusOnMap(gps) {
-            const coords = cleanCoords(gps);
+            const coords = parseGPS(gps);
             if(!coords) return;
             map.flyTo(coords, 16);
             if(window.innerWidth <= 768) toggleMapList();
