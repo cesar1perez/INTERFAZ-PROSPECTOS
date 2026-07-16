@@ -1,301 +1,604 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROSPECCIÓN LLANTERAMA</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <style>
-        :root { --marino: #001f3f; --mostaza: #FFB800; }
-        body { font-family: 'Arial Black', sans-serif; background: #f1f5f9; color: #000; overflow-x: hidden; }
-        
-        .home-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--marino); position: fixed; width: 100%; z-index: 1000; }
-        .logo-ll { width: 110px; height: 110px; border: 6px solid var(--mostaza); display: flex; align-items: center; justify-content: center; border-radius: 25px; }
-        .logo-ll span { color: var(--mostaza); font-size: 65px; font-style: italic; font-weight: 900; }
-        
-        .btn-main { background: white; border: 4px solid var(--marino); padding: 18px; border-radius: 15px; width: 290px; display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; box-shadow: 0 6px 0 #000; transition: 0.1s; }
-        .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
-        .btn-main span { color: var(--marino); font-size: 14px; font-weight: 900; margin-top: 5px; text-transform: uppercase; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CRM PROSPECCIÓN LLANTERAMA</title>
 
-        .view-section { display: none; min-height: 100vh; background: #f1f5f9; }
-        .active-view { display: block !important; }
-        .header-app { background: var(--marino); color: white; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 4px solid var(--mostaza); position: sticky; top: 0; z-index: 500; }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- FIX: se definen los colores/fuentes para que las clases de Tailwind sí pinten -->
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: { marino: '#001529', mostaza: '#facc15' },
+      fontFamily: { orbitron: ['Orbitron','sans-serif'], mono: ['JetBrains Mono','monospace'] }
+    }}
+  };
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-        .leaflet-popup-content-wrapper { background: white; border-radius: 12px; border: 2px solid var(--marino); }
-        .popup-title { font-size: 12px; font-weight: 900; color: var(--marino); text-transform: uppercase; margin-bottom: 2px; text-align: center; }
-        .popup-vendedor { font-size: 10px; font-weight: bold; color: #64748b; text-align: center; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+<style>
+  :root { --marino:#001529; --mostaza:#facc15; --marino2:#012a4a; }
+  * { -webkit-tap-highlight-color: transparent; }
+  body { font-family:'JetBrains Mono',monospace; background:#eef2f7; color:#0f172a; overflow-x:hidden; }
+  .orb { font-family:'Orbitron',sans-serif; }
 
-        .map-layout { display: flex; height: calc(100vh - 65px); position: relative; }
-        @media (max-width: 768px) {
-            .sidebar-map { position: absolute; bottom: 0; left: 0; width: 100%; height: 70%; z-index: 1000; transform: translateY(100%); transition: 0.4s; border-top: 5px solid var(--mostaza); }
-            .sidebar-map.open { transform: translateY(0); }
-            .btn-toggle-list { display: block !important; }
-        }
-        .sidebar-map { width: 320px; background: white; border-right: 4px solid var(--marino); overflow-y: auto; }
-        #map { flex-grow: 1; z-index: 10; }
-        
-        .btn-toggle-list { 
-            display: none; 
-            position: absolute; 
-            top: 15px; 
-            left: 15px; 
-            z-index: 1100; 
-            background: var(--marino); 
-            color: var(--mostaza); 
-            padding: 10px 20px; 
-            border-radius: 12px; 
-            font-weight: 900; 
-            border: 3px solid var(--mostaza); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
-            font-size: 12px;
-        }
+  /* HOME */
+  .home-container { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 0%, var(--marino2), var(--marino) 70%); position:fixed; inset:0; z-index:1000; padding:20px; }
+  .logo-ll { width:104px; height:104px; border:5px solid var(--mostaza); display:flex; align-items:center; justify-content:center;
+    border-radius:26px; box-shadow:0 0 40px rgba(250,204,21,.25); }
+  .logo-ll span { color:var(--mostaza); font-size:58px; font-style:italic; font-weight:900; font-family:'Orbitron'; }
 
-        #detailPanel { position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 450px; background: white; z-index: 2000; transform: translateX(100%); transition: 0.4s; border-left: 10px solid var(--mostaza); box-shadow: -10px 0 40px rgba(0,0,0,0.4); }
-        .panel-open { transform: translateX(0) !important; }
-        .field-card { border-bottom: 1px solid #eee; padding: 6px 0; }
-        .badge-count { background: #2563eb; color: white; padding: 10px 20px; border-radius: 50px; font-size: 24px; box-shadow: 0 4px 0 #1e40af; }
+  .btn-main { background:#fff; padding:20px; border-radius:18px; width:300px; max-width:88vw; display:flex; align-items:center; gap:18px;
+    margin-bottom:14px; box-shadow:0 8px 0 #00060f; transition:.08s; border:none; }
+  .btn-main:active { transform:translateY(5px); box-shadow:0 3px 0 #00060f; }
+  .btn-main .ico { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .btn-main .txt { text-align:left; }
+  .btn-main .txt b { display:block; color:var(--marino); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
+  .btn-main .txt small { color:#64748b; font-size:11px; font-weight:600; }
 
-        .btn-google-maps { background: #4285F4; color: white; padding: 6px 10px; border-radius: 5px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: none; font-weight: 900; }
-    </style>
+  /* VISTAS */
+  .view-section { display:none; min-height:100vh; }
+  .active-view { display:block !important; }
+  .header-app { background:var(--marino); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:14px;
+    border-bottom:4px solid var(--mostaza); position:sticky; top:0; z-index:500; }
+  .header-app .title { font-family:'Orbitron'; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:1px; }
+  .btn-inicio { background:var(--mostaza); color:var(--marino); padding:9px 16px; border-radius:11px; font-weight:800; font-size:12px; border:none; }
+
+  /* RESUMEN */
+  .stat-card { background:#fff; border-radius:16px; padding:16px; box-shadow:0 4px 16px rgba(0,21,41,.08); border-left:8px solid var(--marino); }
+  .stat-num { font-family:'Orbitron'; font-weight:900; font-size:34px; color:var(--marino); line-height:1; }
+  .bar-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .bar-track { flex:1; height:22px; background:#e2e8f0; border-radius:6px; overflow:hidden; }
+  .bar-fill { height:100%; background:var(--marino); display:flex; align-items:center; padding-left:8px; color:#fff; font-weight:800; font-size:11px; }
+
+  /* BUSCADOR (FIX: antes no tenía estilos) */
+  .search-wrap { padding:12px 14px; background:var(--marino); position:sticky; top:60px; z-index:400; }
+  .search-input { width:100%; padding:13px 16px; border-radius:12px; border:3px solid var(--mostaza); font-family:'JetBrains Mono';
+    font-weight:700; font-size:14px; outline:none; }
+
+  /* TABLA */
+  table { border-collapse:separate; border-spacing:0; }
+  th { background:var(--marino); color:var(--mostaza); font-family:'Orbitron'; font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+    padding:12px 8px; cursor:pointer; position:sticky; top:112px; z-index:300; user-select:none; }
+  th:hover { background:var(--marino2); }
+  .row-card td { padding:12px 8px; font-size:12px; font-weight:600; border-bottom:1px solid #e2e8f0; }
+  .row-card:active { background:#fffbeb; }
+
+  .badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:800; text-transform:uppercase; white-space:nowrap; }
+
+  /* MAPA */
+  .map-layout { display:flex; height:calc(100vh - 64px); position:relative; }
+  .sidebar-map { width:330px; background:#fff; border-right:4px solid var(--marino); overflow-y:auto; }
+  #map { flex-grow:1; z-index:10; }
+  .btn-toggle-list { display:none; position:absolute; top:14px; left:14px; z-index:1100; background:var(--marino); color:var(--mostaza);
+    padding:11px 20px; border-radius:12px; font-weight:800; border:3px solid var(--mostaza); box-shadow:0 4px 12px rgba(0,0,0,.35); font-size:12px; }
+  @media (max-width:768px){
+    .sidebar-map { position:absolute; bottom:0; left:0; width:100%; height:72%; z-index:1000; transform:translateY(100%);
+      transition:.4s; border-top:5px solid var(--mostaza); border-right:none; }
+    .sidebar-map.open { transform:translateY(0); }
+    .btn-toggle-list { display:block !important; }
+  }
+  .leaflet-popup-content-wrapper { border-radius:12px; border:2px solid var(--marino); }
+  .popup-title { font-family:'Orbitron'; font-size:12px; font-weight:800; color:var(--marino); text-transform:uppercase; text-align:center; }
+  .popup-sub { font-size:10px; font-weight:700; color:#64748b; text-align:center; margin:2px 0 8px; border-bottom:1px solid #eee; padding-bottom:4px; }
+
+  /* PANEL FICHA / CRM */
+  #detailPanel { position:fixed; top:0; right:0; height:100%; width:100%; max-width:460px; background:#f4f7fb; z-index:2000;
+    transform:translateX(100%); transition:.35s cubic-bezier(.4,0,.2,1); border-left:8px solid var(--mostaza); box-shadow:-12px 0 44px rgba(0,0,0,.4); }
+  .panel-open { transform:translateX(0) !important; }
+  .panel-head { background:var(--marino); color:#fff; padding:16px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .panel-head h2 { font-family:'Orbitron'; font-weight:800; font-size:16px; text-transform:uppercase; line-height:1.15; }
+  .sec-title { font-family:'Orbitron'; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--marino);
+    margin:18px 0 8px; padding-bottom:5px; border-bottom:2px solid var(--mostaza); }
+  .field { padding:7px 0; border-bottom:1px solid #e6ebf2; }
+  .field .k { font-size:9px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+  .field .v { font-size:14px; color:var(--marino); font-weight:700; line-height:1.25; }
+
+  .visita-card { background:#fff; border-radius:14px; padding:12px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,21,41,.07); border-left:6px solid var(--marino); }
+  .visita-card.tiene { border-left-color:#16a34a; }
+  .visita-label { font-family:'Orbitron'; font-weight:800; font-size:12px; color:var(--marino); text-transform:uppercase; }
+  .visita-txt { width:100%; min-height:62px; border:2px solid #e2e8f0; border-radius:10px; padding:9px; font-family:'JetBrains Mono';
+    font-size:13px; font-weight:600; resize:vertical; outline:none; margin-top:6px; }
+  .visita-txt:focus { border-color:var(--mostaza); }
+  .btn-mic, .btn-save { border:none; border-radius:10px; padding:9px 12px; font-weight:800; font-size:12px; cursor:pointer; }
+  .btn-mic { background:#e2e8f0; color:var(--marino); }
+  .btn-mic.rec { background:#dc2626; color:#fff; animation:pulse 1s infinite; }
+  .btn-save { background:var(--marino); color:var(--mostaza); flex:1; }
+  .btn-save:disabled { opacity:.5; }
+  @keyframes pulse { 50% { opacity:.55; } }
+
+  .btn-gmaps { background:#1a73e8; color:#fff; padding:12px; border-radius:12px; font-weight:800; font-size:13px; border:none;
+    width:100%; display:flex; align-items:center; justify-content:center; gap:8px; }
+
+  .status-select { width:100%; padding:11px; border-radius:11px; border:3px solid var(--marino); font-family:'JetBrains Mono';
+    font-weight:800; font-size:14px; background:#fff; color:var(--marino); }
+
+  /* TOAST */
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(120px); z-index:5000;
+    padding:14px 22px; border-radius:14px; font-weight:800; font-size:13px; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,.3); transition:.3s; }
+  #toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* LOADER */
+  #loader { position:fixed; inset:0; background:var(--marino); z-index:3000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; }
+  .spin { width:46px; height:46px; border:5px solid rgba(250,204,21,.25); border-top-color:var(--mostaza); border-radius:50%; animation:sp 1s linear infinite; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+</style>
 </head>
 <body>
 
-    <section id="homeView" class="home-container">
-        <div class="logo-ll mb-8"><span>LL</span></div>
-        <h1 class="text-white text-3xl font-black italic mb-10 tracking-tighter uppercase text-center">Prospección Llanterama</h1>
-        <button onclick="switchView('money')" class="btn-main"><i class="fas fa-hand-holding-usd text-3xl text-emerald-600"></i><span>Bonificaciones por mes</span></button>
-        <button onclick="switchView('list')" class="btn-main"><i class="fas fa-clipboard-list text-3xl text-blue-600"></i><span>Listado y Estatus</span></button>
-        <button onclick="switchView('map')" class="btn-main"><i class="fas fa-map-marked-alt text-3xl text-orange-600"></i><span>Mapa por Zonas</span></button>
-    </section>
+<!-- LOADER -->
+<div id="loader"><div class="spin"></div><p class="text-mostaza orb font-black text-sm tracking-widest">CARGANDO CRM…</p></div>
 
-    <section id="moneyView" class="view-section">
-        <div class="header-app">
-            <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Bonificaciones por Mes</span>
-        </div>
-        <div id="comisionesContainer" class="p-4 space-y-6"></div>
-    </section>
+<!-- HOME -->
+<section id="homeView" class="home-container">
+  <div class="logo-ll mb-6"><span>LL</span></div>
+  <h1 class="text-white orb text-2xl font-black italic mb-1 tracking-tight uppercase text-center">CRM Prospección</h1>
+  <p class="text-mostaza text-xs font-bold mb-9 tracking-widest">LLANTERAMA · LTH</p>
+  <button onclick="switchView('resumen')" class="btn-main">
+    <div class="ico" style="background:#dbeafe;color:#2563eb"><i class="fas fa-chart-pie"></i></div>
+    <div class="txt"><b>Resumen</b><small>Estatus, potencial y zonas</small></div>
+  </button>
+  <button onclick="switchView('list')" class="btn-main">
+    <div class="ico" style="background:#fef3c7;color:#d97706"><i class="fas fa-clipboard-list"></i></div>
+    <div class="txt"><b>Prospectos</b><small>Listado, fichas y seguimiento</small></div>
+  </button>
+  <button onclick="switchView('map')" class="btn-main">
+    <div class="ico" style="background:#dcfce7;color:#16a34a"><i class="fas fa-map-marked-alt"></i></div>
+    <div class="txt"><b>Mapa por zonas</b><small>Rutas y ubicación GPS</small></div>
+  </button>
+</section>
 
-    <section id="listView" class="view-section">
-        <div class="header-app">
-            <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase text-xs">Listado Prospección Llanterama</span>
-        </div>
-        <div class="search-container">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar por negocio, impulsor o zona..." onkeyup="filterTable()">
-        </div>
-        <div class="overflow-x-auto p-2">
-            <table class="w-full bg-white border-2 border-marino">
-                <thead>
-                    <tr>
-                        <th onclick="sortTable(0)">Fecha</th>
-                        <th onclick="sortTable(1)">Negocio</th>
-                        <th onclick="sortTable(2)">Impulsor</th>
-                        <th onclick="sortTable(3)">Estatus</th>
-                        <th onclick="sortTable(4)">Zona</th>
-                        <th onclick="sortTable(5)">Interés</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
-    </section>
+<!-- RESUMEN -->
+<section id="resumenView" class="view-section">
+  <div class="header-app">
+    <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
+    <span class="title">Resumen</span>
+  </div>
+  <div id="resumenContent" class="p-4 space-y-5"></div>
+</section>
 
-    <section id="mapView" class="view-section">
-        <div class="header-app">
-            <button onclick="switchView('home')" class="bg-mostaza text-marino px-4 py-2 rounded-lg font-black text-xs">INICIO</button>
-            <span class="font-black italic uppercase">Mapa de Ruta</span>
-        </div>
-        <div class="map-layout">
-            <button class="btn-toggle-list" onclick="toggleMapList()"><i class="fas fa-list"></i> VER LISTA</button>
-            <div class="sidebar-map" id="mapListContainer"></div>
-            <div id="map"></div>
-        </div>
-    </section>
+<!-- LISTADO -->
+<section id="listView" class="view-section">
+  <div class="header-app">
+    <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
+    <span class="title">Prospectos</span>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Negocio, impulsor, zona, estatus…" onkeyup="filterTable()">
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full bg-white">
+      <thead><tr>
+        <th onclick="sortTable('Nombre del negocio')">Negocio</th>
+        <th onclick="sortTable('Impulsor de mercado')">Impulsor</th>
+        <th onclick="sortTable('Zona')">Zona</th>
+        <th onclick="sortTable('ESTATUS')">Estatus</th>
+        <th>Pot.</th>
+      </tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</section>
 
-    <div id="detailPanel">
-        <div class="p-6 h-full flex flex-col">
-            <div class="flex justify-between items-center border-b-4 border-marino pb-2 mb-4">
-                <span class="font-black text-marino italic text-xl uppercase">Ficha Técnica</span>
-                <button onclick="closeDetail()" class="text-4xl font-bold text-marino">×</button>
-            </div>
-            <div id="detailContent" class="overflow-y-auto flex-1 pr-2"></div>
-        </div>
+<!-- MAPA -->
+<section id="mapView" class="view-section">
+  <div class="header-app">
+    <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
+    <span class="title">Mapa de ruta</span>
+  </div>
+  <div class="map-layout">
+    <button class="btn-toggle-list" onclick="toggleMapList()"><i class="fas fa-list"></i> VER LISTA</button>
+    <div class="sidebar-map" id="mapListContainer"></div>
+    <div id="map"></div>
+  </div>
+</section>
+
+<!-- PANEL FICHA + SEGUIMIENTO -->
+<div id="detailPanel">
+  <div class="h-full flex flex-col">
+    <div class="panel-head">
+      <div>
+        <h2 id="fichaNombre">—</h2>
+        <p id="fichaCodigo" class="text-mostaza text-[11px] font-bold mt-1"></p>
+      </div>
+      <button onclick="closeDetail()" class="text-3xl font-bold leading-none">&times;</button>
+    </div>
+    <div id="detailContent" class="overflow-y-auto flex-1 p-4"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ==================================================================
+   CONFIGURACIÓN
+   ================================================================== */
+const CONFIG = {
+  // Pega aquí la URL /exec de tu Apps Script (la del archivo .gs).
+  // Mientras esté vacía, el CRM LEE desde el CSV pero NO puede guardar.
+  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzqLpVvvbf2EcoLnDSOdGvo-9AKTRtuATIr7OBja2u-ZYjD0pkAXgSZJjk7Ris1KwwpQw/exec',
+
+  // Respaldo de lectura (tu CSV publicado actual).
+  CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv',
+
+  ESTATUS_OPCIONES: ['Prospecto', 'En seguimiento', 'Cliente', 'No interesado', 'Descartado']
+};
+
+let allData = [], map, markersLayer, sortState = {};
+
+/* ==================================================================
+   UTILIDADES
+   ================================================================== */
+function isBackendOn(){ return /^https?:\/\//.test(CONFIG.WEB_APP_URL.trim()); }
+
+function getVal(row, name){
+  const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()));
+  const v = key ? row[key] : '';
+  return (v === null || v === undefined) ? '' : v.toString().trim();
+}
+
+function parseGPS(s){
+  if(!s || !s.includes(',')) return null;
+  const [a,b] = s.split(',');
+  const lat = parseFloat(a), lng = parseFloat(b);
+  return (isNaN(lat)||isNaN(lng)) ? null : [lat,lng];
+}
+
+// FIX: el potencial venía en 3 columnas separadas; aquí se unifica.
+function getPotencial(row){
+  const alto  = getVal(row,'Potencial del cliente [Alto');
+  const medio = getVal(row,'Potencial del cliente [Medio');
+  const base  = row['Potencial del cliente'] ? String(row['Potencial del cliente']).trim() : '';
+  if(alto)  return 'Alto';
+  if(medio) return 'Medio';
+  if(base && !base.includes('[')) return base;
+  return '';
+}
+
+function potColor(p){ return p==='Alto'?'#16a34a' : p==='Medio'?'#d97706' : p==='Bajo'?'#dc2626' : '#94a3b8'; }
+function potBadge(p){ const c=potColor(p); return `<span class="badge" style="background:${c}1a;color:${c}">${p||'—'}</span>`; }
+
+function estatusColor(s){
+  const t=(s||'').toLowerCase();
+  if(t.includes('cliente')) return '#16a34a';
+  if(t.includes('seguim'))  return '#2563eb';
+  if(t.includes('no')||t.includes('descart')) return '#dc2626';
+  return '#64748b';
+}
+function estatusBadge(s){ const c=estatusColor(s); return `<span class="badge" style="background:${c}1a;color:${c}">${s||'S/D'}</span>`; }
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function toast(msg, tipo='ok'){
+  const t=document.getElementById('toast');
+  t.style.background = tipo==='ok' ? '#16a34a' : tipo==='error' ? '#dc2626' : '#001529';
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._tT); window._tT=setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* ==================================================================
+   NAVEGACIÓN
+   ================================================================== */
+function switchView(v){
+  document.getElementById('homeView').style.display = (v==='home') ? 'flex' : 'none';
+  document.querySelectorAll('.view-section').forEach(s=>s.classList.remove('active-view'));
+  if(v!=='home') document.getElementById(v+'View').classList.add('active-view');
+  if(v==='map'){ if(!map) initMap(); setTimeout(()=>map.invalidateSize(),300); }
+  window.scrollTo(0,0);
+}
+function toggleMapList(){
+  document.querySelector('.sidebar-map').classList.toggle('open');
+  const b=document.querySelector('.btn-toggle-list');
+  b.innerHTML = b.innerHTML.includes('VER') ? '<i class="fas fa-times"></i> CERRAR' : '<i class="fas fa-list"></i> VER LISTA';
+}
+
+/* ==================================================================
+   CARGA DE DATOS
+   ================================================================== */
+async function loadData(){
+  if(isBackendOn()){
+    try{
+      const res = await fetch(CONFIG.WEB_APP_URL);
+      const json = await res.json();
+      allData = json.filter(r => r['Marca temporal']);
+      afterLoad(); return;
+    }catch(e){ console.warn('Falló lectura por Apps Script, uso CSV:', e); }
+  }
+  Papa.parse(CONFIG.CSV_URL, {
+    download:true, header:true,
+    complete: res => {
+      // _row = fila real en la hoja (encabezado + índice). Se calcula ANTES de filtrar.
+      res.data.forEach((r,i)=> r._row = i + 2);
+      allData = res.data.filter(r => r['Marca temporal']);
+      afterLoad();
+    },
+    error: () => { document.getElementById('loader').innerHTML =
+      '<p class="text-mostaza orb font-bold text-center px-6">No se pudo cargar la hoja.<br>Revisa tu conexión e intenta de nuevo.</p>'; }
+  });
+}
+function afterLoad(){
+  renderResumen();
+  renderListado(allData);
+  if(map) renderMapa();
+  document.getElementById('loader').style.display='none';
+}
+
+/* ==================================================================
+   RESUMEN
+   ================================================================== */
+function renderResumen(){
+  const c = document.getElementById('resumenContent');
+  const total = allData.length;
+  const byPot = {Alto:0,Medio:0,Bajo:0,'Sin definir':0};
+  allData.forEach(r=>{ const p=getPotencial(r); byPot[p||'Sin definir'] = (byPot[p||'Sin definir']||0)+1; });
+
+  const byZona = {};
+  allData.forEach(r=>{ const z=getVal(r,'Zona')||'Sin zona'; byZona[z]=(byZona[z]||0)+1; });
+  const zonas = Object.entries(byZona).sort((a,b)=>b[1]-a[1]);
+  const maxZ = Math.max(...zonas.map(z=>z[1]),1);
+
+  const byEst = {};
+  allData.forEach(r=>{ const s=getVal(r,'ESTATUS')||'Sin dato'; byEst[s]=(byEst[s]||0)+1; });
+
+  const conGps = allData.filter(r=>parseGPS(getVal(r,'GPS'))).length;
+
+  c.innerHTML = `
+    <div class="grid grid-cols-2 gap-3">
+      <div class="stat-card"><p class="stat-num">${total}</p><p class="text-xs font-bold text-slate-500 mt-1 uppercase">Prospectos</p></div>
+      <div class="stat-card" style="border-left-color:#16a34a"><p class="stat-num" style="color:#16a34a">${byPot.Alto||0}</p><p class="text-xs font-bold text-slate-500 mt-1 uppercase">Potencial alto</p></div>
     </div>
 
-    <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv';
-        let allData = [], map, markersLayer, sortDir = {};
+    <div class="stat-card">
+      <p class="sec-title" style="margin-top:0">Por estatus</p>
+      ${Object.entries(byEst).map(([k,v])=>`<div class="flex justify-between items-center py-1"><span>${estatusBadge(k)}</span><b class="orb">${v}</b></div>`).join('')}
+    </div>
 
-        function getVal(row, name) {
-            const key = Object.keys(row).find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()));
-            return key ? row[key].toString().trim() : "";
-        }
+    <div class="stat-card">
+      <p class="sec-title" style="margin-top:0">Por potencial</p>
+      ${['Alto','Medio','Bajo','Sin definir'].map(p=>{
+        const v=byPot[p]||0; const c2=potColor(p==='Sin definir'?'':p);
+        return `<div class="bar-row"><span class="text-xs font-bold" style="width:78px">${p}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${total?Math.max(v/total*100,v?12:0):0}%;background:${c2}">${v||''}</div></div></div>`;
+      }).join('')}
+    </div>
 
-        function parseGPS(gpsStr) {
-            if(!gpsStr || !gpsStr.includes(',')) return null;
-            const parts = gpsStr.split(',');
-            const lat = parseFloat(parts[0].trim());
-            const lng = parseFloat(parts[1].trim());
-            if(isNaN(lat) || isNaN(lng)) return null;
-            return [lat, lng];
-        }
+    <div class="stat-card">
+      <p class="sec-title" style="margin-top:0">Por zona</p>
+      ${zonas.map(([z,v])=>`<div class="bar-row"><span class="text-xs font-bold truncate" style="width:96px">${esc(z)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(v/maxZ*100,14)}%">${v}</div></div></div>`).join('')}
+    </div>
 
-        function switchView(v) {
-            document.getElementById('homeView').style.display = (v === 'home') ? 'flex' : 'none';
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
-            if(v !== 'home') document.getElementById(v + 'View').classList.add('active-view');
-            if(v === 'map') { if(!map) initMap(); setTimeout(() => map.invalidateSize(), 300); }
-            window.scrollTo(0,0);
-        }
+    <div class="stat-card" style="border-left-color:#1a73e8">
+      <p class="text-xs font-bold text-slate-500 uppercase">Con ubicación GPS</p>
+      <p class="stat-num" style="color:#1a73e8">${conGps} <span class="text-base text-slate-400">/ ${total}</span></p>
+    </div>`;
+}
 
-        function toggleMapList() {
-            document.querySelector('.sidebar-map').classList.toggle('open');
-            const btn = document.querySelector('.btn-toggle-list');
-            btn.innerHTML = btn.innerHTML.includes('VER') ? '<i class="fas fa-times"></i> CERRAR' : '<i class="fas fa-list"></i> VER LISTA';
-        }
+/* ==================================================================
+   LISTADO
+   ================================================================== */
+function renderListado(data){
+  const tb = document.getElementById('tableBody');
+  tb.innerHTML = data.length ? '' : `<tr><td colspan="5" class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta tu búsqueda.</td></tr>`;
+  data.forEach(row=>{
+    const tr=document.createElement('tr');
+    tr.className='row-card';
+    tr.onclick=()=>showDetail(row._row);
+    tr.innerHTML=`
+      <td class="text-marino font-black uppercase">${esc(getVal(row,'Nombre del negocio'))}</td>
+      <td class="text-blue-700 uppercase">${esc(getVal(row,'Impulsor de mercado'))}</td>
+      <td class="text-slate-500 uppercase">${esc(getVal(row,'Zona'))}</td>
+      <td>${estatusBadge(getVal(row,'ESTATUS'))}</td>
+      <td>${potBadge(getPotencial(row))}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function filterTable(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  renderListado(allData.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(q))));
+}
+function sortTable(col){
+  sortState[col]=!sortState[col];
+  const sorted=[...allData].sort((a,b)=>{
+    const v1=getVal(a,col), v2=getVal(b,col);
+    return sortState[col] ? v1.localeCompare(v2) : v2.localeCompare(v1);
+  });
+  renderListado(sorted);
+}
 
-        function loadData() {
-            Papa.parse(CSV_URL, {
-                download: true, header: true,
-                complete: function(res) {
-                    allData = res.data.filter(r => r['Marca temporal']);
-                    renderAll();
-                }
-            });
-        }
+/* ==================================================================
+   FICHA + SEGUIMIENTO CRM
+   ================================================================== */
+function findByRow(row){ return allData.find(r=>r._row===row); }
 
-        function renderAll() {
-            renderBonificaciones();
-            renderListado(allData);
-            if(map) renderMapa();
-        }
+function showDetail(rowNum){
+  const r = findByRow(rowNum);
+  if(!r) return;
+  document.getElementById('fichaNombre').textContent = getVal(r,'Nombre del negocio') || 'Prospecto';
+  const cod = getVal(r,'Codigo Cliente');
+  document.getElementById('fichaCodigo').textContent = cod ? ('Cód. cliente: '+cod) : 'Sin código de cliente';
 
-        function renderBonificaciones() {
-            const container = document.getElementById('comisionesContainer');
-            container.innerHTML = '';
-            const meses = ["Enero", "Febrero", "Marzo"];
-            const impulsores = ["Marco A. Hernández", "Josue Jimárez"];
-            meses.forEach(mes => {
-                let html = `<div class="bg-marino text-mostaza p-2 font-black text-center rounded shadow uppercase italic tracking-widest">${mes}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 mb-8">`;
-                impulsores.forEach(imp => {
-                    const filtrados = allData.filter(r => getVal(r, "Impulsor de mercado") === imp && getVal(r, "Mes correspondiente").toLowerCase().includes(mes.toLowerCase()));
-                    html += `<div class="bg-white p-6 border-l-[10px] border-marino rounded-2xl shadow-lg flex justify-between items-center"><div><p class="text-[10px] text-slate-400 font-bold uppercase mb-2 italic">${imp}</p><p class="text-4xl font-black text-emerald-600">$${filtrados.length * 20}</p></div><div class="flex flex-col items-center"><div class="badge-count font-black">${filtrados.length}</div><p class="text-[10px] font-black mt-2 text-blue-700 uppercase">Hechos</p></div></div>`;
-                });
-                container.innerHTML += html + `</div>`;
-            });
-        }
+  const gps = getVal(r,'GPS');
+  const campos = [
+    ['Impulsor', getVal(r,'Impulsor de mercado')],
+    ['Zona', getVal(r,'Zona')],
+    ['Día de visita', getVal(r,'Dia de visita')],
+    ['Encargado / Dueño', getVal(r,'encargado')],
+    ['Dirección', getVal(r,'Dirección completa')],
+    ['Giro', getVal(r,'Giro del negocio')],
+    ['Teléfono', getVal(r,'Teléfono')],
+    ['Correo', getVal(r,'Correo')],
+  ];
+  const compra = [
+    ['Acumuladores', getVal(r,'¿Compra acumuladores'), getVal(r,'marca de acumuladores')],
+    ['Lubricantes', getVal(r,'¿Compra lubricantes'), getVal(r,'marca de lubricante')],
+    ['Motobaterías', getVal(r,'¿Compra motobaterías'), getVal(r,'marca de motobatería')],
+    ['Filtros', getVal(r,'¿Compra filtros'), getVal(r,'marca de filtros')],
+    ['Llantas', getVal(r,'¿Compra llanta'), getVal(r,'marca de llanta')],
+  ];
 
-        function renderListado(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            data.forEach((row) => {
-                const tr = document.createElement('tr');
-                tr.className = "text-[11px] font-bold border-b active:bg-yellow-50";
-                tr.onclick = () => showDetail(allData.indexOf(row));
-                tr.innerHTML = `
-                    <td class="p-3 border">${row['Marca temporal'] ? row['Marca temporal'].split(' ')[0] : '-'}</td>
-                    <td class="p-3 border text-marino uppercase font-black">${getVal(row, "Nombre del negocio")}</td>
-                    <td class="p-3 border uppercase text-blue-700">${getVal(row, "Impulsor de mercado")}</td>
-                    <td class="p-3 border">${getVal(row, "ESTATUS") || 'S/D'}</td>
-                    <td class="p-3 border uppercase text-slate-500">${getVal(row, "Zona")}</td>
-                    <td class="p-3 border italic">${getVal(row, "interés")}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
+  let html = '';
 
-        function filterTable() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allData.filter(r => Object.values(r).some(v => v.toString().toLowerCase().includes(term)));
-            renderListado(filtered);
-        }
+  if(parseGPS(gps)){
+    html += `<button class="btn-gmaps mb-4" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gps)}','_blank')">
+      <i class="fas fa-directions text-lg"></i> IR AL CLIENTE (GPS)</button>`;
+  }
 
-        function sortTable(idx) {
-            sortDir[idx] = !sortDir[idx];
-            const keys = ["Marca temporal", "Nombre del negocio", "Impulsor de mercado", "ESTATUS", "Zona", "interés"];
-            const sorted = [...allData].sort((a, b) => {
-                let v1 = getVal(a, keys[idx]), v2 = getVal(b, keys[idx]);
-                return sortDir[idx] ? v1.localeCompare(v2) : v2.localeCompare(v1);
-            });
-            renderListado(sorted);
-        }
+  // ESTATUS editable
+  const estActual = getVal(r,'ESTATUS');
+  html += `<p class="sec-title" style="margin-top:4px">Estatus del prospecto</p>
+    <select class="status-select" onchange="guardar(${r._row}, 'ESTATUS', this.value, this)">
+      ${CONFIG.ESTATUS_OPCIONES.map(o=>`<option ${o.toLowerCase()===estActual.toLowerCase()?'selected':''}>${o}</option>`).join('')}
+      ${estActual && !CONFIG.ESTATUS_OPCIONES.map(x=>x.toLowerCase()).includes(estActual.toLowerCase())?`<option selected>${esc(estActual)}</option>`:''}
+    </select>`;
 
-        function showDetail(i) {
-            const r = allData[i];
-            const content = document.getElementById('detailContent');
-            const gps = getVal(r, "GPS");
-            const campos = ["Impulsor de mercado", "Dia de visita", "Zona", "Nombre del negocio", "Nombre del encargado / Dueño", "Dirección completa.", "Giro del negocio", "Teléfono", "Correo electrónico", "¿Compra acumuladores?", "¿Qué marca de acumuladores?", "¿Compra lubricantes?", "¿Qué marca de lubricante?", "¿Compra motobaterías?", "¿Qué marca de motobatería?", "¿Compra filtros?", "¿Qué marca de filtros?", "¿Compra llanta?", "¿Qué marca de llanta?", "Observaciones / Información adicional.", "¿Qué nivel de interés mostró el cliente?", "¿Le distribuye la competencia?", "ESTATUS", "VISITAS"];
-            let html = campos.map(c => `<div class="field-card"><p class="text-[9px] text-slate-400 font-black uppercase">${c}</p><p class="text-[13px] font-black text-marino leading-none">${getVal(r, c) || '---'}</p></div>`).join('');
-            if(gps && gps.includes(',')) {
-                html = `<button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${gps.trim()}', '_blank')" class="btn-google-maps w-full justify-center py-3 mb-4"><i class="fas fa-directions text-lg"></i> IR AL CLIENTE CON GPS</button>` + html;
-            }
-            content.innerHTML = html;
-            document.getElementById('detailPanel').classList.add('panel-open');
-        }
+  // Datos generales
+  html += `<p class="sec-title">Datos generales</p>` +
+    campos.map(([k,v])=>`<div class="field"><p class="k">${k}</p><p class="v">${esc(v)||'—'}</p></div>`).join('');
 
-        function initMap() {
-            map = L.map('map', {zoomControl: false}).setView([20.10, -98.75], 10);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-            L.control.zoom({position: 'bottomright'}).addTo(map);
-            markersLayer = L.layerGroup().addTo(map);
-            renderMapa();
-        }
+  // Perfil de compra
+  html += `<p class="sec-title">Perfil de compra</p>` +
+    compra.map(([k,si,marca])=>{
+      const compra_ok=/s[ií]|x|verdad|true/i.test(si);
+      return `<div class="field"><p class="k">${k} ${compra_ok?'✅':''}</p><p class="v">${esc(si)||'—'}${marca?` · <span class="text-blue-700">${esc(marca)}</span>`:''}</p></div>`;
+    }).join('');
 
-        function renderMapa() {
-            markersLayer.clearLayers();
-            const sidebar = document.getElementById('mapListContainer');
-            sidebar.innerHTML = '<div class="p-4 bg-marino text-mostaza font-black text-center text-xs border-b-2 border-mostaza">ZONAS</div>';
-            const zonas = [...new Set(allData.map(r => getVal(r, "Zona")).filter(z => z))];
-            
-            zonas.forEach(z => {
-                const pros = allData.filter(r => getVal(r, "Zona") === z);
-                sidebar.innerHTML += `<div class="bg-slate-100 text-marino p-2 px-4 font-black text-xs uppercase border-y flex justify-between"><span>${z}</span><span class="bg-marino text-white px-2 rounded-full">${pros.length}</span></div>`;
-                
-                pros.forEach(row => {
-                    const gpsRaw = getVal(row, "GPS");
-                    const coords = parseGPS(gpsRaw);
-                    const nombre = getVal(row, "Nombre del negocio");
-                    const impulsor = getVal(row, "Impulsor de mercado") || "S/A";
-                    
-                    if(coords) {
-                        const marker = L.circleMarker(coords, { 
-                            radius: 10, fillColor: "#ff0000", color: "#fff", weight: 2, fillOpacity: 1 
-                        }).addTo(markersLayer);
-                        
-                        const popupContent = `
-                            <div class="p-1">
-                                <div class="popup-title">${nombre}</div>
-                                <div class="popup-vendedor">Resp: ${impulsor}</div>
-                                <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${gpsRaw.trim()}', '_blank')" class="btn-google-maps w-full justify-center">
-                                    <i class="fas fa-location-arrow"></i> IR AHORA
-                                </button>
-                            </div>
-                        `;
-                        marker.bindPopup(popupContent);
-                    }
-                    
-                    sidebar.innerHTML += `
-                    <div class="p-3 px-6 border-b flex justify-between items-center">
-                        <div class="text-[10px] font-black uppercase text-slate-600 cursor-pointer" onclick="focusOnMap('${gpsRaw}')">${nombre}</div>
-                    </div>`;
-                });
-            });
-        }
+  // Competencia + potencial
+  html += `<p class="sec-title">Competencia y potencial</p>
+    <div class="field"><p class="k">¿Le distribuye la competencia?</p><p class="v">${esc(getVal(r,'¿Le distribuye la competencia'))||'—'}</p></div>
+    <div class="field"><p class="k">Líneas de la competencia</p><p class="v">${esc(getVal(r,'líneas de producto'))||'—'}</p></div>
+    <div class="field"><p class="k">Distribuidor comercial</p><p class="v">${esc(getVal(r,'Distribuidor Comercial'))||'—'}</p></div>
+    <div class="field"><p class="k">Nivel de interés</p><p class="v">${esc(getVal(r,'nivel de interés'))||'—'}</p></div>
+    <div class="field"><p class="k">Potencial</p><p class="v">${potBadge(getPotencial(r))}</p></div>`;
 
-        function focusOnMap(gps) {
-            const coords = parseGPS(gps);
-            if(!coords) return;
-            map.flyTo(coords, 16);
-            if(window.innerWidth <= 768) toggleMapList();
-        }
+  // Observaciones
+  const obs=getVal(r,'Observaciones');
+  if(obs) html += `<p class="sec-title">Observaciones</p><div class="field"><p class="v">${esc(obs)}</p></div>`;
 
-        function closeDetail() { document.getElementById('detailPanel').classList.remove('panel-open'); }
-        window.onload = loadData;
-    </script>
+  // SEGUIMIENTO POR VISITA (CRM)
+  html += `<p class="sec-title">Seguimiento por visita ${isBackendOn()?'':'<span class="text-red-500 text-[9px]">(configura Apps Script para guardar)</span>'}</p>`;
+  for(let n=1;n<=5;n++){
+    const val = getVal(r,'VISITA '+n);
+    html += `
+      <div class="visita-card ${val?'tiene':''}">
+        <div class="flex items-center justify-between">
+          <span class="visita-label"><i class="fas fa-${val?'check-circle text-green-600':'circle-notch'} mr-1"></i>Visita ${n}</span>
+          ${val?'<span class="text-[10px] font-bold text-green-600">REGISTRADA</span>':'<span class="text-[10px] font-bold text-slate-400">PENDIENTE</span>'}
+        </div>
+        <textarea id="v${n}_${r._row}" class="visita-txt" placeholder="Comentario de la visita ${n}…">${esc(val)}</textarea>
+        <div class="flex gap-2 mt-2">
+          <button class="btn-mic" onclick="dictar('v${n}_${r._row}', this)"><i class="fas fa-microphone"></i></button>
+          <button class="btn-save" onclick="guardarVisita(${r._row}, ${n}, this)"><i class="fas fa-save mr-1"></i>Guardar visita ${n}</button>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('detailContent').innerHTML = html;
+  document.getElementById('detailContent').scrollTop = 0;
+  document.getElementById('detailPanel').classList.add('panel-open');
+}
+function closeDetail(){ document.getElementById('detailPanel').classList.remove('panel-open'); }
+
+/* ==================================================================
+   GUARDADO (Apps Script)
+   ================================================================== */
+async function guardar(row, columna, valor, el){
+  if(!isBackendOn()){ toast('Configura el Apps Script para guardar', 'error'); return false; }
+  if(el){ el.disabled=true; }
+  try{
+    await fetch(CONFIG.WEB_APP_URL, {
+      method:'POST', redirect:'follow',
+      body: JSON.stringify({ row, columna, valor })   // sin headers => evita preflight CORS
+    });
+    // Actualiza copia local para que se refleje sin recargar
+    const rec = findByRow(row);
+    if(rec){ const key=Object.keys(rec).find(k=>k.trim()===columna) || columna; rec[key]=valor; }
+    toast('Guardado ✓', 'ok');
+    renderListado(allData); if(map) renderMapa(); renderResumen();
+    return true;
+  }catch(e){
+    console.error(e); toast('No se pudo guardar. Revisa tu conexión.', 'error'); return false;
+  }finally{ if(el) el.disabled=false; }
+}
+
+async function guardarVisita(row, n, btn){
+  const ta = document.getElementById('v'+n+'_'+row);
+  const val = ta.value.trim();
+  btn.disabled=true; const orig=btn.innerHTML; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Guardando…';
+  const ok = await guardar(row, 'VISITA '+n, val, null);
+  btn.disabled=false; btn.innerHTML=orig;
+  if(ok){
+    const card=btn.closest('.visita-card');
+    if(val){ card.classList.add('tiene'); } else { card.classList.remove('tiene'); }
+  }
+}
+
+/* Dictado por voz (es-MX) */
+let recog=null;
+function dictar(taId, btn){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('Tu navegador no soporta dictado', 'error'); return; }
+  if(recog){ recog.stop(); recog=null; btn.classList.remove('rec'); return; }
+  recog = new SR(); recog.lang='es-MX'; recog.continuous=true; recog.interimResults=false;
+  const ta=document.getElementById(taId);
+  btn.classList.add('rec');
+  recog.onresult = e=>{ for(let i=e.resultIndex;i<e.results.length;i++){ if(e.results[i].isFinal){ ta.value += (ta.value?' ':'') + e.results[i][0].transcript.trim(); } } };
+  recog.onend = ()=>{ btn.classList.remove('rec'); recog=null; };
+  recog.onerror = ()=>{ btn.classList.remove('rec'); recog=null; };
+  recog.start();
+}
+
+/* ==================================================================
+   MAPA
+   ================================================================== */
+function initMap(){
+  map = L.map('map',{zoomControl:false}).setView([20.10,-98.75],10);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+  renderMapa();
+}
+function renderMapa(){
+  markersLayer.clearLayers();
+  const sb=document.getElementById('mapListContainer');
+  sb.innerHTML='<div class="p-3 bg-marino text-mostaza orb font-black text-center text-xs border-b-2 border-mostaza">ZONAS · COLOR = POTENCIAL</div>';
+  const zonas=[...new Set(allData.map(r=>getVal(r,'Zona')).filter(Boolean))];
+
+  zonas.forEach(z=>{
+    const pros=allData.filter(r=>getVal(r,'Zona')===z);
+    sb.innerHTML += `<div class="bg-slate-100 text-marino p-2 px-4 font-black text-xs uppercase border-y flex justify-between"><span>${esc(z)}</span><span class="bg-marino text-white px-2 rounded-full">${pros.length}</span></div>`;
+    pros.forEach(row=>{
+      const gpsRaw=getVal(row,'GPS'); const coords=parseGPS(gpsRaw);
+      const nombre=getVal(row,'Nombre del negocio'); const pot=getPotencial(row);
+      if(coords){
+        const m=L.circleMarker(coords,{radius:10,fillColor:potColor(pot),color:'#fff',weight:2,fillOpacity:1}).addTo(markersLayer);
+        m.bindPopup(`<div class="p-1">
+          <div class="popup-title">${esc(nombre)}</div>
+          <div class="popup-sub">${esc(getVal(row,'Impulsor de mercado')||'S/A')} · ${pot||'S/P'}</div>
+          <button onclick="showDetail(${row._row})" class="btn-gmaps" style="padding:7px;margin-bottom:5px"><i class="fas fa-folder-open"></i> Abrir ficha</button>
+          <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gpsRaw)}','_blank')" class="btn-gmaps" style="padding:7px;background:#16a34a"><i class="fas fa-location-arrow"></i> Ir ahora</button>
+        </div>`);
+      }
+      sb.innerHTML += `<div class="p-3 px-6 border-b flex justify-between items-center gap-2" onclick="focusOnMap('${esc(gpsRaw)}', ${row._row})">
+        <span class="text-[11px] font-black uppercase text-slate-600 truncate">${esc(nombre)}</span>
+        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${potColor(pot)}"></span></div>`;
+    });
+  });
+}
+function focusOnMap(gps,row){
+  const coords=parseGPS(gps);
+  if(coords){ map.flyTo(coords,16); if(window.innerWidth<=768) toggleMapList(); }
+  else if(row){ showDetail(row); }
+}
+
+window.onload = loadData;
+</script>
 </body>
 </html>
