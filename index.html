@@ -61,7 +61,10 @@
   .search-input { width:100%; padding:13px 16px; border-radius:12px; border:3px solid var(--mostaza); font-family:Arial, Helvetica, sans-serif;
     font-weight:700; font-size:14px; outline:none; }
 
-  /* LISTADO EN TARJETAS */
+  /* FILTROS + LISTADO EN TARJETAS */
+  .filter-bar { display:flex; gap:7px; padding:10px 12px 0; flex-wrap:wrap; }
+  .filter-bar select { flex:1 1 30%; min-width:108px; padding:9px 8px; border-radius:10px; border:2px solid #cbd5e1; background:#fff;
+    font-family:inherit; font-weight:700; font-size:12px; color:var(--marino); }
   .plist { padding:10px; display:flex; flex-direction:column; gap:8px; }
   .pcount { padding:8px 12px 0; color:#64748b; font-size:11px; font-weight:700; }
   .pcard { background:#fff; border-radius:12px; padding:11px 13px; box-shadow:0 2px 8px rgba(0,21,41,.07); border-left:5px solid var(--marino); }
@@ -193,7 +196,19 @@
     <span class="title">Prospectos</span>
   </div>
   <div class="search-wrap">
-    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Negocio, impulsor, zona, estatus…" onkeyup="filterTable()">
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Negocio, impulsor, zona, estatus…" onkeyup="applyFilters()">
+  </div>
+  <div class="filter-bar">
+    <select id="fVendedor" onchange="applyFilters()"></select>
+    <select id="fZona" onchange="applyFilters()"></select>
+    <select id="fOrden" onchange="applyFilters()">
+      <option value="az">Nombre A → Z</option>
+      <option value="za">Nombre Z → A</option>
+      <option value="vmas">Más visitas primero</option>
+      <option value="vmenos">Menos visitas primero</option>
+      <option value="potalto">Mayor potencial</option>
+      <option value="zona">Agrupar por zona</option>
+    </select>
   </div>
   <div id="pcount" class="pcount"></div>
   <div id="listContainer" class="plist"></div>
@@ -235,7 +250,7 @@
 const CONFIG = {
   // Pega aquí la URL /exec de tu Apps Script (la del archivo .gs).
   // Mientras esté vacía, el CRM LEE desde el CSV pero NO puede guardar.
-  WEB_APP_URL: '',
+  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzqLpVvvbf2EcoLnDSOdGvo-9AKTRtuATIr7OBja2u-ZYjD0pkAXgSZJjk7Ris1KwwpQw/exec',
 
   // Respaldo de lectura (tu CSV publicado actual).
   CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv',
@@ -322,15 +337,7 @@ function toggleMapList(){
 /* ==================================================================
    CARGA DE DATOS
    ================================================================== */
-async function loadData(){
-  if(isBackendOn()){
-    try{
-      const res = await fetch(CONFIG.WEB_APP_URL);
-      const json = await res.json();
-      allData = json.filter(r => r['Marca temporal']);
-      afterLoad(); return;
-    }catch(e){ console.warn('Falló lectura por Apps Script, uso CSV:', e); }
-  }
+function loadData(){
   Papa.parse(CONFIG.CSV_URL, {
     download:true, header:true,
     complete: res => {
@@ -345,8 +352,9 @@ async function loadData(){
 }
 function afterLoad(){
   buildVendorColors();
+  populateFilters();
   renderResumen();
-  renderListado(allData);
+  applyFilters();
   if(map) renderMapa();
   document.getElementById('loader').style.display='none';
 }
@@ -430,17 +438,51 @@ function renderListado(data){
     </div>`;
   }).join('');
 }
-function filterTable(){
-  const q=document.getElementById('searchInput').value.toLowerCase();
-  renderListado(allData.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(q))));
+function populateFilters(){
+  const vSel=document.getElementById('fVendedor'), zSel=document.getElementById('fZona');
+  const vendors=[...new Set(allData.map(r=>getVal(r,'Impulsor de mercado')).filter(Boolean))].sort();
+  const zonas=[...new Set(allData.map(r=>getVal(r,'Zona')).filter(Boolean))].sort();
+  const sinAsignar = allData.filter(r=>!getVal(r,'Impulsor de mercado')).length;
+
+  vSel.innerHTML =
+      `<option value="__all">👥 Todos los vendedores</option>`
+    + `<option value="__asig">✅ Asignados</option>`
+    + (sinAsignar? `<option value="__sin">⚠️ Sin asignar (${sinAsignar})</option>` : '')
+    + vendors.map(v=>`<option value="v:${esc(v)}">${esc(v)}</option>`).join('');
+
+  zSel.innerHTML = `<option value="__all">📍 Todas las zonas</option>`
+    + zonas.map(z=>`<option value="${esc(z)}">${esc(z)}</option>`).join('');
 }
-function sortTable(col){
-  sortState[col]=!sortState[col];
-  const sorted=[...allData].sort((a,b)=>{
-    const v1=getVal(a,col), v2=getVal(b,col);
-    return sortState[col] ? v1.localeCompare(v2) : v2.localeCompare(v1);
+
+function applyFilters(){
+  const q=(document.getElementById('searchInput').value||'').toLowerCase();
+  const fv=document.getElementById('fVendedor').value;
+  const fz=document.getElementById('fZona').value;
+  const orden=document.getElementById('fOrden').value;
+
+  let list=allData.filter(r=>{
+    if(q && !Object.values(r).some(v=>String(v).toLowerCase().includes(q))) return false;
+    const vend=getVal(r,'Impulsor de mercado');
+    if(fv==='__asig' && !vend) return false;
+    if(fv==='__sin' && vend) return false;
+    if(fv.startsWith('v:') && vend !== fv.slice(2)) return false;
+    if(fz!=='__all' && getVal(r,'Zona')!==fz) return false;
+    return true;
   });
-  renderListado(sorted);
+
+  const vc = r => { let n=0; for(let i=1;i<=5;i++) if(getVal(r,'VISITA '+i)) n++; return n; };
+  const pr = r => ({Alto:3,Medio:2,Bajo:1}[getPotencial(r)] || 0);
+  const nm = r => getVal(r,'Nombre del negocio').toLowerCase();
+  const sorters = {
+    az:     (a,b)=> nm(a).localeCompare(nm(b)),
+    za:     (a,b)=> nm(b).localeCompare(nm(a)),
+    vmas:   (a,b)=> vc(b)-vc(a) || nm(a).localeCompare(nm(b)),
+    vmenos: (a,b)=> vc(a)-vc(b) || nm(a).localeCompare(nm(b)),
+    potalto:(a,b)=> pr(b)-pr(a) || nm(a).localeCompare(nm(b)),
+    zona:   (a,b)=> getVal(a,'Zona').localeCompare(getVal(b,'Zona')) || nm(a).localeCompare(nm(b)),
+  };
+  if(sorters[orden]) list.sort(sorters[orden]);
+  renderListado(list);
 }
 
 /* ==================================================================
@@ -544,21 +586,22 @@ function closeDetail(){ document.getElementById('detailPanel').classList.remove(
    GUARDADO (Apps Script)
    ================================================================== */
 async function guardar(row, columna, valor, el){
-  if(!isBackendOn()){ toast('Configura el Apps Script para guardar', 'error'); return false; }
+  if(!isBackendOn()){ toast('Falta pegar la URL del Apps Script (ver instrucciones)', 'error'); return false; }
   if(el){ el.disabled=true; }
   try{
     await fetch(CONFIG.WEB_APP_URL, {
-      method:'POST', redirect:'follow',
-      body: JSON.stringify({ row, columna, valor })   // sin headers => evita preflight CORS
+      method:'POST',
+      mode:'no-cors',                 // clave para que GitHub Pages pueda escribir en Apps Script
+      body: JSON.stringify({ row, columna, valor })
     });
-    // Actualiza copia local para que se refleje sin recargar
+    // Con no-cors la respuesta es opaca: asumimos éxito y lo reflejamos en pantalla
     const rec = findByRow(row);
     if(rec){ const key=Object.keys(rec).find(k=>k.trim()===columna) || columna; rec[key]=valor; }
     toast('Guardado ✓', 'ok');
-    renderListado(allData); if(map) renderMapa(); renderResumen();
+    applyFilters(); if(map) renderMapa(); renderResumen();
     return true;
   }catch(e){
-    console.error(e); toast('No se pudo guardar. Revisa tu conexión.', 'error'); return false;
+    console.error(e); toast('Sin conexión. Intenta de nuevo.', 'error'); return false;
   }finally{ if(el) el.disabled=false; }
 }
 
