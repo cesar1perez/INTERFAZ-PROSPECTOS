@@ -12,27 +12,26 @@
   tailwind.config = {
     theme: { extend: {
       colors: { marino: '#001529', mostaza: '#facc15' },
-      fontFamily: { orbitron: ['Orbitron','sans-serif'], mono: ['JetBrains Mono','monospace'] }
+      fontFamily: { orbitron: [Arial, Helvetica, sans-serif,'sans-serif'], mono: [Arial, Helvetica, sans-serif,'monospace'] }
     }}
   };
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
   :root { --marino:#001529; --mostaza:#facc15; --marino2:#012a4a; }
   * { -webkit-tap-highlight-color: transparent; }
-  body { font-family:'JetBrains Mono',monospace; background:#eef2f7; color:#0f172a; overflow-x:hidden; }
-  .orb { font-family:'Orbitron',sans-serif; }
+  body { font-family:Arial, Helvetica, sans-serif; background:#eef2f7; color:#0f172a; overflow-x:hidden; }
+  .orb { font-family:Arial, Helvetica, sans-serif; }
 
   /* HOME */
   .home-container { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:radial-gradient(circle at 50% 0%, var(--marino2), var(--marino) 70%); position:fixed; inset:0; z-index:1000; padding:20px; }
   .logo-ll { width:104px; height:104px; border:5px solid var(--mostaza); display:flex; align-items:center; justify-content:center;
     border-radius:26px; box-shadow:0 0 40px rgba(250,204,21,.25); }
-  .logo-ll span { color:var(--mostaza); font-size:58px; font-style:italic; font-weight:900; font-family:'Orbitron'; }
+  .logo-ll span { color:var(--mostaza); font-size:58px; font-style:italic; font-weight:900; font-family:Arial, Helvetica, sans-serif; }
 
   .btn-main { background:#fff; padding:20px; border-radius:18px; width:300px; max-width:88vw; display:flex; align-items:center; gap:18px;
     margin-bottom:14px; box-shadow:0 8px 0 #00060f; transition:.08s; border:none; }
@@ -47,24 +46,48 @@
   .active-view { display:block !important; }
   .header-app { background:var(--marino); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:14px;
     border-bottom:4px solid var(--mostaza); position:sticky; top:0; z-index:500; }
-  .header-app .title { font-family:'Orbitron'; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:1px; }
+  .header-app .title { font-family:Arial, Helvetica, sans-serif; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:1px; }
   .btn-inicio { background:var(--mostaza); color:var(--marino); padding:9px 16px; border-radius:11px; font-weight:800; font-size:12px; border:none; }
 
   /* RESUMEN */
-  .stat-card { background:#fff; border-radius:16px; padding:16px; box-shadow:0 4px 16px rgba(0,21,41,.08); border-left:8px solid var(--marino); }
-  .stat-num { font-family:'Orbitron'; font-weight:900; font-size:34px; color:var(--marino); line-height:1; }
+  .stat-card { background:#fff; border-radius:14px; padding:12px; box-shadow:0 3px 12px rgba(0,21,41,.08); border-left:8px solid var(--marino); }
+  .stat-num { font-family:Arial, Helvetica, sans-serif; font-weight:900; font-size:26px; color:var(--marino); line-height:1; }
   .bar-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
   .bar-track { flex:1; height:22px; background:#e2e8f0; border-radius:6px; overflow:hidden; }
   .bar-fill { height:100%; background:var(--marino); display:flex; align-items:center; padding-left:8px; color:#fff; font-weight:800; font-size:11px; }
 
   /* BUSCADOR (FIX: antes no tenía estilos) */
-  .search-wrap { padding:12px 14px; background:var(--marino); position:sticky; top:60px; z-index:400; }
-  .search-input { width:100%; padding:13px 16px; border-radius:12px; border:3px solid var(--mostaza); font-family:'JetBrains Mono';
+  .search-wrap { padding:12px 14px; background:var(--marino); }
+  .search-input { width:100%; padding:13px 16px; border-radius:12px; border:3px solid var(--mostaza); font-family:Arial, Helvetica, sans-serif;
     font-weight:700; font-size:14px; outline:none; }
+
+  /* LISTADO EN TARJETAS */
+  .plist { padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .pcount { padding:8px 12px 0; color:#64748b; font-size:11px; font-weight:700; }
+  .pcard { background:#fff; border-radius:12px; padding:11px 13px; box-shadow:0 2px 8px rgba(0,21,41,.07); border-left:5px solid var(--marino); }
+  .pcard:active { background:#fffbeb; }
+  .pcard-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .pcard-name { font-weight:800; font-size:13px; color:var(--marino); text-transform:uppercase; line-height:1.15; }
+  .pcard-sub { font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
+  .pcard-bottom { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:9px; }
+  .vpills { display:flex; gap:4px; }
+  .vpill { width:23px; height:23px; border-radius:7px; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center;
+    border:2px solid #cbd5e1; color:#94a3b8; background:#fff; }
+  .vpill.on { background:#16a34a; border-color:#16a34a; color:#fff; }
+
+  /* MAPA: leyenda + acordeón de zonas */
+  .legend { padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px 12px; background:#fff; border-bottom:3px solid var(--mostaza); position:sticky; top:0; z-index:2; }
+  .legend .chip { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:800; color:#334155; text-transform:uppercase; }
+  .legend .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+  .zona-head { width:100%; background:#f1f5f9; color:var(--marino); padding:12px 14px; font-weight:800; font-size:12px; text-transform:uppercase;
+    border:none; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  .zona-head:active { background:#e2e8f0; }
+  .zona-body { display:none; }
+  .zona-body.open { display:block; }
 
   /* TABLA */
   table { border-collapse:separate; border-spacing:0; }
-  th { background:var(--marino); color:var(--mostaza); font-family:'Orbitron'; font-size:10px; text-transform:uppercase; letter-spacing:.5px;
+  th { background:var(--marino); color:var(--mostaza); font-family:Arial, Helvetica, sans-serif; font-size:10px; text-transform:uppercase; letter-spacing:.5px;
     padding:12px 8px; cursor:pointer; position:sticky; top:112px; z-index:300; user-select:none; }
   th:hover { background:var(--marino2); }
   .row-card td { padding:12px 8px; font-size:12px; font-weight:600; border-bottom:1px solid #e2e8f0; }
@@ -85,7 +108,7 @@
     .btn-toggle-list { display:block !important; }
   }
   .leaflet-popup-content-wrapper { border-radius:12px; border:2px solid var(--marino); }
-  .popup-title { font-family:'Orbitron'; font-size:12px; font-weight:800; color:var(--marino); text-transform:uppercase; text-align:center; }
+  .popup-title { font-family:Arial, Helvetica, sans-serif; font-size:12px; font-weight:800; color:var(--marino); text-transform:uppercase; text-align:center; }
   .popup-sub { font-size:10px; font-weight:700; color:#64748b; text-align:center; margin:2px 0 8px; border-bottom:1px solid #eee; padding-bottom:4px; }
 
   /* PANEL FICHA / CRM */
@@ -93,8 +116,8 @@
     transform:translateX(100%); transition:.35s cubic-bezier(.4,0,.2,1); border-left:8px solid var(--mostaza); box-shadow:-12px 0 44px rgba(0,0,0,.4); }
   .panel-open { transform:translateX(0) !important; }
   .panel-head { background:var(--marino); color:#fff; padding:16px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
-  .panel-head h2 { font-family:'Orbitron'; font-weight:800; font-size:16px; text-transform:uppercase; line-height:1.15; }
-  .sec-title { font-family:'Orbitron'; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--marino);
+  .panel-head h2 { font-family:Arial, Helvetica, sans-serif; font-weight:800; font-size:16px; text-transform:uppercase; line-height:1.15; }
+  .sec-title { font-family:Arial, Helvetica, sans-serif; font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--marino);
     margin:18px 0 8px; padding-bottom:5px; border-bottom:2px solid var(--mostaza); }
   .field { padding:7px 0; border-bottom:1px solid #e6ebf2; }
   .field .k { font-size:9px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
@@ -102,8 +125,8 @@
 
   .visita-card { background:#fff; border-radius:14px; padding:12px; margin-bottom:12px; box-shadow:0 3px 10px rgba(0,21,41,.07); border-left:6px solid var(--marino); }
   .visita-card.tiene { border-left-color:#16a34a; }
-  .visita-label { font-family:'Orbitron'; font-weight:800; font-size:12px; color:var(--marino); text-transform:uppercase; }
-  .visita-txt { width:100%; min-height:62px; border:2px solid #e2e8f0; border-radius:10px; padding:9px; font-family:'JetBrains Mono';
+  .visita-label { font-family:Arial, Helvetica, sans-serif; font-weight:800; font-size:12px; color:var(--marino); text-transform:uppercase; }
+  .visita-txt { width:100%; min-height:62px; border:2px solid #e2e8f0; border-radius:10px; padding:9px; font-family:Arial, Helvetica, sans-serif;
     font-size:13px; font-weight:600; resize:vertical; outline:none; margin-top:6px; }
   .visita-txt:focus { border-color:var(--mostaza); }
   .btn-mic, .btn-save { border:none; border-radius:10px; padding:9px 12px; font-weight:800; font-size:12px; cursor:pointer; }
@@ -116,7 +139,7 @@
   .btn-gmaps { background:#1a73e8; color:#fff; padding:12px; border-radius:12px; font-weight:800; font-size:13px; border:none;
     width:100%; display:flex; align-items:center; justify-content:center; gap:8px; }
 
-  .status-select { width:100%; padding:11px; border-radius:11px; border:3px solid var(--marino); font-family:'JetBrains Mono';
+  .status-select { width:100%; padding:11px; border-radius:11px; border:3px solid var(--marino); font-family:Arial, Helvetica, sans-serif;
     font-weight:800; font-size:14px; background:#fff; color:var(--marino); }
 
   /* TOAST */
@@ -160,7 +183,7 @@
     <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
     <span class="title">Resumen</span>
   </div>
-  <div id="resumenContent" class="p-4 space-y-5"></div>
+  <div id="resumenContent" class="p-3 space-y-3"></div>
 </section>
 
 <!-- LISTADO -->
@@ -172,18 +195,8 @@
   <div class="search-wrap">
     <input type="text" id="searchInput" class="search-input" placeholder="🔍 Negocio, impulsor, zona, estatus…" onkeyup="filterTable()">
   </div>
-  <div class="overflow-x-auto">
-    <table class="w-full bg-white">
-      <thead><tr>
-        <th onclick="sortTable('Nombre del negocio')">Negocio</th>
-        <th onclick="sortTable('Impulsor de mercado')">Impulsor</th>
-        <th onclick="sortTable('Zona')">Zona</th>
-        <th onclick="sortTable('ESTATUS')">Estatus</th>
-        <th>Pot.</th>
-      </tr></thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
+  <div id="pcount" class="pcount"></div>
+  <div id="listContainer" class="plist"></div>
 </section>
 
 <!-- MAPA -->
@@ -222,7 +235,7 @@
 const CONFIG = {
   // Pega aquí la URL /exec de tu Apps Script (la del archivo .gs).
   // Mientras esté vacía, el CRM LEE desde el CSV pero NO puede guardar.
-  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzqLpVvvbf2EcoLnDSOdGvo-9AKTRtuATIr7OBja2u-ZYjD0pkAXgSZJjk7Ris1KwwpQw/exec',
+  WEB_APP_URL: '',
 
   // Respaldo de lectura (tu CSV publicado actual).
   CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv',
@@ -231,6 +244,13 @@ const CONFIG = {
 };
 
 let allData = [], map, markersLayer, sortState = {};
+let vendorColors = {};
+const VENDOR_PALETTE = ['#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#0d9488','#4f46e5','#b45309'];
+function buildVendorColors(){
+  const vs=[...new Set(allData.map(r=>getVal(r,'Impulsor de mercado')).filter(Boolean))].sort();
+  vendorColors={}; vs.forEach((v,i)=>vendorColors[v]=VENDOR_PALETTE[i%VENDOR_PALETTE.length]);
+}
+function vendedorColor(v){ return vendorColors[v] || '#94a3b8'; }
 
 /* ==================================================================
    UTILIDADES
@@ -324,6 +344,7 @@ async function loadData(){
   });
 }
 function afterLoad(){
+  buildVendorColors();
   renderResumen();
   renderListado(allData);
   if(map) renderMapa();
@@ -345,39 +366,37 @@ function renderResumen(){
   const maxZ = Math.max(...zonas.map(z=>z[1]),1);
 
   const byEst = {};
-  allData.forEach(r=>{ const s=getVal(r,'ESTATUS')||'Sin dato'; byEst[s]=(byEst[s]||0)+1; });
+  allData.forEach(r=>{ const s=getVal(r,'ESTATUS')||'S/D'; byEst[s]=(byEst[s]||0)+1; });
 
   const conGps = allData.filter(r=>parseGPS(getVal(r,'GPS'))).length;
 
   c.innerHTML = `
-    <div class="grid grid-cols-2 gap-3">
-      <div class="stat-card"><p class="stat-num">${total}</p><p class="text-xs font-bold text-slate-500 mt-1 uppercase">Prospectos</p></div>
-      <div class="stat-card" style="border-left-color:#16a34a"><p class="stat-num" style="color:#16a34a">${byPot.Alto||0}</p><p class="text-xs font-bold text-slate-500 mt-1 uppercase">Potencial alto</p></div>
+    <div class="grid grid-cols-3 gap-2">
+      <div class="stat-card" style="padding:10px;border-left-width:6px"><p class="stat-num">${total}</p><p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Total</p></div>
+      <div class="stat-card" style="padding:10px;border-left-width:6px;border-left-color:#16a34a"><p class="stat-num" style="color:#16a34a">${byPot.Alto||0}</p><p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Pot. alto</p></div>
+      <div class="stat-card" style="padding:10px;border-left-width:6px;border-left-color:#1a73e8"><p class="stat-num" style="color:#1a73e8">${conGps}</p><p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Con GPS</p></div>
     </div>
 
-    <div class="stat-card">
+    <div class="stat-card" style="padding:12px">
       <p class="sec-title" style="margin-top:0">Por estatus</p>
-      ${Object.entries(byEst).map(([k,v])=>`<div class="flex justify-between items-center py-1"><span>${estatusBadge(k)}</span><b class="orb">${v}</b></div>`).join('')}
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        ${Object.entries(byEst).map(([k,v])=>`<span class="flex items-center gap-1">${estatusBadge(k)}<b>${v}</b></span>`).join('')}
+      </div>
     </div>
 
-    <div class="stat-card">
+    <div class="stat-card" style="padding:12px">
       <p class="sec-title" style="margin-top:0">Por potencial</p>
       ${['Alto','Medio','Bajo','Sin definir'].map(p=>{
         const v=byPot[p]||0; const c2=potColor(p==='Sin definir'?'':p);
-        return `<div class="bar-row"><span class="text-xs font-bold" style="width:78px">${p}</span>
-          <div class="bar-track"><div class="bar-fill" style="width:${total?Math.max(v/total*100,v?12:0):0}%;background:${c2}">${v||''}</div></div></div>`;
+        return `<div class="bar-row"><span class="text-[11px] font-bold" style="width:70px">${p}</span>
+          <div class="bar-track" style="height:18px"><div class="bar-fill" style="width:${total?Math.max(v/total*100,v?12:0):0}%;background:${c2}">${v||''}</div></div></div>`;
       }).join('')}
     </div>
 
-    <div class="stat-card">
+    <div class="stat-card" style="padding:12px">
       <p class="sec-title" style="margin-top:0">Por zona</p>
-      ${zonas.map(([z,v])=>`<div class="bar-row"><span class="text-xs font-bold truncate" style="width:96px">${esc(z)}</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(v/maxZ*100,14)}%">${v}</div></div></div>`).join('')}
-    </div>
-
-    <div class="stat-card" style="border-left-color:#1a73e8">
-      <p class="text-xs font-bold text-slate-500 uppercase">Con ubicación GPS</p>
-      <p class="stat-num" style="color:#1a73e8">${conGps} <span class="text-base text-slate-400">/ ${total}</span></p>
+      ${zonas.map(([z,v])=>`<div class="bar-row"><span class="text-[11px] font-bold truncate" style="width:88px">${esc(z)}</span>
+        <div class="bar-track" style="height:18px"><div class="bar-fill" style="width:${Math.max(v/maxZ*100,14)}%">${v}</div></div></div>`).join('')}
     </div>`;
 }
 
@@ -385,20 +404,31 @@ function renderResumen(){
    LISTADO
    ================================================================== */
 function renderListado(data){
-  const tb = document.getElementById('tableBody');
-  tb.innerHTML = data.length ? '' : `<tr><td colspan="5" class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta tu búsqueda.</td></tr>`;
-  data.forEach(row=>{
-    const tr=document.createElement('tr');
-    tr.className='row-card';
-    tr.onclick=()=>showDetail(row._row);
-    tr.innerHTML=`
-      <td class="text-marino font-black uppercase">${esc(getVal(row,'Nombre del negocio'))}</td>
-      <td class="text-blue-700 uppercase">${esc(getVal(row,'Impulsor de mercado'))}</td>
-      <td class="text-slate-500 uppercase">${esc(getVal(row,'Zona'))}</td>
-      <td>${estatusBadge(getVal(row,'ESTATUS'))}</td>
-      <td>${potBadge(getPotencial(row))}</td>`;
-    tb.appendChild(tr);
-  });
+  const cont = document.getElementById('listContainer');
+  document.getElementById('pcount').textContent = `${data.length} prospecto${data.length===1?'':'s'}`;
+  if(!data.length){ cont.innerHTML = `<div class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta tu búsqueda.</div>`; return; }
+  cont.innerHTML = data.map(row=>{
+    const pot=getPotencial(row);
+    const vend=getVal(row,'Impulsor de mercado');
+    let pills='';
+    for(let n=1;n<=5;n++){
+      const on = getVal(row,'VISITA '+n) ? 'on' : '';
+      pills += `<span class="vpill ${on}" onclick="event.stopPropagation();showDetail(${row._row},${n})">${n}</span>`;
+    }
+    return `<div class="pcard" style="border-left-color:${vendedorColor(vend)}" onclick="showDetail(${row._row})">
+      <div class="pcard-top">
+        <div>
+          <div class="pcard-name">${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
+          <div class="pcard-sub">${esc(vend||'—')} · ${esc(getVal(row,'Zona')||'s/zona')}</div>
+        </div>
+        <span class="w-3 h-3 rounded-full flex-shrink-0 mt-1" style="background:${potColor(pot)}" title="Potencial ${pot||'s/d'}"></span>
+      </div>
+      <div class="pcard-bottom">
+        ${estatusBadge(getVal(row,'ESTATUS'))}
+        <div class="vpills">${pills}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 function filterTable(){
   const q=document.getElementById('searchInput').value.toLowerCase();
@@ -418,7 +448,7 @@ function sortTable(col){
    ================================================================== */
 function findByRow(row){ return allData.find(r=>r._row===row); }
 
-function showDetail(rowNum){
+function showDetail(rowNum, focusVisit){
   const r = findByRow(rowNum);
   if(!r) return;
   document.getElementById('fichaNombre').textContent = getVal(r,'Nombre del negocio') || 'Prospecto';
@@ -503,6 +533,10 @@ function showDetail(rowNum){
   document.getElementById('detailContent').innerHTML = html;
   document.getElementById('detailContent').scrollTop = 0;
   document.getElementById('detailPanel').classList.add('panel-open');
+  if(focusVisit){
+    setTimeout(()=>{ const el=document.getElementById('v'+focusVisit+'_'+rowNum);
+      if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.focus({preventScroll:true}); } }, 380);
+  }
 }
 function closeDetail(){ document.getElementById('detailPanel').classList.remove('panel-open'); }
 
@@ -568,29 +602,47 @@ function initMap(){
 function renderMapa(){
   markersLayer.clearLayers();
   const sb=document.getElementById('mapListContainer');
-  sb.innerHTML='<div class="p-3 bg-marino text-mostaza orb font-black text-center text-xs border-b-2 border-mostaza">ZONAS · COLOR = POTENCIAL</div>';
-  const zonas=[...new Set(allData.map(r=>getVal(r,'Zona')).filter(Boolean))];
+  const vendedores=Object.keys(vendorColors);
 
-  zonas.forEach(z=>{
+  let html = `<div class="legend">${
+    vendedores.map(v=>`<span class="chip"><span class="dot" style="background:${vendorColors[v]}"></span>${esc(v)}</span>`).join('')
+    || '<span class="chip">Sin vendedores</span>'
+  }</div>`;
+
+  const zonas=[...new Set(allData.map(r=>getVal(r,'Zona')).filter(Boolean))];
+  zonas.forEach((z,zi)=>{
     const pros=allData.filter(r=>getVal(r,'Zona')===z);
-    sb.innerHTML += `<div class="bg-slate-100 text-marino p-2 px-4 font-black text-xs uppercase border-y flex justify-between"><span>${esc(z)}</span><span class="bg-marino text-white px-2 rounded-full">${pros.length}</span></div>`;
+    const zid='zona'+zi;
+    html += `<button class="zona-head" onclick="toggleZona('${zid}')">
+      <span><i class="fas fa-chevron-right mr-2" id="chev_${zid}" style="font-size:10px"></i>${esc(z)}</span>
+      <span class="bg-marino text-white px-2 rounded-full text-[11px] font-black">${pros.length}</span></button>
+      <div id="${zid}" class="zona-body">`;
+
     pros.forEach(row=>{
       const gpsRaw=getVal(row,'GPS'); const coords=parseGPS(gpsRaw);
-      const nombre=getVal(row,'Nombre del negocio'); const pot=getPotencial(row);
+      const nombre=getVal(row,'Nombre del negocio'); const vend=getVal(row,'Impulsor de mercado'); const col=vendedorColor(vend);
       if(coords){
-        const m=L.circleMarker(coords,{radius:10,fillColor:potColor(pot),color:'#fff',weight:2,fillOpacity:1}).addTo(markersLayer);
+        const m=L.circleMarker(coords,{radius:10,fillColor:col,color:'#fff',weight:2,fillOpacity:1}).addTo(markersLayer);
         m.bindPopup(`<div class="p-1">
           <div class="popup-title">${esc(nombre)}</div>
-          <div class="popup-sub">${esc(getVal(row,'Impulsor de mercado')||'S/A')} · ${pot||'S/P'}</div>
+          <div class="popup-sub">${esc(vend||'S/A')} · ${getPotencial(row)||'S/P'}</div>
           <button onclick="showDetail(${row._row})" class="btn-gmaps" style="padding:7px;margin-bottom:5px"><i class="fas fa-folder-open"></i> Abrir ficha</button>
           <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gpsRaw)}','_blank')" class="btn-gmaps" style="padding:7px;background:#16a34a"><i class="fas fa-location-arrow"></i> Ir ahora</button>
         </div>`);
       }
-      sb.innerHTML += `<div class="p-3 px-6 border-b flex justify-between items-center gap-2" onclick="focusOnMap('${esc(gpsRaw)}', ${row._row})">
+      html += `<div class="p-3 px-5 border-b flex justify-between items-center gap-2" onclick="focusOnMap('${esc(gpsRaw)}', ${row._row})">
         <span class="text-[11px] font-black uppercase text-slate-600 truncate">${esc(nombre)}</span>
-        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${potColor(pot)}"></span></div>`;
+        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${col}"></span></div>`;
     });
+    html += `</div>`;
   });
+  sb.innerHTML = html;
+}
+function toggleZona(id){
+  const body=document.getElementById(id); const chev=document.getElementById('chev_'+id);
+  const open=body.classList.toggle('open');
+  if(chev) chev.className='fas fa-chevron-'+(open?'down':'right')+' mr-2';
+  if(chev) chev.style.fontSize='10px';
 }
 function focusOnMap(gps,row){
   const coords=parseGPS(gps);
