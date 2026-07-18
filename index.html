@@ -28,18 +28,35 @@
 
   /* HOME */
   .home-container { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background:radial-gradient(circle at 50% 0%, var(--marino2), var(--marino) 70%); position:fixed; inset:0; z-index:1000; padding:20px; }
-  .logo-ll { width:104px; height:104px; border:5px solid var(--mostaza); display:flex; align-items:center; justify-content:center;
-    border-radius:26px; box-shadow:0 0 40px rgba(250,204,21,.25); }
-  .logo-ll span { color:var(--mostaza); font-size:58px; font-style:italic; font-weight:900; font-family:Arial, Helvetica, sans-serif; }
+    background:radial-gradient(circle at 50% 0%, var(--marino2), var(--marino) 70%); position:fixed; inset:0; z-index:1000; padding:24px 20px; overflow:hidden; }
+  .home-bg { position:absolute; inset:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(250,204,21,.10), transparent 42%),
+      radial-gradient(circle at 85% 82%, rgba(37,99,235,.20), transparent 46%),
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size:100% 100%, 100% 100%, 28px 28px, 28px 28px; }
+  .home-watermark { position:absolute; right:-8vw; bottom:-10vh; font-size:58vh; font-weight:900; font-style:italic;
+    color:rgba(250,204,21,.035); line-height:1; pointer-events:none; user-select:none; }
+  .home-inner { position:relative; z-index:2; width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; }
+  .logo-ll { width:100px; height:100px; border:5px solid var(--mostaza); display:flex; align-items:center; justify-content:center;
+    border-radius:26px; box-shadow:0 0 44px rgba(250,204,21,.3); }
+  .logo-ll span { color:var(--mostaza); font-size:56px; font-style:italic; font-weight:900; }
+  .title-accent { width:52px; height:4px; background:var(--mostaza); border-radius:4px; margin:11px 0 5px; }
+  .home-stat { background:rgba(255,255,255,.07); border:1px solid rgba(250,204,21,.35); color:#fff; padding:7px 16px;
+    border-radius:40px; font-size:12px; font-weight:700; margin:18px 0 26px; }
+  .home-stat b { color:var(--mostaza); }
 
-  .btn-main { background:#fff; padding:20px; border-radius:18px; width:300px; max-width:88vw; display:flex; align-items:center; gap:18px;
-    margin-bottom:14px; box-shadow:0 8px 0 #00060f; transition:.08s; border:none; }
-  .btn-main:active { transform:translateY(5px); box-shadow:0 3px 0 #00060f; }
-  .btn-main .ico { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
-  .btn-main .txt { text-align:left; }
-  .btn-main .txt b { display:block; color:var(--marino); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
-  .btn-main .txt small { color:#64748b; font-size:11px; font-weight:600; }
+  .nav-card { position:relative; background:#fff; padding:17px; border-radius:18px; width:100%; display:flex; align-items:center; gap:15px;
+    margin-bottom:13px; box-shadow:0 8px 0 #00060f; transition:.08s; border:none; text-align:left; }
+  .nav-card:active { transform:translateY(5px); box-shadow:0 3px 0 #00060f; }
+  .nav-card .ico { width:54px; height:54px; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .nav-card .txt { flex:1; }
+  .nav-card .txt b { display:block; color:var(--marino); font-size:16px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
+  .nav-card .txt small { color:#64748b; font-size:11px; font-weight:600; }
+  .nav-card .chev { color:#cbd5e1; font-size:18px; }
+  .home-footer { position:relative; z-index:2; margin-top:24px; text-align:center; color:rgba(255,255,255,.5);
+    font-size:9.5px; font-weight:600; line-height:1.7; letter-spacing:.4px; }
 
   /* VISTAS */
   .view-section { display:none; min-height:100vh; }
@@ -77,6 +94,29 @@
   .vpill { width:23px; height:23px; border-radius:7px; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center;
     border:2px solid #cbd5e1; color:#94a3b8; background:#fff; }
   .vpill.on { background:#16a34a; border-color:#16a34a; color:#fff; }
+
+  /* RESUMEN DESPLEGABLE (dentro de Prospectos) */
+  .res-toggle { width:100%; background:var(--marino2); color:var(--mostaza); border:none; padding:12px 14px; display:flex;
+    justify-content:space-between; align-items:center; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  .res-body { display:none; background:#e8edf4; padding:10px; }
+  .res-body.open { display:block; }
+  .res-block { background:#fff; border-radius:12px; padding:11px 13px; margin-bottom:9px; box-shadow:0 2px 8px rgba(0,21,41,.06); }
+  .res-block h4 { font-size:11px; font-weight:800; color:var(--marino); text-transform:uppercase; letter-spacing:.6px;
+    padding-bottom:6px; margin-bottom:8px; border-bottom:2px solid var(--mostaza); }
+  .res-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .res-row .lbl { font-size:11px; font-weight:700; color:#334155; width:104px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .res-row .track { flex:1; height:17px; background:#e2e8f0; border-radius:5px; overflow:hidden; }
+  .res-row .fill { height:100%; background:var(--marino); color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; padding-left:6px; }
+  .res-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:9px; }
+  .kpi { background:#fff; border-radius:12px; padding:10px 8px; text-align:center; box-shadow:0 2px 8px rgba(0,21,41,.06); border-top:4px solid var(--marino); }
+  .kpi b { display:block; font-size:22px; font-weight:900; color:var(--marino); line-height:1; }
+  .kpi span { font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; display:block; margin-top:4px; }
+  .emp-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #eef2f7; font-size:12px; font-weight:700; color:var(--marino); }
+  .emp-row b { font-size:16px; }
+  .prod-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:7px; }
+  .prod { border-radius:11px; padding:9px; text-align:center; }
+  .prod b { display:block; font-size:19px; font-weight:900; line-height:1; }
+  .prod span { font-size:9.5px; font-weight:700; text-transform:uppercase; }
 
   /* MAPA: leyenda + acordeón de zonas */
   .legend { padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px 12px; background:#fff; border-bottom:3px solid var(--mostaza); position:sticky; top:0; z-index:2; }
@@ -163,30 +203,27 @@
 
 <!-- HOME -->
 <section id="homeView" class="home-container">
-  <div class="logo-ll mb-6"><span>LL</span></div>
-  <h1 class="text-white orb text-2xl font-black italic mb-1 tracking-tight uppercase text-center">CRM Prospección</h1>
-  <p class="text-mostaza text-xs font-bold mb-9 tracking-widest">LLANTERAMA · LTH</p>
-  <button onclick="switchView('resumen')" class="btn-main">
-    <div class="ico" style="background:#dbeafe;color:#2563eb"><i class="fas fa-chart-pie"></i></div>
-    <div class="txt"><b>Resumen</b><small>Estatus, potencial y zonas</small></div>
-  </button>
-  <button onclick="switchView('list')" class="btn-main">
-    <div class="ico" style="background:#fef3c7;color:#d97706"><i class="fas fa-clipboard-list"></i></div>
-    <div class="txt"><b>Prospectos</b><small>Listado, fichas y seguimiento</small></div>
-  </button>
-  <button onclick="switchView('map')" class="btn-main">
-    <div class="ico" style="background:#dcfce7;color:#16a34a"><i class="fas fa-map-marked-alt"></i></div>
-    <div class="txt"><b>Mapa por zonas</b><small>Rutas y ubicación GPS</small></div>
-  </button>
-</section>
+  <div class="home-bg"></div>
+  <div class="home-watermark">LL</div>
+  <div class="home-inner">
+    <div class="logo-ll"><span>LL</span></div>
+    <div class="title-accent"></div>
+    <h1 class="text-white text-2xl font-black italic tracking-tight uppercase text-center leading-tight">CRM Prospección</h1>
+    <p class="text-mostaza text-[11px] font-bold tracking-[3px] mt-1">LLANTERAMA · LTH</p>
+    <div class="home-stat" id="homeStat">Cargando…</div>
 
-<!-- RESUMEN -->
-<section id="resumenView" class="view-section">
-  <div class="header-app">
-    <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
-    <span class="title">Resumen</span>
+    <button onclick="switchView('list')" class="nav-card">
+      <div class="ico" style="background:#fef3c7;color:#d97706"><i class="fas fa-clipboard-list"></i></div>
+      <div class="txt"><b>Prospectos</b><small>Listado, resumen y seguimiento</small></div>
+      <i class="fas fa-chevron-right chev"></i>
+    </button>
+    <button onclick="switchView('map')" class="nav-card">
+      <div class="ico" style="background:#dcfce7;color:#16a34a"><i class="fas fa-map-marked-alt"></i></div>
+      <div class="txt"><b>Mapa por zonas</b><small>Rutas y ubicación GPS</small></div>
+      <i class="fas fa-chevron-right chev"></i>
+    </button>
   </div>
-  <div id="resumenContent" class="p-3 space-y-3"></div>
+  <div class="home-footer">LLANTERAMA TULANCINGO · LLANTERAMA POZA RICA<br>Sistema interno de prospección</div>
 </section>
 
 <!-- LISTADO -->
@@ -195,6 +232,13 @@
     <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
     <span class="title">Prospectos</span>
   </div>
+
+  <button class="res-toggle" onclick="toggleResumen()">
+    <span><i class="fas fa-chart-pie mr-2"></i>Ver resumen general</span>
+    <i class="fas fa-chevron-down" id="resChev"></i>
+  </button>
+  <div id="resBody" class="res-body"></div>
+
   <div class="search-wrap">
     <input type="text" id="searchInput" class="search-input" placeholder="🔍 Negocio, impulsor, zona, estatus…" onkeyup="applyFilters()">
   </div>
@@ -255,7 +299,12 @@ const CONFIG = {
   // Respaldo de lectura (tu CSV publicado actual).
   CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv',
 
-  ESTATUS_OPCIONES: ['Prospecto', 'En seguimiento', 'Cliente', 'No interesado', 'Descartado']
+  ESTATUS_OPCIONES: ['Prospecto', 'En seguimiento', 'Cliente', 'No interesado', 'Descartado'],
+
+  // Como el formulario no tiene columna de empresa, se separan por zona.
+  // Escribe aquí las zonas que pertenecen a POZA RICA. Todo lo demás cuenta como TULANCINGO.
+  // Ejemplo: zonasPozaRica: ['Poza Rica', 'Tihuatlán', 'Coatzintla']
+  EMPRESAS: { zonasPozaRica: [] }
 };
 
 let allData = [], map, markersLayer, sortState = {};
@@ -362,49 +411,97 @@ function afterLoad(){
 /* ==================================================================
    RESUMEN
    ================================================================== */
+function toggleResumen(){
+  const b=document.getElementById('resBody');
+  const open=b.classList.toggle('open');
+  document.getElementById('resChev').className='fas fa-chevron-'+(open?'up':'down');
+}
+
+function empresaDe(row){
+  const z=getVal(row,'Zona');
+  const pr=(CONFIG.EMPRESAS.zonasPozaRica||[]).map(s=>s.toLowerCase().trim());
+  return pr.includes(z.toLowerCase().trim()) ? 'Poza Rica' : 'Tulancingo';
+}
+function mesDe(row){
+  const m=getVal(row,'Mes correspondiente');
+  if(m) return m;
+  const t=getVal(row,'Marca temporal');           // dd/mm/aaaa
+  const p=t.split(' ')[0].split('/');
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  if(p.length===3){ const i=parseInt(p[1],10)-1; if(i>=0&&i<12) return MESES[i]; }
+  return 'Sin fecha';
+}
+const ORDEN_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function esSi(v){ return /^s[ií]/i.test(String(v).trim()); }
+
+function barras(pares, color){
+  const max=Math.max(...pares.map(p=>p[1]),1);
+  return pares.map(([k,v])=>`<div class="res-row"><span class="lbl" title="${esc(k)}">${esc(k)}</span>
+    <div class="track"><div class="fill" style="width:${Math.max(v/max*100,13)}%;${color?'background:'+color:''}">${v}</div></div></div>`).join('');
+}
+function cuenta(fn){
+  const o={}; allData.forEach(r=>{ const k=fn(r)||'Sin dato'; o[k]=(o[k]||0)+1; }); return o;
+}
+
 function renderResumen(){
-  const c = document.getElementById('resumenContent');
-  const total = allData.length;
-  const byPot = {Alto:0,Medio:0,Bajo:0,'Sin definir':0};
-  allData.forEach(r=>{ const p=getPotencial(r); byPot[p||'Sin definir'] = (byPot[p||'Sin definir']||0)+1; });
+  const total=allData.length;
+  const stat=document.getElementById('homeStat');
+  if(stat) stat.innerHTML=`<b>${total}</b> prospectos registrados`;
 
-  const byZona = {};
-  allData.forEach(r=>{ const z=getVal(r,'Zona')||'Sin zona'; byZona[z]=(byZona[z]||0)+1; });
-  const zonas = Object.entries(byZona).sort((a,b)=>b[1]-a[1]);
-  const maxZ = Math.max(...zonas.map(z=>z[1]),1);
+  const porVend=Object.entries(cuenta(r=>getVal(r,'Impulsor de mercado'))).sort((a,b)=>b[1]-a[1]);
+  const porZona=Object.entries(cuenta(r=>getVal(r,'Zona'))).sort((a,b)=>b[1]-a[1]);
+  const porEmp=cuenta(empresaDe);
+  const porMesObj=cuenta(mesDe);
+  const porMes=Object.entries(porMesObj).sort((a,b)=>ORDEN_MESES.indexOf(a[0])-ORDEN_MESES.indexOf(b[0]));
 
-  const byEst = {};
-  allData.forEach(r=>{ const s=getVal(r,'ESTATUS')||'S/D'; byEst[s]=(byEst[s]||0)+1; });
+  const prod=[
+    ['Acumuladores','¿Compra acumuladores','#2563eb'],
+    ['Motobaterías','¿Compra motobaterías','#7c3aed'],
+    ['Lubricantes','¿Compra lubricantes','#d97706'],
+    ['Filtros','¿Compra filtros','#16a34a'],
+    ['Llantas','¿Compra llanta','#dc2626'],
+  ].map(([n,col,c])=>[n, allData.filter(r=>esSi(getVal(r,col))).length, c]);
 
-  const conGps = allData.filter(r=>parseGPS(getVal(r,'GPS'))).length;
+  const conGps=allData.filter(r=>parseGPS(getVal(r,'GPS'))).length;
+  const sinAsig=allData.filter(r=>!getVal(r,'Impulsor de mercado')).length;
 
-  c.innerHTML = `
-    <div class="grid grid-cols-3 gap-2">
-      <div class="stat-card" style="padding:10px;border-left-width:6px"><p class="stat-num">${total}</p><p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Total</p></div>
-      <div class="stat-card" style="padding:10px;border-left-width:6px;border-left-color:#16a34a"><p class="stat-num" style="color:#16a34a">${byPot.Alto||0}</p><p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Pot. alto</p></div>
-      <div class="stat-card" style="padding:10px;border-left-width:6px;border-left-color:#1a73e8"><p class="stat-num" style="color:#1a73e8">${conGps}</p><p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Con GPS</p></div>
+  document.getElementById('resBody').innerHTML=`
+    <div class="res-kpis">
+      <div class="kpi"><b>${total}</b><span>Prospectos</span></div>
+      <div class="kpi" style="border-top-color:#2563eb"><b style="color:#2563eb">${porVend.length}</b><span>Impulsores</span></div>
+      <div class="kpi" style="border-top-color:#16a34a"><b style="color:#16a34a">${porZona.length}</b><span>Zonas</span></div>
     </div>
 
-    <div class="stat-card" style="padding:12px">
-      <p class="sec-title" style="margin-top:0">Por estatus</p>
-      <div class="flex flex-wrap gap-x-4 gap-y-2">
-        ${Object.entries(byEst).map(([k,v])=>`<span class="flex items-center gap-1">${estatusBadge(k)}<b>${v}</b></span>`).join('')}
+    <div class="res-block">
+      <h4>Por empresa</h4>
+      <div class="emp-row"><span>Llanterama Tulancingo S.A. de C.V.</span><b>${porEmp['Tulancingo']||0}</b></div>
+      <div class="emp-row" style="border:none"><span>Llanterama Poza Rica S.A. de C.V.</span><b>${porEmp['Poza Rica']||0}</b></div>
+      ${(CONFIG.EMPRESAS.zonasPozaRica||[]).length ? '' :
+        '<p class="text-[10px] text-red-600 font-bold mt-2">⚠ Define las zonas de Poza Rica en CONFIG.EMPRESAS para separar el conteo.</p>'}
+    </div>
+
+    <div class="res-block">
+      <h4>Prospectos por impulsor</h4>
+      ${barras(porVend)}
+      ${sinAsig?`<p class="text-[10px] font-bold text-amber-600 mt-2">⚠ ${sinAsig} prospecto(s) sin impulsor asignado</p>`:''}
+    </div>
+
+    <div class="res-block">
+      <h4>Prospectos por zona</h4>
+      ${barras(porZona,'#0891b2')}
+    </div>
+
+    <div class="res-block">
+      <h4>Prospectos por mes</h4>
+      ${barras(porMes,'#7c3aed')}
+    </div>
+
+    <div class="res-block">
+      <h4>Interés por línea de producto</h4>
+      <div class="prod-grid">
+        ${prod.map(([n,v,c])=>`<div class="prod" style="background:${c}14;color:${c}"><b>${v}</b><span>${n}</span></div>`).join('')}
+        <div class="prod" style="background:#1a73e814;color:#1a73e8"><b>${conGps}</b><span>Con GPS</span></div>
       </div>
-    </div>
-
-    <div class="stat-card" style="padding:12px">
-      <p class="sec-title" style="margin-top:0">Por potencial</p>
-      ${['Alto','Medio','Bajo','Sin definir'].map(p=>{
-        const v=byPot[p]||0; const c2=potColor(p==='Sin definir'?'':p);
-        return `<div class="bar-row"><span class="text-[11px] font-bold" style="width:70px">${p}</span>
-          <div class="bar-track" style="height:18px"><div class="bar-fill" style="width:${total?Math.max(v/total*100,v?12:0):0}%;background:${c2}">${v||''}</div></div></div>`;
-      }).join('')}
-    </div>
-
-    <div class="stat-card" style="padding:12px">
-      <p class="sec-title" style="margin-top:0">Por zona</p>
-      ${zonas.map(([z,v])=>`<div class="bar-row"><span class="text-[11px] font-bold truncate" style="width:88px">${esc(z)}</span>
-        <div class="bar-track" style="height:18px"><div class="bar-fill" style="width:${Math.max(v/maxZ*100,14)}%">${v}</div></div></div>`).join('')}
     </div>`;
 }
 
