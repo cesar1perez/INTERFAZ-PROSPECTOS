@@ -99,16 +99,20 @@
   .pcard { background:#fff; border-radius:14px; padding:0; box-shadow:0 2px 10px rgba(0,21,41,.08); border-left:5px solid var(--marino); overflow:hidden; }
   .pcard-main { padding:11px 13px 10px; }
   .pcard-main:active { background:#fffbeb; }
-  .pcard-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-  .pcard-name { font-weight:800; font-size:13.5px; color:var(--marino); text-transform:uppercase; line-height:1.2; }
-  .pcard-date { font-size:10px; color:#94a3b8; font-weight:700; white-space:nowrap; text-align:right; line-height:1.35; }
-  .pcard-meta { display:flex; flex-wrap:wrap; align-items:center; gap:5px 9px; margin-top:6px; font-size:11px; font-weight:600; color:#64748b; }
+  .pcard-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; padding-bottom:8px; margin-bottom:4px;
+    border-bottom:2px solid #eef2f7; }
+  .pcard-name { font-weight:800; font-size:13.5px; color:var(--marino); text-transform:uppercase; line-height:1.2; flex:1; }
+  .frow { display:flex; gap:8px; align-items:baseline; padding:4px 0; border-bottom:1px dashed #eef2f7; }
+  .frow .fk { flex:0 0 96px; font-size:9.5px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.3px; }
+  .frow .fv { flex:1; font-size:12px; font-weight:700; color:var(--marino); line-height:1.35; min-width:0; }
+  .vacio { color:#cbd5e1; font-weight:600; font-style:italic; }
+  .cod-ok { background:#001529; color:var(--mostaza); padding:2px 8px; border-radius:6px; font-size:11px; letter-spacing:.5px; }
   .tel-link { color:#1a73e8; font-weight:800; text-decoration:none; }
   .asig { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:20px; }
   .asig.si { background:#dcfce7; color:#15803d; }
   .asig.no { background:#fee2e2; color:#b91c1c; }
 
-  .prod-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .prod-chips { display:inline-flex; flex-wrap:wrap; gap:4px; }
   .pchip { font-size:9.5px; font-weight:800; padding:3px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:.3px; }
   .no-prod { font-size:10px; color:#cbd5e1; font-weight:700; font-style:italic; }
 
@@ -287,6 +291,8 @@
   <div class="filter-bar">
     <select id="fVendedor" onchange="applyFilters()"></select>
     <select id="fZona" onchange="applyFilters()"></select>
+    <select id="fAsignado" onchange="applyFilters()"></select>
+    <select id="fMes" onchange="applyFilters()"></select>
     <select id="fFecha" onchange="applyFilters()">
       <option value="__all">📅 Cualquier fecha</option>
       <option value="hoy">Hoy</option>
@@ -351,12 +357,20 @@ const CONFIG = {
   // Respaldo de lectura (tu CSV publicado actual).
   CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRcrymfUz61DDQ0fK90mTNnTqKHDwOm-UxSd9uUR6ZBjhCvcS6y2_xb7BF7uQtfIsWVsFcWAHvX-x8G/pub?gid=866211599&single=true&output=csv',
 
-  ESTATUS_OPCIONES: ['Prospecto', 'En seguimiento', 'Cliente', 'No interesado', 'Descartado'],
+  // Sugerencias rápidas al asignar (se escriben en la columna AF).
+  PREFIJO_ASIGNACION: 'Asignado a ',
 
   // Como el formulario no tiene columna de empresa, se separan por zona.
   // Escribe aquí las zonas que pertenecen a POZA RICA. Todo lo demás cuenta como TULANCINGO.
   // Ejemplo: zonasPozaRica: ['Poza Rica', 'Tihuatlán', 'Coatzintla']
-  EMPRESAS: { zonasPozaRica: [] }
+  EMPRESAS: { zonasPozaRica: [] },
+
+  // Columna AF de tu hoja (ESTATUS): ahí se escribe "Asignado a Miguel L.".
+  // Si está vacía, el prospecto NO tiene vendedor asignado.
+  COL_VENDEDOR: 'ESTATUS',
+
+  // Columna AL de tu hoja: código que se captura cuando se concreta la venta.
+  COL_CODIGO: 'Codigo Cliente'
 };
 
 let allData = [], map, markersLayer, sortState = {};
@@ -402,12 +416,13 @@ function potBadge(p){ const c=potColor(p); return `<span class="badge" style="ba
 
 function estatusColor(s){
   const t=(s||'').toLowerCase();
+  if(!t) return '#d97706';                    // S/A = sin asignar estatus (ámbar, no gris)
   if(t.includes('cliente')) return '#16a34a';
   if(t.includes('seguim'))  return '#2563eb';
   if(t.includes('no')||t.includes('descart')) return '#dc2626';
   return '#64748b';
 }
-function estatusBadge(s){ const c=estatusColor(s); return `<span class="badge" style="background:${c}1a;color:${c}">${s||'S/D'}</span>`; }
+function estatusBadge(s){ const c=estatusColor(s); return `<span class="badge" style="background:${c}1a;color:${c}">${s||'S/A'}</span>`; }
 
 function esc(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
@@ -515,7 +530,8 @@ function renderResumen(){
   ].map(([n,col,c])=>[n, allData.filter(r=>esSi(getVal(r,col))).length, c]);
 
   const conGps=allData.filter(r=>parseGPS(getVal(r,'GPS'))).length;
-  const sinAsig=allData.filter(r=>!getVal(r,'Impulsor de mercado')).length;
+  const sinAsig=allData.filter(r=>!vendedorAsignado(r)).length;
+  const porAsig=Object.entries(cuenta(r=>vendedorCorto(r)||'Sin asignar')).sort((a,b)=>b[1]-a[1]);
 
   document.getElementById('resBody').innerHTML=`
     <div class="res-kpis">
@@ -536,6 +552,11 @@ function renderResumen(){
       <h4>Prospectos por impulsor</h4>
       ${barras(porVend)}
       ${sinAsig?`<p class="text-[10px] font-bold text-amber-600 mt-2">⚠ ${sinAsig} prospecto(s) sin impulsor asignado</p>`:''}
+    </div>
+
+    <div class="res-block">
+      <h4>Prospectos por vendedor asignado</h4>
+      ${barras(porAsig,'#16a34a')}
     </div>
 
     <div class="res-block">
@@ -597,13 +618,19 @@ function productosDe(row){ return PRODUCTOS.filter(([,col])=>esSi(getVal(row,col
 function visitasDe(row){ let n=0; for(let i=1;i<=5;i++) if(getVal(row,'VISITA '+i)) n++; return n; }
 
 /* ---------- Listado ---------- */
+function vendedorAsignado(row){ return getVal(row, CONFIG.COL_VENDEDOR); }
+function vendedorCorto(row){ return vendedorAsignado(row).replace(/^asignad[oa]\s*a\s*/i,'').trim(); }
+function codigoCliente(row){ return getVal(row, CONFIG.COL_CODIGO); }
+
 function renderListado(data){
   const cont=document.getElementById('listContainer');
   document.getElementById('pcount').textContent=`${data.length} prospecto${data.length===1?'':'s'}`;
   if(!data.length){ cont.innerHTML=`<div class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta los filtros.</div>`; return; }
 
   cont.innerHTML=data.map(row=>{
-    const vend=getVal(row,'Impulsor de mercado');
+    const alta=getVal(row,'Impulsor de mercado');       // quien dio de alta
+    const asig=vendedorAsignado(row);                    // vendedor asignado
+    const cod=codigoCliente(row);
     const tel=getVal(row,'Teléfono').replace(/\s+/g,'');
     const f=fechaCorta(row);
     const prods=productosDe(row);
@@ -615,24 +642,33 @@ function renderListado(data){
       pills+=`<button class="vpill ${on}" onclick="event.stopPropagation();showDetail(${row._row},${n})" title="Visita ${n}">${n}</button>`;
     }
 
-    return `<div class="pcard" style="border-left-color:${vendedorColor(vend)}">
+    const fila=(lbl,val)=>`<div class="frow"><span class="fk">${lbl}</span><span class="fv">${val}</span></div>`;
+
+    return `<div class="pcard" style="border-left-color:${vendedorColor(alta)}">
       <div class="pcard-main" onclick="showDetail(${row._row})">
-        <div class="pcard-top">
-          <div style="flex:1;min-width:0">
-            <div class="pcard-name">${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
-            <div class="pcard-meta">
-              <span>${vend ? `<span class="asig si"><i class="fas fa-user-check"></i>${esc(vend)}</span>`
-                            : `<span class="asig no"><i class="fas fa-user-slash"></i>Sin asignar</span>`}</span>
-              <span><i class="fas fa-location-dot"></i> ${esc(getVal(row,'Zona')||'s/zona')}</span>
-              ${tel?`<a class="tel-link" href="tel:${esc(tel)}" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> ${esc(tel)}</a>`:''}
-            </div>
-          </div>
-          <div class="pcard-date">${f.dia}${f.hora?`<br><span style="color:#cbd5e1">${f.hora}</span>`:''}</div>
+        <div class="pcard-head">
+          <span class="pcard-name">${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</span>
+          ${asig ? '<span class="badge" style="background:#dcfce7;color:#15803d">ASIGNADO</span>'
+                 : '<span class="badge" style="background:#fef3c7;color:#b45309">S/A</span>'}
         </div>
-        <div class="prod-chips">
-          ${prods.length ? prods.map(([n,,c])=>`<span class="pchip" style="background:${c}1a;color:${c}">${n}</span>`).join('')
-                         : '<span class="no-prod">Sin líneas registradas</span>'}
-          ${estatusBadge(getVal(row,'ESTATUS'))}
+
+        ${fila('Fecha de alta', `${f.dia}${f.hora?` · <span style="color:#94a3b8">${f.hora} hrs</span>`:''}`)}
+        ${fila('Dio de alta', esc(alta)||'<span class="vacio">—</span>')}
+        ${fila('Zona', esc(getVal(row,'Zona'))||'<span class="vacio">—</span>')}
+        ${fila('Teléfono', tel?`<a class="tel-link" href="tel:${esc(tel)}" onclick="event.stopPropagation()">${esc(tel)}</a>`:'<span class="vacio">—</span>')}
+        ${fila('Vendedor asignado', asig
+            ? `<span class="asig si"><i class="fas fa-user-check"></i>${esc(vendedorCorto(row))}</span>`
+            : `<span class="asig no"><i class="fas fa-user-slash"></i>Sin asignar</span>`)}
+        ${fila('Código cliente', cod
+            ? `<span class="cod-ok">${esc(cod)}</span>`
+            : '<span class="vacio">Pendiente de venta</span>')}
+
+        <div class="frow" style="border:none">
+          <span class="fk">Productos</span>
+          <span class="fv"><span class="prod-chips">
+            ${prods.length ? prods.map(([n,,c])=>`<span class="pchip" style="background:${c}1a;color:${c}">${n}</span>`).join('')
+                           : '<span class="vacio">Sin líneas registradas</span>'}
+          </span></span>
         </div>
       </div>
       <div class="pcard-foot">
@@ -656,6 +692,8 @@ function limpiarFiltros(){
   document.getElementById('fVendedor').value='__all';
   document.getElementById('fZona').value='__all';
   document.getElementById('fFecha').value='__all';
+  document.getElementById('fMes').value='__all';
+  document.getElementById('fAsignado').value='__all';
   document.getElementById('fOrden').value='reciente';
   filtroAsig='__all';
   document.querySelectorAll('.fchip').forEach(b=>b.classList.toggle('active', b.dataset.asig==='__all'));
@@ -663,17 +701,39 @@ function limpiarFiltros(){
 }
 
 function populateFilters(){
-  const vSel=document.getElementById('fVendedor'), zSel=document.getElementById('fZona');
-  const vendors=[...new Set(allData.map(r=>getVal(r,'Impulsor de mercado')).filter(Boolean))].sort();
+  const vSel=document.getElementById('fVendedor'), zSel=document.getElementById('fZona'), mSel=document.getElementById('fMes');
+  const altas=[...new Set(allData.map(r=>getVal(r,'Impulsor de mercado')).filter(Boolean))].sort();
   const zonas=[...new Set(allData.map(r=>getVal(r,'Zona')).filter(Boolean))].sort();
-  const sinAsignar=allData.filter(r=>!getVal(r,'Impulsor de mercado')).length;
+  const sinAsignar=allData.filter(r=>!vendedorAsignado(r)).length;
 
-  vSel.innerHTML=`<option value="__all">👥 Todos los vendedores</option>`
-    + vendors.map(v=>`<option value="v:${esc(v)}">${esc(v)}</option>`).join('');
+  vSel.innerHTML=`<option value="__all">👤 Todos los que dieron de alta</option>`
+    + altas.map(v=>`<option value="v:${esc(v)}">${esc(v)}</option>`).join('');
   zSel.innerHTML=`<option value="__all">📍 Todas las zonas</option>`
     + zonas.map(z=>`<option value="${esc(z)}">${esc(z)}</option>`).join('');
 
+  // Meses presentes en los datos, del más nuevo al más viejo
+  const claves=[...new Set(allData.map(mesClave).filter(Boolean))].sort().reverse();
+  mSel.innerHTML=`<option value="__all">🗓 Todos los meses</option>`
+    + claves.map(k=>`<option value="${k}">${esc(mesEtiqueta(k))} (${allData.filter(r=>mesClave(r)===k).length})</option>`).join('');
+  // Arranca en el mes más reciente para que lo viejo no haga ruido
+  if(claves.length) mSel.value=claves[0];
+
+  const aSel=document.getElementById('fAsignado');
+  const asignados=[...new Set(allData.map(vendedorCorto).filter(Boolean))].sort();
+  aSel.innerHTML=`<option value="__all">🎯 Cualquier asignación</option>`
+    + asignados.map(v=>`<option value="${esc(v)}">Asignado a ${esc(v)}</option>`).join('');
+
   const c=document.getElementById('cSin'); if(c) c.textContent=sinAsignar?`(${sinAsignar})`:'';
+}
+
+// Clave ordenable aaaa-mm a partir de la marca temporal
+function mesClave(row){
+  const d=parseFecha(row); if(!d) return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function mesEtiqueta(k){
+  const [a,m]=k.split('-');
+  return ORDEN_MESES[parseInt(m,10)-1]+' '+a;
 }
 
 function applyFilters(){
@@ -681,17 +741,22 @@ function applyFilters(){
   const fv=document.getElementById('fVendedor').value;
   const fz=document.getElementById('fZona').value;
   const ff=document.getElementById('fFecha').value;
+  const fm=document.getElementById('fMes').value;
+  const fa=document.getElementById('fAsignado').value;
   const orden=document.getElementById('fOrden').value;
 
   let list=allData.filter(r=>{
     if(q && !Object.values(r).some(v=>String(v).toLowerCase().includes(q))) return false;
-    const vend=getVal(r,'Impulsor de mercado');
-    if(filtroAsig==='__asig'  && !vend) return false;
-    if(filtroAsig==='__sin'   && vend)  return false;
+    const alta=getVal(r,'Impulsor de mercado');
+    const asig=vendedorAsignado(r);
+    if(filtroAsig==='__asig'  && !asig) return false;
+    if(filtroAsig==='__sin'   && asig)  return false;
     if(filtroAsig==='__seg'   && visitasDe(r)===0) return false;
     if(filtroAsig==='__noseg' && visitasDe(r)>0)   return false;
-    if(fv.startsWith('v:') && vend!==fv.slice(2)) return false;
+    if(fv.startsWith('v:') && alta!==fv.slice(2)) return false;
     if(fz!=='__all' && getVal(r,'Zona')!==fz) return false;
+    if(fm!=='__all' && mesClave(r)!==fm) return false;
+    if(fa!=='__all' && vendedorCorto(r)!==fa) return false;
     if(ff!=='__all' && !esReciente(r, ff)) return false;
     return true;
   });
@@ -751,13 +816,19 @@ function showDetail(rowNum, focusVisit){
       <i class="fas fa-directions text-lg"></i> IR AL CLIENTE (GPS)</button>`;
   }
 
-  // ESTATUS editable
-  const estActual = getVal(r,'ESTATUS');
-  html += `<p class="sec-title" style="margin-top:4px">Estatus del prospecto</p>
-    <select class="status-select" onchange="guardar(${r._row}, 'ESTATUS', this.value, this)">
-      ${CONFIG.ESTATUS_OPCIONES.map(o=>`<option ${o.toLowerCase()===estActual.toLowerCase()?'selected':''}>${o}</option>`).join('')}
-      ${estActual && !CONFIG.ESTATUS_OPCIONES.map(x=>x.toLowerCase()).includes(estActual.toLowerCase())?`<option selected>${esc(estActual)}</option>`:''}
-    </select>`;
+  // ASIGNACIÓN DE VENDEDOR (columna AF) — texto libre para no borrar lo ya escrito
+  const asigActual = vendedorAsignado(r);
+  const sugeridos = [...new Set(allData.map(x=>vendedorAsignado(x)).filter(Boolean))].sort();
+  html += `<p class="sec-title" style="margin-top:4px">Vendedor asignado</p>
+    <input id="asig_${r._row}" class="status-select" list="asigOpts" value="${esc(asigActual)}"
+           placeholder="Ej. ${esc(CONFIG.PREFIJO_ASIGNACION)}Miguel L.">
+    <datalist id="asigOpts">${sugeridos.map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+    <div class="flex gap-2 mt-2">
+      <button class="btn-save" style="flex:1" onclick="guardarAsignacion(${r._row}, this)">
+        <i class="fas fa-user-check mr-1"></i>Guardar asignación</button>
+      ${asigActual?`<button class="btn-mic" title="Quitar asignación" onclick="quitarAsignacion(${r._row}, this)"><i class="fas fa-eraser"></i></button>`:''}
+    </div>
+    <p class="text-[10px] text-slate-400 font-bold mt-1">Se guarda en la columna AF. Vacío = sin asignar.</p>`;
 
   // Datos generales
   html += `<p class="sec-title">Datos generales</p>` +
@@ -831,6 +902,25 @@ async function guardar(row, columna, valor, el){
   }catch(e){
     console.error(e); toast('Sin conexión. Intenta de nuevo.', 'error'); return false;
   }finally{ if(el) el.disabled=false; }
+}
+
+async function guardarAsignacion(row, btn){
+  const inp=document.getElementById('asig_'+row);
+  let val=inp.value.trim();
+  // Si escriben solo el nombre, se le antepone "Asignado a "
+  if(val && !/^asignad/i.test(val)) val=CONFIG.PREFIJO_ASIGNACION+val;
+  btn.disabled=true; const o=btn.innerHTML; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Guardando…';
+  const ok=await guardar(row, CONFIG.COL_VENDEDOR, val, null);
+  btn.disabled=false; btn.innerHTML=o;
+  if(ok){ inp.value=val; showDetail(row); }
+}
+
+async function quitarAsignacion(row, btn){
+  if(!confirm('¿Quitar la asignación de vendedor de este prospecto?')) return;
+  btn.disabled=true;
+  const ok=await guardar(row, CONFIG.COL_VENDEDOR, '', null);
+  btn.disabled=false;
+  if(ok) showDetail(row);
 }
 
 async function guardarVisita(row, n, btn){
