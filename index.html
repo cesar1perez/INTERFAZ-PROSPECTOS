@@ -79,25 +79,57 @@
     font-weight:700; font-size:14px; outline:none; }
 
   /* FILTROS + LISTADO EN TARJETAS */
-  .filter-bar { display:flex; gap:7px; padding:10px 12px 0; flex-wrap:wrap; }
-  .filter-bar select { flex:1 1 30%; min-width:108px; padding:9px 8px; border-radius:10px; border:2px solid #cbd5e1; background:#fff;
+  .chip-bar { display:flex; gap:6px; padding:10px 12px 0; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .chip-bar::-webkit-scrollbar { display:none; }
+  .fchip { flex-shrink:0; background:#fff; border:2px solid #cbd5e1; color:#475569; padding:7px 12px; border-radius:30px;
+    font-size:11.5px; font-weight:700; font-family:inherit; white-space:nowrap; }
+  .fchip b { color:#dc2626; }
+  .fchip.active { background:var(--marino); border-color:var(--marino); color:var(--mostaza); }
+  .fchip.active b { color:var(--mostaza); }
+
+  .filter-bar { display:flex; gap:7px; padding:9px 12px 0; flex-wrap:wrap; align-items:stretch; }
+  .filter-bar select { flex:1 1 30%; min-width:104px; padding:9px 8px; border-radius:10px; border:2px solid #cbd5e1; background:#fff;
     font-family:inherit; font-weight:700; font-size:12px; color:var(--marino); }
-  .plist { padding:10px; display:flex; flex-direction:column; gap:8px; }
-  .pcount { padding:8px 12px 0; color:#64748b; font-size:11px; font-weight:700; }
-  .pcard { background:#fff; border-radius:12px; padding:11px 13px; box-shadow:0 2px 8px rgba(0,21,41,.07); border-left:5px solid var(--marino); }
-  .pcard:active { background:#fffbeb; }
+  .btn-clear { flex:0 0 auto; padding:9px 12px; border-radius:10px; border:2px solid #cbd5e1; background:#fff;
+    font-family:inherit; font-weight:700; font-size:11.5px; color:#64748b; }
+
+  .plist { padding:10px 10px 30px; display:flex; flex-direction:column; gap:9px; }
+  .pcount { padding:9px 13px 0; color:#64748b; font-size:11px; font-weight:700; }
+
+  .pcard { background:#fff; border-radius:14px; padding:0; box-shadow:0 2px 10px rgba(0,21,41,.08); border-left:5px solid var(--marino); overflow:hidden; }
+  .pcard-main { padding:11px 13px 10px; }
+  .pcard-main:active { background:#fffbeb; }
   .pcard-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-  .pcard-name { font-weight:800; font-size:13px; color:var(--marino); text-transform:uppercase; line-height:1.15; }
-  .pcard-sub { font-size:11px; color:#64748b; font-weight:600; margin-top:2px; }
-  .pcard-bottom { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:9px; }
-  .vpills { display:flex; gap:4px; }
-  .vpill { width:23px; height:23px; border-radius:7px; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center;
-    border:2px solid #cbd5e1; color:#94a3b8; background:#fff; }
-  .vpill.on { background:#16a34a; border-color:#16a34a; color:#fff; }
+  .pcard-name { font-weight:800; font-size:13.5px; color:var(--marino); text-transform:uppercase; line-height:1.2; }
+  .pcard-date { font-size:10px; color:#94a3b8; font-weight:700; white-space:nowrap; text-align:right; line-height:1.35; }
+  .pcard-meta { display:flex; flex-wrap:wrap; align-items:center; gap:5px 9px; margin-top:6px; font-size:11px; font-weight:600; color:#64748b; }
+  .tel-link { color:#1a73e8; font-weight:800; text-decoration:none; }
+  .asig { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:20px; }
+  .asig.si { background:#dcfce7; color:#15803d; }
+  .asig.no { background:#fee2e2; color:#b91c1c; }
+
+  .prod-chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .pchip { font-size:9.5px; font-weight:800; padding:3px 7px; border-radius:6px; text-transform:uppercase; letter-spacing:.3px; }
+  .no-prod { font-size:10px; color:#cbd5e1; font-weight:700; font-style:italic; }
+
+  .pcard-foot { display:flex; justify-content:space-between; align-items:center; gap:8px;
+    padding:8px 13px; background:#f8fafc; border-top:1px solid #eef2f7; }
+  .seg-label { font-size:9.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.4px; }
+  .seg-label i { margin-right:3px; }
+  .vpills { display:flex; gap:5px; }
+  .vpill { width:26px; height:26px; border-radius:8px; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center;
+    border:2px solid #d8e0ea; color:#94a3b8; background:#fff; font-family:inherit; }
+  .vpill.on { background:#16a34a; border-color:#16a34a; color:#fff; box-shadow:0 2px 5px rgba(22,163,74,.35); }
 
   /* RESUMEN DESPLEGABLE (dentro de Prospectos) */
-  .res-toggle { width:100%; background:var(--marino2); color:var(--mostaza); border:none; padding:12px 14px; display:flex;
-    justify-content:space-between; align-items:center; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  .res-toggle { width:100%; background:linear-gradient(90deg, var(--marino2), var(--marino)); color:#fff; border:none;
+    border-bottom:3px solid var(--mostaza); padding:13px 16px; display:flex; justify-content:space-between; align-items:center;
+    font-family:inherit; font-weight:800; font-size:13px; }
+  .res-toggle-l { display:flex; align-items:center; gap:11px; text-align:left; }
+  .res-toggle-l > i { color:var(--marino); background:var(--mostaza); width:32px; height:32px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .res-toggle-l small { display:block; font-size:9.5px; font-weight:600; color:rgba(255,255,255,.6); margin-top:1px; text-transform:none; }
+  #resChev { color:var(--mostaza); }
   .res-body { display:none; background:#e8edf4; padding:10px; }
   .res-body.open { display:block; }
   .res-block { background:#fff; border-radius:12px; padding:11px 13px; margin-bottom:9px; box-shadow:0 2px 8px rgba(0,21,41,.06); }
@@ -234,18 +266,37 @@
   </div>
 
   <button class="res-toggle" onclick="toggleResumen()">
-    <span><i class="fas fa-chart-pie mr-2"></i>Ver resumen general</span>
+    <span class="res-toggle-l"><i class="fas fa-chart-pie"></i>
+      <span>Resumen general<small id="resHint">Impulsores · zonas · empresas · productos</small></span></span>
     <i class="fas fa-chevron-down" id="resChev"></i>
   </button>
   <div id="resBody" class="res-body"></div>
 
   <div class="search-wrap">
-    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Negocio, impulsor, zona, estatus…" onkeyup="applyFilters()">
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Negocio, impulsor, zona, teléfono…" onkeyup="applyFilters()">
   </div>
+
+  <div class="chip-bar">
+    <button class="fchip active" data-asig="__all" onclick="setAsig(this)">Todos</button>
+    <button class="fchip" data-asig="__asig" onclick="setAsig(this)"><i class="fas fa-user-check"></i> Con vendedor</button>
+    <button class="fchip warn" data-asig="__sin" onclick="setAsig(this)"><i class="fas fa-user-slash"></i> Sin asignar <b id="cSin"></b></button>
+    <button class="fchip" data-asig="__seg" onclick="setAsig(this)"><i class="fas fa-comment-dots"></i> Con seguimiento</button>
+    <button class="fchip" data-asig="__noseg" onclick="setAsig(this)"><i class="far fa-comment"></i> Sin seguimiento</button>
+  </div>
+
   <div class="filter-bar">
     <select id="fVendedor" onchange="applyFilters()"></select>
     <select id="fZona" onchange="applyFilters()"></select>
+    <select id="fFecha" onchange="applyFilters()">
+      <option value="__all">📅 Cualquier fecha</option>
+      <option value="hoy">Hoy</option>
+      <option value="7">Últimos 7 días</option>
+      <option value="30">Últimos 30 días</option>
+      <option value="90">Últimos 3 meses</option>
+    </select>
     <select id="fOrden" onchange="applyFilters()">
+      <option value="reciente">🕒 Más recientes primero</option>
+      <option value="antiguo">Más antiguos primero</option>
       <option value="az">Nombre A → Z</option>
       <option value="za">Nombre Z → A</option>
       <option value="vmas">Más visitas primero</option>
@@ -253,6 +304,7 @@
       <option value="potalto">Mayor potencial</option>
       <option value="zona">Agrupar por zona</option>
     </select>
+    <button class="btn-clear" onclick="limpiarFiltros()"><i class="fas fa-rotate-left"></i> Limpiar</button>
   </div>
   <div id="pcount" class="pcount"></div>
   <div id="listContainer" class="plist"></div>
@@ -508,75 +560,154 @@ function renderResumen(){
 /* ==================================================================
    LISTADO
    ================================================================== */
+/* ---------- Fechas ---------- */
+// La marca temporal de Forms viene como dd/mm/aaaa hh:mm:ss
+function parseFecha(row){
+  const t=getVal(row,'Marca temporal'); if(!t) return null;
+  const [f,h] = t.split(' ');
+  const p=f.split('/'); if(p.length!==3) return null;
+  const [d,m,a]=p.map(n=>parseInt(n,10));
+  const hh=(h||'0:0:0').split(':').map(n=>parseInt(n,10)||0);
+  const dt=new Date(a, m-1, d, hh[0]||0, hh[1]||0, hh[2]||0);
+  return isNaN(dt.getTime()) ? null : dt;
+}
+function fechaCorta(row){
+  const d=parseFecha(row); if(!d) return {dia:'—', hora:''};
+  const MM=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const hh=String(d.getHours()).padStart(2,'0'), mi=String(d.getMinutes()).padStart(2,'0');
+  return { dia:`${d.getDate()} ${MM[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`, hora:`${hh}:${mi}` };
+}
+function esReciente(row, dias){
+  const d=parseFecha(row); if(!d) return false;
+  const hoy=new Date();
+  if(dias==='hoy') return d.toDateString()===hoy.toDateString();
+  const lim=new Date(); lim.setDate(lim.getDate()-parseInt(dias,10));
+  return d>=lim;
+}
+
+/* ---------- Productos que compra ---------- */
+const PRODUCTOS=[
+  ['ACUM','¿Compra acumuladores','#2563eb'],
+  ['MOTO','¿Compra motobaterías','#7c3aed'],
+  ['LUBS','¿Compra lubricantes','#d97706'],
+  ['FILT','¿Compra filtros','#16a34a'],
+  ['LLTA','¿Compra llanta','#dc2626'],
+];
+function productosDe(row){ return PRODUCTOS.filter(([,col])=>esSi(getVal(row,col))); }
+function visitasDe(row){ let n=0; for(let i=1;i<=5;i++) if(getVal(row,'VISITA '+i)) n++; return n; }
+
+/* ---------- Listado ---------- */
 function renderListado(data){
-  const cont = document.getElementById('listContainer');
-  document.getElementById('pcount').textContent = `${data.length} prospecto${data.length===1?'':'s'}`;
-  if(!data.length){ cont.innerHTML = `<div class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta tu búsqueda.</div>`; return; }
-  cont.innerHTML = data.map(row=>{
-    const pot=getPotencial(row);
+  const cont=document.getElementById('listContainer');
+  document.getElementById('pcount').textContent=`${data.length} prospecto${data.length===1?'':'s'}`;
+  if(!data.length){ cont.innerHTML=`<div class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta los filtros.</div>`; return; }
+
+  cont.innerHTML=data.map(row=>{
     const vend=getVal(row,'Impulsor de mercado');
+    const tel=getVal(row,'Teléfono').replace(/\s+/g,'');
+    const f=fechaCorta(row);
+    const prods=productosDe(row);
+    const nVis=visitasDe(row);
+
     let pills='';
     for(let n=1;n<=5;n++){
-      const on = getVal(row,'VISITA '+n) ? 'on' : '';
-      pills += `<span class="vpill ${on}" onclick="event.stopPropagation();showDetail(${row._row},${n})">${n}</span>`;
+      const on=getVal(row,'VISITA '+n)?'on':'';
+      pills+=`<button class="vpill ${on}" onclick="event.stopPropagation();showDetail(${row._row},${n})" title="Visita ${n}">${n}</button>`;
     }
-    return `<div class="pcard" style="border-left-color:${vendedorColor(vend)}" onclick="showDetail(${row._row})">
-      <div class="pcard-top">
-        <div>
-          <div class="pcard-name">${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
-          <div class="pcard-sub">${esc(vend||'—')} · ${esc(getVal(row,'Zona')||'s/zona')}</div>
+
+    return `<div class="pcard" style="border-left-color:${vendedorColor(vend)}">
+      <div class="pcard-main" onclick="showDetail(${row._row})">
+        <div class="pcard-top">
+          <div style="flex:1;min-width:0">
+            <div class="pcard-name">${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
+            <div class="pcard-meta">
+              <span>${vend ? `<span class="asig si"><i class="fas fa-user-check"></i>${esc(vend)}</span>`
+                            : `<span class="asig no"><i class="fas fa-user-slash"></i>Sin asignar</span>`}</span>
+              <span><i class="fas fa-location-dot"></i> ${esc(getVal(row,'Zona')||'s/zona')}</span>
+              ${tel?`<a class="tel-link" href="tel:${esc(tel)}" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> ${esc(tel)}</a>`:''}
+            </div>
+          </div>
+          <div class="pcard-date">${f.dia}${f.hora?`<br><span style="color:#cbd5e1">${f.hora}</span>`:''}</div>
         </div>
-        <span class="w-3 h-3 rounded-full flex-shrink-0 mt-1" style="background:${potColor(pot)}" title="Potencial ${pot||'s/d'}"></span>
+        <div class="prod-chips">
+          ${prods.length ? prods.map(([n,,c])=>`<span class="pchip" style="background:${c}1a;color:${c}">${n}</span>`).join('')
+                         : '<span class="no-prod">Sin líneas registradas</span>'}
+          ${estatusBadge(getVal(row,'ESTATUS'))}
+        </div>
       </div>
-      <div class="pcard-bottom">
-        ${estatusBadge(getVal(row,'ESTATUS'))}
+      <div class="pcard-foot">
+        <span class="seg-label"><i class="fas fa-comment-dots"></i> Seguimiento ${nVis}/5</span>
         <div class="vpills">${pills}</div>
       </div>
     </div>`;
   }).join('');
 }
+
+/* ---------- Filtros ---------- */
+let filtroAsig='__all';
+function setAsig(btn){
+  document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filtroAsig=btn.dataset.asig;
+  applyFilters();
+}
+function limpiarFiltros(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('fVendedor').value='__all';
+  document.getElementById('fZona').value='__all';
+  document.getElementById('fFecha').value='__all';
+  document.getElementById('fOrden').value='reciente';
+  filtroAsig='__all';
+  document.querySelectorAll('.fchip').forEach(b=>b.classList.toggle('active', b.dataset.asig==='__all'));
+  applyFilters();
+}
+
 function populateFilters(){
   const vSel=document.getElementById('fVendedor'), zSel=document.getElementById('fZona');
   const vendors=[...new Set(allData.map(r=>getVal(r,'Impulsor de mercado')).filter(Boolean))].sort();
   const zonas=[...new Set(allData.map(r=>getVal(r,'Zona')).filter(Boolean))].sort();
-  const sinAsignar = allData.filter(r=>!getVal(r,'Impulsor de mercado')).length;
+  const sinAsignar=allData.filter(r=>!getVal(r,'Impulsor de mercado')).length;
 
-  vSel.innerHTML =
-      `<option value="__all">👥 Todos los vendedores</option>`
-    + `<option value="__asig">✅ Asignados</option>`
-    + (sinAsignar? `<option value="__sin">⚠️ Sin asignar (${sinAsignar})</option>` : '')
+  vSel.innerHTML=`<option value="__all">👥 Todos los vendedores</option>`
     + vendors.map(v=>`<option value="v:${esc(v)}">${esc(v)}</option>`).join('');
-
-  zSel.innerHTML = `<option value="__all">📍 Todas las zonas</option>`
+  zSel.innerHTML=`<option value="__all">📍 Todas las zonas</option>`
     + zonas.map(z=>`<option value="${esc(z)}">${esc(z)}</option>`).join('');
+
+  const c=document.getElementById('cSin'); if(c) c.textContent=sinAsignar?`(${sinAsignar})`:'';
 }
 
 function applyFilters(){
   const q=(document.getElementById('searchInput').value||'').toLowerCase();
   const fv=document.getElementById('fVendedor').value;
   const fz=document.getElementById('fZona').value;
+  const ff=document.getElementById('fFecha').value;
   const orden=document.getElementById('fOrden').value;
 
   let list=allData.filter(r=>{
     if(q && !Object.values(r).some(v=>String(v).toLowerCase().includes(q))) return false;
     const vend=getVal(r,'Impulsor de mercado');
-    if(fv==='__asig' && !vend) return false;
-    if(fv==='__sin' && vend) return false;
-    if(fv.startsWith('v:') && vend !== fv.slice(2)) return false;
+    if(filtroAsig==='__asig'  && !vend) return false;
+    if(filtroAsig==='__sin'   && vend)  return false;
+    if(filtroAsig==='__seg'   && visitasDe(r)===0) return false;
+    if(filtroAsig==='__noseg' && visitasDe(r)>0)   return false;
+    if(fv.startsWith('v:') && vend!==fv.slice(2)) return false;
     if(fz!=='__all' && getVal(r,'Zona')!==fz) return false;
+    if(ff!=='__all' && !esReciente(r, ff)) return false;
     return true;
   });
 
-  const vc = r => { let n=0; for(let i=1;i<=5;i++) if(getVal(r,'VISITA '+i)) n++; return n; };
-  const pr = r => ({Alto:3,Medio:2,Bajo:1}[getPotencial(r)] || 0);
-  const nm = r => getVal(r,'Nombre del negocio').toLowerCase();
-  const sorters = {
-    az:     (a,b)=> nm(a).localeCompare(nm(b)),
-    za:     (a,b)=> nm(b).localeCompare(nm(a)),
-    vmas:   (a,b)=> vc(b)-vc(a) || nm(a).localeCompare(nm(b)),
-    vmenos: (a,b)=> vc(a)-vc(b) || nm(a).localeCompare(nm(b)),
-    potalto:(a,b)=> pr(b)-pr(a) || nm(a).localeCompare(nm(b)),
-    zona:   (a,b)=> getVal(a,'Zona').localeCompare(getVal(b,'Zona')) || nm(a).localeCompare(nm(b)),
+  const ts=r=>{ const d=parseFecha(r); return d?d.getTime():0; };
+  const pr=r=>({Alto:3,Medio:2,Bajo:1}[getPotencial(r)]||0);
+  const nm=r=>getVal(r,'Nombre del negocio').toLowerCase();
+  const sorters={
+    reciente:(a,b)=> ts(b)-ts(a),
+    antiguo: (a,b)=> ts(a)-ts(b),
+    az:      (a,b)=> nm(a).localeCompare(nm(b)),
+    za:      (a,b)=> nm(b).localeCompare(nm(a)),
+    vmas:    (a,b)=> visitasDe(b)-visitasDe(a) || ts(b)-ts(a),
+    vmenos:  (a,b)=> visitasDe(a)-visitasDe(b) || ts(b)-ts(a),
+    potalto: (a,b)=> pr(b)-pr(a) || ts(b)-ts(a),
+    zona:    (a,b)=> getVal(a,'Zona').localeCompare(getVal(b,'Zona')) || nm(a).localeCompare(nm(b)),
   };
   if(sorters[orden]) list.sort(sorters[orden]);
   renderListado(list);
