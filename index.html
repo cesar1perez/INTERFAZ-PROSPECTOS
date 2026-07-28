@@ -185,6 +185,26 @@
   .prod b { display:block; font-size:19px; font-weight:900; line-height:1; }
   .prod span { font-size:9.5px; font-weight:700; text-transform:uppercase; }
 
+  /* CALENDARIO / AGENDA */
+  .cal-nav { display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--marino2); }
+  .cal-nav button { width:36px; height:36px; border-radius:10px; border:2px solid var(--mostaza); background:transparent; color:var(--mostaza); font-size:14px; }
+  .cal-nav span { color:#fff; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:1px; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; padding:10px; }
+  .cal-dow { text-align:center; font-size:9.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; padding:4px 0; }
+  .cal-day { aspect-ratio:1; border-radius:9px; background:#fff; border:1.5px solid var(--linea); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; position:relative; font-weight:700; font-size:13px; color:#334155; }
+  .cal-day.empty { background:transparent; border:none; }
+  .cal-day.hoy { border-color:var(--marino); border-width:2.5px; }
+  .cal-day.tiene { background:var(--marino); color:#fff; cursor:pointer; box-shadow:0 3px 8px rgba(0,21,41,.25); }
+  .cal-day.tiene .cd-badge { position:absolute; top:-5px; right:-5px; background:var(--mostaza); color:var(--marino);
+    min-width:19px; height:19px; border-radius:50%; font-size:11px; font-weight:900; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+  .cal-detalle { padding:4px 12px 30px; }
+  .cal-cita { background:#fff; border-left:5px solid var(--marino); border-radius:10px; padding:10px 12px; margin-bottom:8px;
+    box-shadow:0 2px 8px rgba(0,21,41,.07); }
+  .cal-cita .neg { font-weight:800; font-size:13px; color:var(--marino); text-transform:uppercase; }
+  .cal-cita .meta { font-size:11px; color:#64748b; font-weight:600; margin-top:3px; }
+  .cal-vacio { text-align:center; color:#94a3b8; font-weight:700; padding:24px; font-size:12px; }
+
   /* MAPA: leyenda + acordeón de zonas */
   .legend { padding:10px 12px; display:flex; flex-wrap:wrap; gap:8px 12px; background:#fff; border-bottom:3px solid var(--mostaza); position:sticky; top:0; z-index:2; }
   .legend .chip { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:800; color:#334155; text-transform:uppercase; }
@@ -239,6 +259,13 @@
   .visita-txt { width:100%; min-height:62px; border:2px solid #e2e8f0; border-radius:10px; padding:9px; font-family:Arial, Helvetica, sans-serif;
     font-size:13px; font-weight:600; resize:vertical; outline:none; margin-top:6px; }
   .visita-txt:focus { border-color:var(--mostaza); }
+  .cita-row { display:flex; align-items:center; gap:7px; margin-top:9px; padding-top:9px; border-top:1px dashed #e2e8f0; }
+  .cita-row > i { color:var(--marino); font-size:13px; }
+  .cita-lbl { font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.3px; }
+  .cita-input { flex:1; padding:7px 9px; border:2px solid #cbd5e1; border-radius:9px; font-family:inherit; font-weight:700;
+    font-size:12.5px; color:var(--marino); outline:none; }
+  .cita-input:focus { border-color:var(--mostaza); }
+  .cita-clear { width:30px; height:30px; border-radius:8px; border:none; background:#fee2e2; color:#b91c1c; font-size:12px; flex-shrink:0; }
   .btn-mic, .btn-save { border:none; border-radius:10px; padding:9px 12px; font-weight:800; font-size:12px; cursor:pointer; }
   .btn-mic { background:#e2e8f0; color:var(--marino); }
   .btn-mic.rec { background:#dc2626; color:#fff; animation:pulse 1s infinite; }
@@ -287,6 +314,11 @@
     <button onclick="switchView('map')" class="nav-card">
       <div class="ico" style="background:#dcfce7;color:#16a34a"><i class="fas fa-map-marked-alt"></i></div>
       <div class="txt"><b>Mapa por zonas</b><small>Rutas y ubicación GPS</small></div>
+      <i class="fas fa-chevron-right chev"></i>
+    </button>
+    <button onclick="switchView('cal')" class="nav-card">
+      <div class="ico" style="background:#ede9fe;color:#7c3aed"><i class="fas fa-calendar-check"></i></div>
+      <div class="txt"><b>Agenda de visitas</b><small>Citas agendadas por mes</small></div>
       <i class="fas fa-chevron-right chev"></i>
     </button>
   </div>
@@ -360,7 +392,25 @@
   </div>
 </section>
 
+<!-- CALENDARIO / AGENDA -->
+<section id="calView" class="view-section">
+  <div class="wrap">
+    <div class="header-app">
+      <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
+      <span class="title">Agenda de visitas</span>
+    </div>
+    <div class="cal-nav">
+      <button onclick="cambiarMesCal(-1)"><i class="fas fa-chevron-left"></i></button>
+      <span id="calTitulo"></span>
+      <button onclick="cambiarMesCal(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div id="calGrid" class="cal-grid"></div>
+    <div id="calDetalle" class="cal-detalle"></div>
+  </div>
+</section>
+
 <!-- PANEL FICHA + SEGUIMIENTO -->
+
 <div id="detailPanel">
   <div class="h-full flex flex-col">
     <div class="panel-head">
@@ -401,7 +451,10 @@ const CONFIG = {
   COL_VENDEDOR: 'ESTATUS',
 
   // Columna AL de tu hoja: código que se captura cuando se concreta la venta.
-  COL_CODIGO: 'Codigo Cliente'
+  COL_CODIGO: 'Codigo Cliente',
+
+  // Columnas AO–AS: fecha de cita agendada para cada visita (FECHA 1 … FECHA 5).
+  COL_FECHAS: ['FECHA 1','FECHA 2','FECHA 3','FECHA 4','FECHA 5']
 };
 
 let allData = [], map, markersLayer, sortState = {};
@@ -473,6 +526,7 @@ function switchView(v){
   document.querySelectorAll('.view-section').forEach(s=>s.classList.remove('active-view'));
   if(v!=='home') document.getElementById(v+'View').classList.add('active-view');
   if(v==='map'){ if(!map) initMap(); setTimeout(()=>map.invalidateSize(),300); }
+  if(v==='cal'){ renderCalendario(); }
   window.scrollTo(0,0);
 }
 function toggleMapList(){
@@ -490,7 +544,8 @@ function loadData(){
     complete: res => {
       // _row = fila real en la hoja (encabezado + índice). Se calcula ANTES de filtrar.
       res.data.forEach((r,i)=> r._row = i + 2);
-      allData = res.data.filter(r => r['Marca temporal']);
+      // Se acepta la fila si tiene marca temporal O nombre de negocio (altas manuales).
+      allData = res.data.filter(r => r['Marca temporal'] || getVal(r,'Nombre del negocio'));
       afterLoad();
     },
     error: () => { document.getElementById('loader').innerHTML =
@@ -900,6 +955,8 @@ function showDetail(rowNum, focusVisit){
   html += `<p class="sec-title">Seguimiento por visita ${isBackendOn()?'':'<span class="text-red-500 text-[9px]">(configura Apps Script para guardar)</span>'}</p>`;
   for(let n=1;n<=5;n++){
     const val = getVal(r,'VISITA '+n);
+    const colF = CONFIG.COL_FECHAS[n-1];
+    const cita = getVal(r, colF);
     html += `
       <div class="visita-card ${val?'tiene':''}">
         <div class="flex items-center justify-between">
@@ -910,6 +967,12 @@ function showDetail(rowNum, focusVisit){
         <div class="flex gap-2 mt-2">
           <button class="btn-mic" onclick="dictar('v${n}_${r._row}', this)"><i class="fas fa-microphone"></i></button>
           <button class="btn-save" onclick="guardarVisita(${r._row}, ${n}, this)"><i class="fas fa-save mr-1"></i>Guardar visita ${n}</button>
+        </div>
+        <div class="cita-row">
+          <i class="fas fa-calendar-day"></i>
+          <span class="cita-lbl">Cita agendada:</span>
+          <input type="date" id="cita${n}_${r._row}" class="cita-input" value="${isoFecha(cita)}" onchange="guardarCita(${r._row}, ${n}, this)">
+          ${cita?`<button class="cita-clear" onclick="limpiarCita(${r._row}, ${n})" title="Quitar cita"><i class="fas fa-times"></i></button>`:''}
         </div>
       </div>`;
   }
@@ -964,6 +1027,17 @@ async function quitarAsignacion(row, btn){
   const ok=await guardar(row, CONFIG.COL_VENDEDOR, '', null);
   btn.disabled=false;
   if(ok) showDetail(row);
+}
+
+async function guardarCita(row, n, inp){
+  const col=CONFIG.COL_FECHAS[n-1];
+  const ok=await guardar(row, col, inp.value, inp);
+  if(ok){ toast(inp.value?`Cita fijada para la visita ${n} ✓`:'Cita borrada','ok'); showDetail(row, n); }
+}
+async function limpiarCita(row, n){
+  const col=CONFIG.COL_FECHAS[n-1];
+  const ok=await guardar(row, col, '', null);
+  if(ok) showDetail(row, n);
 }
 
 async function guardarVisita(row, n, btn){
@@ -1052,6 +1126,85 @@ function focusOnMap(gps,row){
   const coords=parseGPS(gps);
   if(coords){ map.flyTo(coords,16); if(window.innerWidth<=768) toggleMapList(); }
   else if(row){ showDetail(row); }
+}
+
+/* ==================================================================
+   CALENDARIO DE AGENDA (fechas AO–AS)
+   ================================================================== */
+let calMes = new Date().getMonth(), calAnio = new Date().getFullYear();
+
+// Normaliza cualquier fecha a aaaa-mm-dd (acepta dd/mm/aaaa, que es como Sheets suele reexportar)
+function isoFecha(s){
+  s=String(s||'').trim(); if(!s) return '';
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+  if(m) return `20${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return '';
+}
+
+function citasDelRango(){
+  // Devuelve [{fecha:'aaaa-mm-dd', row, negocio, visita, vend}]
+  const out=[];
+  allData.forEach(r=>{
+    CONFIG.COL_FECHAS.forEach((col,i)=>{
+      const f=isoFecha(getVal(r,col));
+      if(f){
+        out.push({ fecha:f, row:r._row, negocio:getVal(r,'Nombre del negocio'),
+                   visita:i+1, vend:vendedorCorto(r)||getVal(r,'Impulsor de mercado') });
+      }
+    });
+  });
+  return out;
+}
+
+function cambiarMesCal(d){
+  calMes+=d;
+  if(calMes<0){ calMes=11; calAnio--; }
+  if(calMes>11){ calMes=0; calAnio++; }
+  renderCalendario();
+}
+
+function renderCalendario(){
+  document.getElementById('calTitulo').textContent = `${ORDEN_MESES[calMes]} ${calAnio}`;
+  const citas=citasDelRango();
+  const porDia={};
+  citas.forEach(c=>{
+    const [a,m]=c.fecha.split('-').map(n=>parseInt(n,10));
+    if(a===calAnio && m===calMes+1){ const d=parseInt(c.fecha.split('-')[2],10); (porDia[d]=porDia[d]||[]).push(c); }
+  });
+
+  const primerDia=new Date(calAnio, calMes, 1).getDay();       // 0=Dom
+  const diasMes=new Date(calAnio, calMes+1, 0).getDate();
+  const hoy=new Date();
+  const esMesActual = hoy.getFullYear()===calAnio && hoy.getMonth()===calMes;
+
+  let g=['D','L','M','M','J','V','S'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<primerDia;i++) g+=`<div class="cal-day empty"></div>`;
+  for(let d=1; d<=diasMes; d++){
+    const n=(porDia[d]||[]).length;
+    const cls=['cal-day']; if(n) cls.push('tiene'); if(esMesActual && d===hoy.getDate()) cls.push('hoy');
+    g+=`<div class="${cls.join(' ')}" ${n?`onclick="verDiaCal(${d})"`:''}>${d}${n?`<span class="cd-badge">${n}</span>`:''}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=g;
+
+  const totalMes=Object.values(porDia).reduce((s,a)=>s+a.length,0);
+  document.getElementById('calDetalle').innerHTML = totalMes
+    ? `<p class="pcount">📅 ${totalMes} cita(s) agendada(s) este mes · toca un día resaltado</p>`
+    : `<div class="cal-vacio">Sin citas agendadas en ${ORDEN_MESES[calMes]}.<br>Se fijan desde la ficha de cada prospecto, bajo cada visita.</div>`;
+  window._calPorDia=porDia;
+}
+
+function verDiaCal(d){
+  const citas=(window._calPorDia&&window._calPorDia[d])||[];
+  const cont=document.getElementById('calDetalle');
+  cont.innerHTML=`<p class="pcount">${d} de ${ORDEN_MESES[calMes]} · ${citas.length} cita(s)</p>`
+    + citas.map(c=>`<div class="cal-cita" onclick="showDetail(${c.row}, ${c.visita})">
+        <div class="neg">${esc(c.negocio)||'Prospecto'}</div>
+        <div class="meta"><i class="fas fa-user mr-1"></i>${esc(c.vend)||'—'} · <i class="fas fa-flag-checkered mr-1"></i>Visita ${c.visita}</div>
+      </div>`).join('');
+  cont.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 window.onload = loadData;
