@@ -111,6 +111,7 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .c-negocio .sub { font-size:10.5px; color:#94a3b8; font-weight:600; margin-top:2px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .c-negocio .sub b { color:#0f5c8f; font-weight:800; }
   .cell { font-size:11px; font-weight:700; color:#334155; min-width:0; }
   .cell .mini { display:none; }
   .txt-ell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -195,7 +196,14 @@
     align-items:center; justify-content:center; position:relative; font-weight:700; font-size:13px; color:#334155; }
   .cal-day.empty { background:transparent; border:none; }
   .cal-day.hoy { border-color:var(--marino); border-width:2.5px; }
-  .cal-day.tiene { background:var(--marino); color:#fff; cursor:pointer; box-shadow:0 3px 8px rgba(0,21,41,.25); }
+  .cal-day.tiene { background:#1e3a5f; color:#fff; cursor:pointer; box-shadow:0 3px 8px rgba(0,21,41,.18); }
+  .cal-day.pasada { background:#e2e8f0; color:#64748b; cursor:pointer; box-shadow:none; }
+  .cal-day.pasada .cd-badge { background:#94a3b8; color:#fff; }
+  .cal-day.vencida { background:#fee2e2; color:#b91c1c; cursor:pointer; box-shadow:none; border-color:#fca5a5; }
+  .cal-day.vencida .cd-badge { background:#dc2626; color:#fff; }
+  .cal-leyenda { display:flex; flex-wrap:wrap; gap:12px; padding:4px 14px 8px; }
+  .cal-leyenda span { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; color:#64748b; }
+  .cal-leyenda i { width:13px; height:13px; border-radius:4px; display:inline-block; }
   .cal-day.tiene .cd-badge { position:absolute; top:-5px; right:-5px; background:var(--mostaza); color:var(--marino);
     min-width:19px; height:19px; border-radius:50%; font-size:11px; font-weight:900; display:flex; align-items:center; justify-content:center; padding:0 4px; }
   .cal-detalle { padding:4px 12px 30px; }
@@ -405,6 +413,7 @@
       <button onclick="cambiarMesCal(1)"><i class="fas fa-chevron-right"></i></button>
     </div>
     <div id="calGrid" class="cal-grid"></div>
+    <div id="calLeyenda" class="cal-leyenda"></div>
     <div id="calDetalle" class="cal-detalle"></div>
   </div>
 </section>
@@ -682,11 +691,19 @@ function renderResumen(){
 // La marca temporal de Forms viene como dd/mm/aaaa hh:mm:ss
 function parseFecha(row){
   const t=getVal(row,'Marca temporal'); if(!t) return null;
-  const [f,h] = t.split(' ');
+
+  // Formato ISO que devuelve Apps Script: 2026-07-18T14:32:00.000Z  (o "2026-07-18 14:32:00")
+  let m=t.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if(m){ const dt=new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5]); return isNaN(dt)?null:dt; }
+  m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m){ const dt=new Date(+m[1], +m[2]-1, +m[3]); return isNaN(dt)?null:dt; }
+
+  // Formato del CSV publicado: dd/mm/aaaa hh:mm:ss
+  const [f,h]=t.split(' ');
   const p=f.split('/'); if(p.length!==3) return null;
-  const [d,m,a]=p.map(n=>parseInt(n,10));
+  const [d,mo,a]=p.map(n=>parseInt(n,10));
   const hh=(h||'0:0:0').split(':').map(n=>parseInt(n,10)||0);
-  const dt=new Date(a, m-1, d, hh[0]||0, hh[1]||0, hh[2]||0);
+  const dt=new Date(a, mo-1, d, hh[0]||0, hh[1]||0, hh[2]||0);
   return isNaN(dt.getTime()) ? null : dt;
 }
 function fechaCorta(row){
@@ -767,7 +784,7 @@ function renderListado(data){
     return `<div class="prow" onclick="showDetail(${row._row})">
       <div class="c-negocio">
         <div class="nom">${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
-        <div class="sub">Alta: ${esc(alta)||'—'}</div>
+        <div class="sub">Alta: <b>${esc(alta)||'—'}</b></div>
       </div>
       <div class="c-det">
         <span class="cell txt-ell"><i class="mini">Fecha</i>${f.dia}${f.hora?` <span style="color:#cbd5e1">${f.hora}</span>`:''}</span>
@@ -820,12 +837,14 @@ function populateFilters(){
   zSel.innerHTML=`<option value="__all">📍 Todas las zonas</option>`
     + zonas.map(z=>`<option value="${esc(z)}">${esc(z)}</option>`).join('');
 
-  // Meses presentes en los datos, del más nuevo al más viejo
-  const claves=[...new Set(allData.map(mesClave).filter(Boolean))].sort().reverse();
+  // Meses reales del más nuevo al más viejo; "Sin fecha" (manuales) va al final
+  const reales=[...new Set(allData.map(mesClave))].filter(k=>k && k!=='__sf').sort().reverse();
+  const haySF=allData.some(r=>mesClave(r)==='__sf');
+  const claves=[...reales, ...(haySF?['__sf']:[])];
   mSel.innerHTML=`<option value="__all">🗓 Todos los meses</option>`
     + claves.map(k=>`<option value="${k}">${esc(mesEtiqueta(k))} (${allData.filter(r=>mesClave(r)===k).length})</option>`).join('');
-  // Arranca en el mes más reciente para que lo viejo no haga ruido
-  if(claves.length) mSel.value=claves[0];
+  // Arranca en el mes real más reciente para que lo viejo no haga ruido
+  if(reales.length) mSel.value=reales[0];
 
   const aSel=document.getElementById('fAsignado');
   const asignados=[...new Set(allData.map(vendedorCorto).filter(Boolean))].sort();
@@ -837,10 +856,11 @@ function populateFilters(){
 
 // Clave ordenable aaaa-mm a partir de la marca temporal
 function mesClave(row){
-  const d=parseFecha(row); if(!d) return '';
+  const d=parseFecha(row); if(!d) return '__sf';   // altas manuales sin fecha
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
 function mesEtiqueta(k){
+  if(k==='__sf') return 'Sin fecha (manual)';
   const [a,m]=k.split('-');
   return ORDEN_MESES[parseInt(m,10)-1]+' '+a;
 }
@@ -1163,7 +1183,8 @@ function citasDelRango(){
       const f=isoFecha(getVal(r,col));
       if(f){
         out.push({ fecha:f, row:r._row, negocio:getVal(r,'Nombre del negocio'),
-                   visita:i+1, vend:vendedorCorto(r)||getVal(r,'Impulsor de mercado') });
+                   visita:i+1, vend:vendedorCorto(r)||getVal(r,'Impulsor de mercado'),
+                   atendida: !!getVal(r,'VISITA '+(i+1)) });
       }
     });
   });
@@ -1194,11 +1215,28 @@ function renderCalendario(){
   let g=['D','L','M','M','J','V','S'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
   for(let i=0;i<primerDia;i++) g+=`<div class="cal-day empty"></div>`;
   for(let d=1; d<=diasMes; d++){
-    const n=(porDia[d]||[]).length;
-    const cls=['cal-day']; if(n) cls.push('tiene'); if(esMesActual && d===hoy.getDate()) cls.push('hoy');
+    const citasDia=porDia[d]||[];
+    const n=citasDia.length;
+    const cls=['cal-day'];
+    if(n){
+      const fechaDia=new Date(calAnio, calMes, d);
+      const refHoy=new Date(); refHoy.setHours(0,0,0,0);
+      if(fechaDia < refHoy){
+        // pasado: rojo si quedó alguna sin atender (sin comentario), gris si todas atendidas
+        cls.push(citasDia.some(c=>!c.atendida) ? 'vencida' : 'pasada');
+      } else {
+        cls.push('tiene');
+      }
+    }
+    if(esMesActual && d===hoy.getDate()) cls.push('hoy');
     g+=`<div class="${cls.join(' ')}" ${n?`onclick="verDiaCal(${d})"`:''}>${d}${n?`<span class="cd-badge">${n}</span>`:''}</div>`;
   }
   document.getElementById('calGrid').innerHTML=g;
+
+  document.getElementById('calLeyenda').innerHTML=`
+    <span><i style="background:#1e3a5f"></i>Próxima</span>
+    <span><i style="background:#fee2e2;border:1px solid #fca5a5"></i>Vencida sin atender</span>
+    <span><i style="background:#e2e8f0"></i>Atendida</span>`;
 
   const totalMes=Object.values(porDia).reduce((s,a)=>s+a.length,0);
   document.getElementById('calDetalle').innerHTML = totalMes
@@ -1211,10 +1249,17 @@ function verDiaCal(d){
   const citas=(window._calPorDia&&window._calPorDia[d])||[];
   const cont=document.getElementById('calDetalle');
   cont.innerHTML=`<p class="pcount">${d} de ${ORDEN_MESES[calMes]} · ${citas.length} cita(s)</p>`
-    + citas.map(c=>`<div class="cal-cita" onclick="showDetail(${c.row}, ${c.visita})">
+    + citas.map(c=>{
+        const hoy0=new Date(); hoy0.setHours(0,0,0,0);
+        const fdia=new Date(calAnio, calMes, d);
+        const vencida = fdia<hoy0 && !c.atendida;
+        return `<div class="cal-cita" style="${vencida?'border-left-color:#dc2626':''}" onclick="showDetail(${c.row}, ${c.visita})">
         <div class="neg">${esc(c.negocio)||'Prospecto'}</div>
-        <div class="meta"><i class="fas fa-user mr-1"></i>${esc(c.vend)||'—'} · <i class="fas fa-flag-checkered mr-1"></i>Visita ${c.visita}</div>
-      </div>`).join('');
+        <div class="meta"><i class="fas fa-user mr-1"></i>${esc(c.vend)||'—'} · <i class="fas fa-flag-checkered mr-1"></i>Visita ${c.visita}
+          ${c.atendida?'<span style="color:#16a34a;font-weight:800">· ✓ Atendida</span>'
+                      :vencida?'<span style="color:#dc2626;font-weight:800">· ⚠ Sin atender</span>':''}</div>
+      </div>`;
+      }).join('');
   cont.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
