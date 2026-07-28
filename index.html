@@ -538,14 +538,25 @@ function toggleMapList(){
 /* ==================================================================
    CARGA DE DATOS
    ================================================================== */
-function loadData(){
-  Papa.parse(CONFIG.CSV_URL, {
+async function loadData(){
+  // 1) Intento leer EN VIVO desde el Apps Script (sin caché, incluye altas manuales).
+  if(isBackendOn()){
+    try{
+      const res = await fetch(CONFIG.WEB_APP_URL + '?t=' + Date.now(), { redirect:'follow' });
+      const json = await res.json();
+      if(Array.isArray(json) && json.length){
+        allData = json.filter(r => getVal(r,'Nombre del negocio') || r['Marca temporal']);
+        afterLoad(); return;
+      }
+    }catch(e){ console.warn('Lectura en vivo falló, uso CSV de respaldo:', e); }
+  }
+  // 2) Respaldo: CSV publicado (puede tener unos minutos de retraso).
+  Papa.parse(CONFIG.CSV_URL + '&t=' + Date.now(), {
     download:true, header:true,
     complete: res => {
-      // _row = fila real en la hoja (encabezado + índice). Se calcula ANTES de filtrar.
-      res.data.forEach((r,i)=> r._row = i + 2);
-      // Se acepta la fila si tiene marca temporal O nombre de negocio (altas manuales).
-      allData = res.data.filter(r => r['Marca temporal'] || getVal(r,'Nombre del negocio'));
+      res.data.forEach((r,i)=> r._row = i + 2);   // fila real en la hoja
+      // Ancla en la columna F (Nombre del negocio / Razón Social); acepta también con marca temporal.
+      allData = res.data.filter(r => getVal(r,'Nombre del negocio') || r['Marca temporal']);
       afterLoad();
     },
     error: () => { document.getElementById('loader').innerHTML =
