@@ -187,6 +187,9 @@
   .prod span { font-size:9.5px; font-weight:700; text-transform:uppercase; }
 
   /* CALENDARIO / AGENDA */
+  .cal-filtro { padding:10px 12px 0; }
+  .cal-filtro select { width:100%; padding:9px 11px; border-radius:10px; border:2px solid var(--marino2); background:#fff;
+    font-weight:700; font-size:13px; color:var(--marino); outline:none; }
   .cal-nav { display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--marino2); }
   .cal-nav button { width:36px; height:36px; border-radius:10px; border:2px solid var(--mostaza); background:transparent; color:var(--mostaza); font-size:14px; }
   .cal-nav span { color:#fff; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:1px; }
@@ -411,6 +414,9 @@
     <div class="header-app">
       <button onclick="switchView('home')" class="btn-inicio">INICIO</button>
       <span class="title">Agenda de visitas</span>
+    </div>
+    <div class="cal-filtro">
+      <select id="calVendedor" onchange="renderCalendario()"></select>
     </div>
     <div class="cal-nav">
       <button onclick="cambiarMesCal(-1)"><i class="fas fa-chevron-left"></i></button>
@@ -1200,8 +1206,11 @@ function isoFecha(s){
 
 function citasDelRango(){
   // Devuelve [{fecha:'aaaa-mm-dd', row, negocio, visita, vend}]
+  const filtroV = (document.getElementById('calVendedor')||{}).value || '__all';
   const out=[];
   allData.forEach(r=>{
+    const vendR = vendedorCorto(r) || getVal(r,'Impulsor de mercado');
+    if(filtroV!=='__all' && vendR!==filtroV) return;
     CONFIG.COL_FECHAS.forEach((col,i)=>{
       const f=isoFecha(getVal(r,col));
       if(f){
@@ -1221,7 +1230,16 @@ function cambiarMesCal(d){
   renderCalendario();
 }
 
+function poblarCalVendedor(){
+  const sel=document.getElementById('calVendedor');
+  if(!sel || sel.dataset.listo) return;               // solo una vez, para no perder la selección
+  const vends=[...new Set(allData.map(r=>vendedorCorto(r)||getVal(r,'Impulsor de mercado')).filter(Boolean))].sort();
+  sel.innerHTML=`<option value="__all">👥 Todos los vendedores</option>`
+    + vends.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  sel.dataset.listo='1';
+}
 function renderCalendario(){
+  poblarCalVendedor();
   document.getElementById('calTitulo').textContent = `${ORDEN_MESES[calMes]} ${calAnio}`;
   const citas=citasDelRango();
   const porDia={};
