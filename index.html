@@ -149,12 +149,14 @@
   }
   /* ESCRITORIO: columnas reales con encabezado */
   @media (min-width:820px){
-    .prow { grid-template-columns: 2.1fr 1fr 1.2fr 1.3fr 1.5fr .9fr auto auto; padding:8px 14px; }
+    .prow { grid-template-columns: 2.7fr 1fr 1.2fr 1.3fr 1.5fr .9fr auto; padding:8px 14px; }
     .c-det { display:contents; }
-    .lhead { display:grid; grid-template-columns: 2.1fr 1fr 1.2fr 1.3fr 1.5fr .9fr auto auto; gap:8px; padding:9px 14px;
+    .lhead { display:grid; grid-template-columns: 2.7fr 1fr 1.2fr 1.3fr 1.5fr .9fr auto; gap:8px; padding:9px 14px;
       background:var(--marino); color:var(--mostaza); font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.5px;
       position:sticky; top:0; z-index:20; }
-    .lhead span:nth-last-child(-n+2) { text-align:right; }
+    .lhead span:last-child { text-align:right; }
+    .th-sort { cursor:pointer; user-select:none; white-space:nowrap; }
+    .th-sort:hover { color:#fff; }
   }
 
   /* RESUMEN DESPLEGABLE (dentro de Prospectos) */
@@ -788,13 +790,13 @@ function renderListado(data){
   if(!data.length){ cont.innerHTML=`<div class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta los filtros.</div>`; return; }
 
   const head=`<div class="lhead">
-    <span>Cliente / alta</span><span>Fecha</span><span>Zona</span><span>Asignado</span>
-    <span>Productos</span><span>Código</span><span>Seguimiento</span><span>Contacto</span></div>`;
+    ${thOrden('Cliente / alta','negocio')}${thOrden('Fecha','fecha')}${thOrden('Zona','zonaAsc')}
+    ${thOrden('Asignado','asignado')}${thOrden('Productos','prod')}${thOrden('Seguimiento','vis')}
+    <span>Contacto</span></div>`;
 
   const filas=data.map(row=>{
     const alta=getVal(row,'Impulsor de mercado');
     const asig=vendedorAsignado(row);
-    const cod=codigoCliente(row);
     const tel=telLimpio(row);
     const f=fechaCorta(row);
     const prods=productosDe(row);
@@ -824,7 +826,6 @@ function renderListado(data){
         <span class="cell"><span class="prod-chips">${
             prods.length ? prods.map(([n,,c])=>`<span class="pchip" style="background:${c}1a;color:${c}">${n}</span>`).join('')
                          : '<span class="vacio">—</span>'}</span></span>
-        <span class="cell txt-ell"><i class="mini">Código</i>${cod?`<span class="cod-ok">${esc(cod)}</span>`:'<span class="vacio">—</span>'}</span>
         <span class="cell"><span class="vpills">${pills}</span></span>
       </div>
       <div class="acts">${acciones}</div>
@@ -832,6 +833,33 @@ function renderListado(data){
   }).join('');
 
   cont.innerHTML=head+filas;
+}
+
+// Encabezado clicable: aplica el orden y muestra la flecha del sentido activo
+function thOrden(txt, clave){
+  const activo = document.getElementById('fOrden') && ordenActivoBase()===clave;
+  const flecha = activo ? (ordenAscendente()?' ▲':' ▼') : '';
+  return `<span class="th-sort" onclick="ordenarPorColumna('${clave}')">${txt}${flecha}</span>`;
+}
+function ordenActivoBase(){
+  const v=(document.getElementById('fOrden')||{}).value||'';
+  const map={az:'negocio',za:'negocio',reciente:'fecha',antiguo:'fecha',vmas:'vis',vmenos:'vis',potalto:'prod',zona:'zonaAsc'};
+  return map[v]||'';
+}
+function ordenAscendente(){
+  const v=(document.getElementById('fOrden')||{}).value||'';
+  return ['az','antiguo','vmenos','zona'].includes(v);
+}
+// Alterna asc/desc al hacer click en la misma columna
+function ordenarPorColumna(clave){
+  const sel=document.getElementById('fOrden'); if(!sel) return;
+  const parejas={
+    negocio:['az','za'], fecha:['reciente','antiguo'], vis:['vmas','vmenos'],
+    prod:['potalto','potalto'], zonaAsc:['zona','zona']
+  };
+  const [a,b]=parejas[clave]||['az','za'];
+  sel.value = (sel.value===a) ? b : a;   // segundo click invierte
+  applyFilters();
 }
 
 /* ---------- Filtros ---------- */
