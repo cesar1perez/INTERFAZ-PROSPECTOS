@@ -1261,12 +1261,12 @@ function renderCalendario(){
     const cls=['cal-day'];
     const esHoy = esMesActual && d===hoy.getDate();
 
-    if(n){
+    if(esHoy){
+      cls.push('hoymarca');                            // HOY siempre navy (con o sin citas, con o sin filtro)
+    } else if(n){
       const fechaDia=new Date(calAnio, calMes, d);
       const refHoy=new Date(); refHoy.setHours(0,0,0,0);
-      if(esHoy){
-        cls.push('hoymarca');                          // HOY con citas: relleno navy
-      } else if(fechaDia < refHoy){
+      if(fechaDia < refHoy){
         const atend=citasDia.filter(c=>c.atendida).length;
         if(atend===n)      cls.push('ok');             // todas atendidas -> verde
         else if(atend>0)   cls.push('media');          // algunas -> amarillo
@@ -1274,8 +1274,6 @@ function renderCalendario(){
       } else {
         cls.push('futura');                            // próximas -> azul claro
       }
-    } else if(esHoy){
-      cls.push('hoy');                                 // hoy sin citas: solo borde
     }
     g+=`<div class="${cls.join(' ')}" ${n?`onclick="verDiaCal(${d})"`:''}>${d}${n?`<span class="cd-badge">${n}</span>`:''}</div>`;
   }
