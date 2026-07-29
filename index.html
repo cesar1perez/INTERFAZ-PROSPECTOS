@@ -460,9 +460,9 @@ const CONFIG = {
   // Ejemplo: zonasPozaRica: ['Poza Rica', 'Tihuatlán', 'Coatzintla']
   EMPRESAS: { zonasPozaRica: [] },
 
-  // VENDEDOR ASIGNADO: columna AH. Se ubica por LETRA para que no se pierda
-  // aunque muevas o agregues columnas. Si está vacía = sin asignar.
-  COL_VENDEDOR: 'AH',
+  // VENDEDOR ASIGNADO: se lee de la columna llamada "ESTATUS"
+  // (ahí escriben el nombre del vendedor). Vacía = sin asignar.
+  COL_VENDEDOR: 'ESTATUS',
 
   // Columna AL de tu hoja: código que se captura cuando se concreta la venta.
   COL_CODIGO: 'Codigo Cliente',
@@ -588,7 +588,11 @@ function resolveCol(ref){
     const h=HEADERS[colLetraAIndice(ref)-1];
     return h || ref;
   }
-  return ref;
+  const low=ref.toLowerCase().trim();
+  const exact=HEADERS.find(h=>String(h).toLowerCase().trim()===low);
+  if(exact) return exact;
+  const incl=HEADERS.find(h=>String(h).toLowerCase().includes(low));
+  return incl || ref;
 }
 function afterLoad(){
   CONFIG._colVendedor = resolveCol(CONFIG.COL_VENDEDOR);   // "AH" -> nombre real del encabezado
