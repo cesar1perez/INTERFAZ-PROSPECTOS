@@ -196,16 +196,21 @@
     align-items:center; justify-content:center; position:relative; font-weight:700; font-size:13px; color:#334155; }
   .cal-day.empty { background:transparent; border:none; }
   .cal-day.hoy { border-color:var(--marino); border-width:2.5px; }
-  .cal-day.tiene { background:#1e3a5f; color:#fff; cursor:pointer; box-shadow:0 3px 8px rgba(0,21,41,.18); }
-  .cal-day.pasada { background:#e2e8f0; color:#64748b; cursor:pointer; box-shadow:none; }
-  .cal-day.pasada .cd-badge { background:#94a3b8; color:#fff; }
-  .cal-day.vencida { background:#fee2e2; color:#b91c1c; cursor:pointer; box-shadow:none; border-color:#fca5a5; }
-  .cal-day.vencida .cd-badge { background:#dc2626; color:#fff; }
-  .cal-leyenda { display:flex; flex-wrap:wrap; gap:12px; padding:4px 14px 8px; }
+  .cal-day.futura { background:#dbeafe; color:#1e40af; cursor:pointer; border-color:#bfdbfe; }
+  .cal-day.futura .cd-badge { background:#2563eb; color:#fff; }
+  .cal-day.hoymarca { background:var(--marino); color:#fff; cursor:pointer; box-shadow:0 3px 8px rgba(0,21,41,.3); }
+  .cal-day.hoymarca .cd-badge { background:var(--mostaza); color:var(--marino); }
+  .cal-day.ok { background:#dcfce7; color:#15803d; cursor:pointer; border-color:#bbf7d0; }
+  .cal-day.ok .cd-badge { background:#16a34a; color:#fff; }
+  .cal-day.media { background:#fef3c7; color:#b45309; cursor:pointer; border-color:#fde68a; }
+  .cal-day.media .cd-badge { background:#d97706; color:#fff; }
+  .cal-day.mala { background:#fee2e2; color:#b91c1c; cursor:pointer; border-color:#fecaca; }
+  .cal-day.mala .cd-badge { background:#dc2626; color:#fff; }
+  .cal-day .cd-badge { position:absolute; top:-5px; right:-5px; min-width:19px; height:19px; border-radius:50%;
+    font-size:11px; font-weight:900; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+  .cal-leyenda { display:flex; flex-wrap:wrap; gap:9px 12px; padding:4px 14px 8px; }
   .cal-leyenda span { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; color:#64748b; }
   .cal-leyenda i { width:13px; height:13px; border-radius:4px; display:inline-block; }
-  .cal-day.tiene .cd-badge { position:absolute; top:-5px; right:-5px; background:var(--mostaza); color:var(--marino);
-    min-width:19px; height:19px; border-radius:50%; font-size:11px; font-weight:900; display:flex; align-items:center; justify-content:center; padding:0 4px; }
   .cal-detalle { padding:4px 12px 30px; }
   .cal-cita { background:#fff; border-left:5px solid var(--marino); border-radius:10px; padding:10px 12px; margin-bottom:8px;
     box-shadow:0 2px 8px rgba(0,21,41,.07); }
@@ -1218,25 +1223,34 @@ function renderCalendario(){
     const citasDia=porDia[d]||[];
     const n=citasDia.length;
     const cls=['cal-day'];
+    const esHoy = esMesActual && d===hoy.getDate();
+
     if(n){
       const fechaDia=new Date(calAnio, calMes, d);
       const refHoy=new Date(); refHoy.setHours(0,0,0,0);
-      if(fechaDia < refHoy){
-        // pasado: rojo si quedó alguna sin atender (sin comentario), gris si todas atendidas
-        cls.push(citasDia.some(c=>!c.atendida) ? 'vencida' : 'pasada');
+      if(esHoy){
+        cls.push('hoymarca');                          // HOY con citas: relleno navy
+      } else if(fechaDia < refHoy){
+        const atend=citasDia.filter(c=>c.atendida).length;
+        if(atend===n)      cls.push('ok');             // todas atendidas -> verde
+        else if(atend>0)   cls.push('media');          // algunas -> amarillo
+        else               cls.push('mala');           // ninguna -> rojo
       } else {
-        cls.push('tiene');
+        cls.push('futura');                            // próximas -> azul claro
       }
+    } else if(esHoy){
+      cls.push('hoy');                                 // hoy sin citas: solo borde
     }
-    if(esMesActual && d===hoy.getDate()) cls.push('hoy');
     g+=`<div class="${cls.join(' ')}" ${n?`onclick="verDiaCal(${d})"`:''}>${d}${n?`<span class="cd-badge">${n}</span>`:''}</div>`;
   }
   document.getElementById('calGrid').innerHTML=g;
 
   document.getElementById('calLeyenda').innerHTML=`
-    <span><i style="background:#1e3a5f"></i>Próxima</span>
-    <span><i style="background:#fee2e2;border:1px solid #fca5a5"></i>Vencida sin atender</span>
-    <span><i style="background:#e2e8f0"></i>Atendida</span>`;
+    <span><i style="background:#dcfce7;border:1px solid #bbf7d0"></i>Todas atendidas</span>
+    <span><i style="background:#fef3c7;border:1px solid #fde68a"></i>Faltan algunas</span>
+    <span><i style="background:#fee2e2;border:1px solid #fecaca"></i>Ninguna atendida</span>
+    <span><i style="background:#dbeafe;border:1px solid #bfdbfe"></i>Próximas</span>
+    <span><i style="background:#001529"></i>Hoy</span>`;
 
   const totalMes=Object.values(porDia).reduce((s,a)=>s+a.length,0);
   document.getElementById('calDetalle').innerHTML = totalMes
