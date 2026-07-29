@@ -460,9 +460,9 @@ const CONFIG = {
   // Ejemplo: zonasPozaRica: ['Poza Rica', 'Tihuatlán', 'Coatzintla']
   EMPRESAS: { zonasPozaRica: [] },
 
-  // Columna AF de tu hoja (ESTATUS): ahí se escribe "Asignado a Miguel L.".
-  // Si está vacía, el prospecto NO tiene vendedor asignado.
-  COL_VENDEDOR: 'ESTATUS',
+  // VENDEDOR ASIGNADO: columna AH. Se ubica por LETRA para que no se pierda
+  // aunque muevas o agregues columnas. Si está vacía = sin asignar.
+  COL_VENDEDOR: 'AH',
 
   // Columna AL de tu hoja: código que se captura cuando se concreta la venta.
   COL_CODIGO: 'Codigo Cliente',
@@ -559,6 +559,7 @@ async function loadData(){
       const res = await fetch(CONFIG.WEB_APP_URL + '?t=' + Date.now(), { redirect:'follow' });
       const json = await res.json();
       if(Array.isArray(json) && json.length){
+        HEADERS = Object.keys(json[0]).filter(k=>k!=='_row');
         allData = json.filter(r => getVal(r,'Nombre del negocio') || r['Marca temporal']);
         afterLoad(); return;
       }
@@ -568,6 +569,7 @@ async function loadData(){
   Papa.parse(CONFIG.CSV_URL + '&t=' + Date.now(), {
     download:true, header:true,
     complete: res => {
+      HEADERS = res.meta.fields || [];
       res.data.forEach((r,i)=> r._row = i + 2);   // fila real en la hoja
       // Ancla en la columna F (Nombre del negocio / Razón Social); acepta también con marca temporal.
       allData = res.data.filter(r => getVal(r,'Nombre del negocio') || r['Marca temporal']);
@@ -577,7 +579,19 @@ async function loadData(){
       '<p class="text-mostaza orb font-bold text-center px-6">No se pudo cargar la hoja.<br>Revisa tu conexión e intenta de nuevo.</p>'; }
   });
 }
+
+// Resuelve una referencia de columna (letra tipo "AH" o nombre) al encabezado real
+let HEADERS = [];
+function colLetraAIndice(l){ let n=0; for(const ch of l.toUpperCase()) n=n*26+(ch.charCodeAt(0)-64); return n; }
+function resolveCol(ref){
+  if(/^[A-Z]{1,3}$/i.test(ref)){
+    const h=HEADERS[colLetraAIndice(ref)-1];
+    return h || ref;
+  }
+  return ref;
+}
 function afterLoad(){
+  CONFIG._colVendedor = resolveCol(CONFIG.COL_VENDEDOR);   // "AH" -> nombre real del encabezado
   buildVendorColors();
   populateFilters();
   renderResumen();
@@ -737,7 +751,7 @@ function productosDe(row){ return PRODUCTOS.filter(([,col])=>esSi(getVal(row,col
 function visitasDe(row){ let n=0; for(let i=1;i<=5;i++) if(getVal(row,'VISITA '+i)) n++; return n; }
 
 /* ---------- Listado ---------- */
-function vendedorAsignado(row){ return getVal(row, CONFIG.COL_VENDEDOR); }
+function vendedorAsignado(row){ const h=CONFIG._colVendedor||CONFIG.COL_VENDEDOR; return (row[h]==null?'':String(row[h])).trim(); }
 function vendedorCorto(row){ return vendedorAsignado(row).replace(/^asignad[oa]\s*a\s*/i,'').trim(); }
 function codigoCliente(row){ return getVal(row, CONFIG.COL_CODIGO); }
 
@@ -1048,19 +1062,19 @@ async function guardar(row, columna, valor, el){
 
 async function guardarAsignacion(row, btn){
   const inp=document.getElementById('asig_'+row);
-  let val=inp.value.trim();
-  // Si escriben solo el nombre, se le antepone "Asignado a "
-  if(val && !/^asignad/i.test(val)) val=CONFIG.PREFIJO_ASIGNACION+val;
+  const val=inp.value.trim();
+  const col=CONFIG._colVendedor||CONFIG.COL_VENDEDOR;
   btn.disabled=true; const o=btn.innerHTML; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Guardando…';
-  const ok=await guardar(row, CONFIG.COL_VENDEDOR, val, null);
+  const ok=await guardar(row, col, val, null);
   btn.disabled=false; btn.innerHTML=o;
   if(ok){ inp.value=val; showDetail(row); }
 }
 
 async function quitarAsignacion(row, btn){
   if(!confirm('¿Quitar la asignación de vendedor de este prospecto?')) return;
+  const col=CONFIG._colVendedor||CONFIG.COL_VENDEDOR;
   btn.disabled=true;
-  const ok=await guardar(row, CONFIG.COL_VENDEDOR, '', null);
+  const ok=await guardar(row, col, '', null);
   btn.disabled=false;
   if(ok) showDetail(row);
 }
