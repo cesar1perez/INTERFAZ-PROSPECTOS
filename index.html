@@ -112,6 +112,8 @@
   .c-negocio .sub { font-size:11.5px; color:#94a3b8; font-weight:600; margin-top:3px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .c-negocio .sub b { color:#0f5c8f; font-weight:800; }
+  .cli-tag { background:#16a34a; color:#fff; font-size:9px; font-weight:900; padding:1px 6px; border-radius:5px; letter-spacing:.3px; vertical-align:middle; }
+  .prow.es-cliente { background:#f0fdf4 !important; box-shadow:inset 4px 0 0 #16a34a; }
   .cell { font-size:12.5px; font-weight:700; color:#334155; min-width:0; }
   .cell .mini { display:none; }
   .txt-ell { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -299,6 +301,20 @@
 
   .status-select { width:100%; padding:11px; border-radius:11px; border:3px solid var(--marino); font-family:Arial, Helvetica, sans-serif;
     font-weight:800; font-size:14px; background:#fff; color:var(--marino); }
+
+  /* BLOQUE CONVERSIÓN A CLIENTE */
+  .venta-box { border:2px dashed #f59e0b; background:#fffbeb; border-radius:14px; padding:12px; margin-bottom:14px; }
+  .venta-box.convertido { border-style:solid; border-color:#16a34a; background:#f0fdf4; }
+  .venta-head { display:flex; align-items:center; gap:8px; font-weight:900; font-size:13px; color:#b45309; text-transform:uppercase; letter-spacing:.3px; }
+  .venta-box.convertido .venta-head { color:#15803d; }
+  .venta-head i { font-size:16px; }
+  .venta-sub { font-size:10.5px; color:#92600c; font-weight:600; margin:3px 0 8px; }
+  .venta-box.convertido .venta-sub { color:#15803d; }
+  .venta-input { flex:1; padding:11px 12px; border-radius:10px; border:2px solid #f59e0b; font-family:inherit; font-weight:800;
+    font-size:15px; color:var(--marino); letter-spacing:.5px; outline:none; background:#fff; }
+  .venta-box.convertido .venta-input { border-color:#16a34a; }
+  .venta-btn { width:46px; border:none; border-radius:10px; background:#b45309; color:#fff; font-size:16px; flex-shrink:0; }
+  .venta-box.convertido .venta-btn { background:#16a34a; }
 
   /* TOAST */
   #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(120px); z-index:5000;
@@ -607,6 +623,7 @@ function resolveCol(ref){
 }
 function afterLoad(){
   CONFIG._colVendedor = resolveCol(CONFIG.COL_VENDEDOR);   // "AH" -> nombre real del encabezado
+  CONFIG._colCodigo   = resolveCol(CONFIG.COL_CODIGO);     // AN "Codigo Cliente"
   buildVendorColors();
   populateFilters();
   renderResumen();
@@ -673,11 +690,26 @@ function renderResumen(){
   const sinAsig=allData.filter(r=>!vendedorAsignado(r)).length;
   const porAsig=Object.entries(cuenta(r=>vendedorCorto(r)||'Sin asignar')).sort((a,b)=>b[1]-a[1]);
 
+  // Conversión a cliente (tienen código en la columna AN)
+  const clientes=allData.filter(esCliente);
+  const nClientes=clientes.length;
+  const tasa= total? Math.round(nClientes/total*100) : 0;
+  const convPorVend={};
+  clientes.forEach(r=>{ const v=vendedorCorto(r)||getVal(r,'Impulsor de mercado')||'Sin asignar'; convPorVend[v]=(convPorVend[v]||0)+1; });
+  const porConv=Object.entries(convPorVend).sort((a,b)=>b[1]-a[1]);
+
   document.getElementById('resBody').innerHTML=`
     <div class="res-kpis">
       <div class="kpi"><b>${total}</b><span>Prospectos</span></div>
+      <div class="kpi" style="border-top-color:#16a34a"><b style="color:#16a34a">${nClientes}</b><span>Clientes (${tasa}%)</span></div>
       <div class="kpi" style="border-top-color:#2563eb"><b style="color:#2563eb">${porVend.length}</b><span>Impulsores</span></div>
-      <div class="kpi" style="border-top-color:#16a34a"><b style="color:#16a34a">${porZona.length}</b><span>Zonas</span></div>
+    </div>
+
+    <div class="res-block" style="border-left:5px solid #16a34a">
+      <h4><i class="fas fa-trophy" style="color:#16a34a"></i> Conversión a cliente por vendedor</h4>
+      ${porConv.length ? barras(porConv,'#16a34a')
+        : '<p class="text-[11px] text-slate-400 font-bold">Aún no hay prospectos convertidos en cliente.</p>'}
+      <p class="text-[10px] font-bold text-slate-500 mt-2">Total: ${nClientes} de ${total} prospectos (${tasa}%) ya son clientes.</p>
     </div>
 
     <div class="res-block">
@@ -768,7 +800,18 @@ function visitasDe(row){ let n=0; for(let i=1;i<=5;i++) if(getVal(row,'VISITA '+
 /* ---------- Listado ---------- */
 function vendedorAsignado(row){ const h=CONFIG._colVendedor||CONFIG.COL_VENDEDOR; return (row[h]==null?'':String(row[h])).trim(); }
 function vendedorCorto(row){ return vendedorAsignado(row).replace(/^asignad[oa]\s*a\s*/i,'').trim(); }
-function codigoCliente(row){ return getVal(row, CONFIG.COL_CODIGO); }
+function codigoCliente(row){ const h=CONFIG._colCodigo||CONFIG.COL_CODIGO; return (row[h]==null?'':String(row[h])).trim(); }
+function esCliente(row){ return !!codigoCliente(row); }
+
+async function guardarCodigo(row, btn){
+  const inp=document.getElementById('cod_'+row);
+  const val=inp.value.trim();
+  const col=CONFIG._colCodigo||CONFIG.COL_CODIGO;
+  btn.disabled=true; const o=btn.innerHTML; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  const ok=await guardar(row, col, val, null);
+  btn.disabled=false; btn.innerHTML=o;
+  if(ok){ toast(val?'¡Prospecto convertido en cliente! ✓':'Código quitado','ok'); showDetail(row); }
+}
 
 /* Teléfono -> WhatsApp / llamada */
 function telLimpio(row){
@@ -793,13 +836,14 @@ function renderListado(data){
   if(!data.length){ cont.innerHTML=`<div class="text-center p-8 text-slate-400 font-bold">Sin resultados. Ajusta los filtros.</div>`; return; }
 
   const head=`<div class="lhead">
-    ${thOrden('Cliente / alta','negocio')}${thOrden('Fecha','fecha')}${thOrden('Zona','zonaAsc')}
+    ${thOrden('Prospecto / alta','negocio')}${thOrden('Fecha','fecha')}${thOrden('Zona','zonaAsc')}
     ${thOrden('Asignado','asignado')}${thOrden('Productos','prod')}${thOrden('Seguimiento','vis')}
     <span>Contacto</span></div>`;
 
   const filas=data.map(row=>{
     const alta=getVal(row,'Impulsor de mercado');
     const asig=vendedorAsignado(row);
+    const cliente=esCliente(row);
     const tel=telLimpio(row);
     const f=fechaCorta(row);
     const prods=productosDe(row);
@@ -815,9 +859,9 @@ function renderListado(data){
          <a class="abtn tel" href="tel:${tel}" onclick="event.stopPropagation()" title="Llamar ${tel}"><i class="fas fa-phone"></i></a>`
       : `<span class="abtn off" title="Sin teléfono"><i class="fas fa-phone-slash"></i></span>`;
 
-    return `<div class="prow" onclick="showDetail(${row._row})">
+    return `<div class="prow${cliente?' es-cliente':''}" onclick="showDetail(${row._row})">
       <div class="c-negocio">
-        <div class="nom">${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
+        <div class="nom">${cliente?'<span class="cli-tag">★ CLIENTE</span> ':''}${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
         <div class="sub">Alta: <b>${esc(alta)||'—'}</b></div>
       </div>
       <div class="c-det">
@@ -999,6 +1043,20 @@ function showDetail(rowNum, focusVisit){
   ];
 
   let html = '';
+
+  // BLOQUE DESTACADO: conversión a cliente (código de venta -> columna AN "Codigo Cliente")
+  const codActual = codigoCliente(r);
+  html += `<div class="venta-box ${codActual?'convertido':''}">
+    <div class="venta-head">
+      <i class="fas fa-${codActual?'circle-check':'handshake-angle'}"></i>
+      <span>${codActual?'CLIENTE CONVERTIDO':'¿Ya le vendiste? Conviértelo en cliente'}</span>
+    </div>
+    <p class="venta-sub">Al concretar la venta, captura aquí el código de cliente.</p>
+    <div class="flex gap-2 mt-1">
+      <input id="cod_${r._row}" class="venta-input" value="${esc(codActual)}" placeholder="Código de venta / cliente">
+      <button class="venta-btn" onclick="guardarCodigo(${r._row}, this)"><i class="fas fa-floppy-disk"></i></button>
+    </div>
+  </div>`;
 
   if(parseGPS(gps)){
     html += `<button class="btn-gmaps mb-4" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gps)}','_blank')">
