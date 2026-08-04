@@ -90,6 +90,8 @@
   .fchip b { color:#dc2626; }
   .fchip.active { background:var(--marino); border-color:var(--marino); color:var(--mostaza); }
   .fchip.active b { color:var(--mostaza); }
+  .fchip.pausa.active { background:#7c3aed; border-color:#7c3aed; color:#fff; }
+  .fchip.pausa.active b { color:#fff; }
 
   .filter-bar { display:flex; gap:6px; padding:7px 10px; flex-wrap:wrap; align-items:stretch; }
   .filter-bar select { flex:1 1 30%; min-width:100px; padding:7px 6px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff;
@@ -113,6 +115,7 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .c-negocio .sub b { color:#0f5c8f; font-weight:800; }
   .cli-tag { background:#16a34a; color:#fff; font-size:9px; font-weight:900; padding:1px 6px; border-radius:5px; letter-spacing:.3px; vertical-align:middle; }
+  .sb-tag { background:#7c3aed; color:#fff; font-size:9px; font-weight:900; padding:1px 6px; border-radius:5px; letter-spacing:.3px; vertical-align:middle; }
   .prow.es-cliente { background:#f0fdf4 !important; box-shadow:inset 4px 0 0 #16a34a; }
   .cell { font-size:12.5px; font-weight:700; color:#334155; min-width:0; }
   .cell .mini { display:none; }
@@ -316,6 +319,21 @@
   .venta-btn { width:46px; border:none; border-radius:10px; background:#b45309; color:#fff; font-size:16px; flex-shrink:0; }
   .venta-box.convertido .venta-btn { background:#16a34a; }
 
+  /* CRÉDITO / MONTO / STANDBY */
+  .cred-box { background:#f8fafc; border:2px solid #e2e8f0; border-radius:12px; padding:11px; }
+  .cred-box.activo { border-color:#0891b2; background:#ecfeff; }
+  .cred-toggle { width:100%; padding:10px; border-radius:10px; border:2px solid #cbd5e1; background:#fff; color:#64748b;
+    font-family:inherit; font-weight:800; font-size:13px; margin-bottom:8px; }
+  .cred-toggle.on { background:#0891b2; border-color:#0891b2; color:#fff; }
+  .monto-row { display:flex; align-items:center; gap:6px; }
+  .monto-simbolo { font-weight:900; font-size:18px; color:#0891b2; }
+  .monto-input { flex:1; padding:10px 12px; border-radius:10px; border:2px solid #cbd5e1; font-family:inherit; font-weight:800;
+    font-size:15px; color:var(--marino); outline:none; }
+  .monto-input:focus { border-color:#0891b2; }
+  .sb-btn { width:100%; padding:12px; border-radius:11px; border:2px solid #7c3aed; background:#fff; color:#7c3aed;
+    font-family:inherit; font-weight:800; font-size:13.5px; }
+  .sb-btn.on { background:#7c3aed; color:#fff; }
+
   /* TOAST */
   #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(120px); z-index:5000;
     padding:14px 22px; border-radius:14px; font-weight:800; font-size:13px; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,.3); transition:.3s; }
@@ -382,10 +400,13 @@
 
   <div class="chip-bar">
     <button class="fchip active" data-asig="__all" onclick="setAsig(this)">Todos</button>
+    <button class="fchip" data-asig="__cli" onclick="setAsig(this)"><i class="fas fa-star"></i> Clientes <b id="cCli"></b></button>
     <button class="fchip" data-asig="__asig" onclick="setAsig(this)"><i class="fas fa-user-check"></i> Con vendedor</button>
     <button class="fchip warn" data-asig="__sin" onclick="setAsig(this)"><i class="fas fa-user-slash"></i> Sin asignar <b id="cSin"></b></button>
+    <button class="fchip" data-asig="__cred" onclick="setAsig(this)"><i class="fas fa-hand-holding-dollar"></i> Requiere crédito <b id="cCred"></b></button>
     <button class="fchip" data-asig="__seg" onclick="setAsig(this)"><i class="fas fa-comment-dots"></i> Con seguimiento</button>
     <button class="fchip" data-asig="__noseg" onclick="setAsig(this)"><i class="far fa-comment"></i> Sin seguimiento</button>
+    <button class="fchip pausa" data-asig="__standby" onclick="setAsig(this)"><i class="fas fa-pause"></i> StandBy <b id="cSb"></b></button>
   </div>
 
   <div class="filter-bar">
@@ -495,7 +516,13 @@ const CONFIG = {
   COL_CODIGO: 'Codigo Cliente',
 
   // Columnas AO–AS: fecha de cita agendada para cada visita (FECHA 1 … FECHA 5).
-  COL_FECHAS: ['FECHA 1','FECHA 2','FECHA 3','FECHA 4','FECHA 5']
+  COL_FECHAS: ['FECHA 1','FECHA 2','FECHA 3','FECHA 4','FECHA 5'],
+
+  // AT: StandBy (prospectos en pausa, se sacan de la lista principal).
+  COL_STANDBY: 'STANDBY',
+  // AU: ¿requiere crédito?  AV: monto / capacidad de compra mensual.
+  COL_CREDITO: 'CREDITO',
+  COL_MONTO: 'MONTO'
 };
 
 let allData = [], map, markersLayer, sortState = {};
@@ -624,6 +651,9 @@ function resolveCol(ref){
 function afterLoad(){
   CONFIG._colVendedor = resolveCol(CONFIG.COL_VENDEDOR);   // "AH" -> nombre real del encabezado
   CONFIG._colCodigo   = resolveCol(CONFIG.COL_CODIGO);     // AN "Codigo Cliente"
+  CONFIG._colStandby  = resolveCol(CONFIG.COL_STANDBY);    // AT
+  CONFIG._colCredito  = resolveCol(CONFIG.COL_CREDITO);    // AU
+  CONFIG._colMonto    = resolveCol(CONFIG.COL_MONTO);      // AV
   buildVendorColors();
   populateFilters();
   renderResumen();
@@ -698,6 +728,17 @@ function renderResumen(){
   clientes.forEach(r=>{ const v=vendedorCorto(r)||getVal(r,'Impulsor de mercado')||'Sin asignar'; convPorVend[v]=(convPorVend[v]||0)+1; });
   const porConv=Object.entries(convPorVend).sort((a,b)=>b[1]-a[1]);
 
+  // Crédito (columnas AU / AV) — se excluyen los StandBy del conteo general
+  const activos=allData.filter(r=>!esStandby(r));
+  const conCredito=activos.filter(reqCredito);
+  const nCred=conCredito.length;
+  const montoTotal=conCredito.reduce((s,r)=>s+montoNum(r),0);
+  const fmtMonto=n=> n>=1000 ? '$'+n.toLocaleString('es-MX') : '$'+n;
+  const credPorVend={};
+  conCredito.forEach(r=>{ const v=vendedorCorto(r)||getVal(r,'Impulsor de mercado')||'Sin asignar'; credPorVend[v]=(credPorVend[v]||0)+montoNum(r); });
+  const porCredMonto=Object.entries(credPorVend).sort((a,b)=>b[1]-a[1]);
+  const nStandby=allData.filter(esStandby).length;
+
   document.getElementById('resBody').innerHTML=`
     <div class="res-kpis">
       <div class="kpi"><b>${total}</b><span>Prospectos</span></div>
@@ -710,6 +751,16 @@ function renderResumen(){
       ${porConv.length ? barras(porConv,'#16a34a')
         : '<p class="text-[11px] text-slate-400 font-bold">Aún no hay prospectos convertidos en cliente.</p>'}
       <p class="text-[10px] font-bold text-slate-500 mt-2">Total: ${nClientes} de ${total} prospectos (${tasa}%) ya son clientes.</p>
+    </div>
+
+    <div class="res-block" style="border-left:5px solid #0891b2">
+      <h4><i class="fas fa-hand-holding-dollar" style="color:#0891b2"></i> Prospectos que requieren crédito</h4>
+      <div class="res-kpis" style="margin-bottom:8px">
+        <div class="kpi" style="border-top-color:#0891b2"><b style="color:#0891b2">${nCred}</b><span>Requieren crédito</span></div>
+        <div class="kpi" style="border-top-color:#16a34a;grid-column:span 2"><b style="color:#16a34a;font-size:17px">${fmtMonto(montoTotal)}</b><span>Capacidad de compra mensual total</span></div>
+      </div>
+      ${porCredMonto.length ? `<p class="text-[10px] font-bold text-slate-500 mb-1">Monto mensual por vendedor:</p>${barras(porCredMonto.map(([k,v])=>[k+' · '+fmtMonto(v), v]),'#0891b2')}`
+        : '<p class="text-[11px] text-slate-400 font-bold">Nadie marcado con crédito todavía.</p>'}
     </div>
 
     <div class="res-block">
@@ -802,6 +853,10 @@ function vendedorAsignado(row){ const h=CONFIG._colVendedor||CONFIG.COL_VENDEDOR
 function vendedorCorto(row){ return vendedorAsignado(row).replace(/^asignad[oa]\s*a\s*/i,'').trim(); }
 function codigoCliente(row){ const h=CONFIG._colCodigo||CONFIG.COL_CODIGO; return (row[h]==null?'':String(row[h])).trim(); }
 function esCliente(row){ return !!codigoCliente(row); }
+function esStandby(row){ const h=CONFIG._colStandby||CONFIG.COL_STANDBY; return /^(s[ií]|x|true|1|standby|verdadero)/i.test(String(row[h]||'').trim()); }
+function reqCredito(row){ const h=CONFIG._colCredito||CONFIG.COL_CREDITO; return /^(s[ií]|x|true|1|verdadero)/i.test(String(row[h]||'').trim()); }
+function montoCredito(row){ const h=CONFIG._colMonto||CONFIG.COL_MONTO; return (row[h]==null?'':String(row[h])).trim(); }
+function montoNum(row){ const n=parseFloat(montoCredito(row).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; }
 
 async function guardarCodigo(row, btn){
   const inp=document.getElementById('cod_'+row);
@@ -811,6 +866,35 @@ async function guardarCodigo(row, btn){
   const ok=await guardar(row, col, val, null);
   btn.disabled=false; btn.innerHTML=o;
   if(ok){ toast(val?'¡Prospecto convertido en cliente! ✓':'Código quitado','ok'); showDetail(row); }
+}
+
+async function toggleStandby(row, btn){
+  const rec=findByRow(row); const activar=!esStandby(rec);
+  if(activar && !confirm('¿Poner este prospecto en StandBy? Saldrá de la lista principal (lo encuentras con el filtro StandBy).')) return;
+  const col=CONFIG._colStandby||CONFIG.COL_STANDBY;
+  btn.disabled=true;
+  const ok=await guardar(row, col, activar?'SI':'', null);
+  btn.disabled=false;
+  if(ok){ toast(activar?'Prospecto puesto en StandBy':'Prospecto reactivado','ok'); closeDetail(); }
+}
+
+async function toggleCredito(row, btn){
+  const rec=findByRow(row); const activar=!reqCredito(rec);
+  const col=CONFIG._colCredito||CONFIG.COL_CREDITO;
+  btn.disabled=true;
+  const ok=await guardar(row, col, activar?'SI':'', null);
+  btn.disabled=false;
+  if(ok){ toast(activar?'Marcado: requiere crédito':'Crédito desmarcado','ok'); showDetail(row); }
+}
+
+async function guardarMonto(row, btn){
+  const inp=document.getElementById('monto_'+row);
+  const val=inp.value.trim();
+  const col=CONFIG._colMonto||CONFIG.COL_MONTO;
+  btn.disabled=true; const o=btn.innerHTML; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  const ok=await guardar(row, col, val, null);
+  btn.disabled=false; btn.innerHTML=o;
+  if(ok){ toast('Monto guardado ✓','ok'); showDetail(row); }
 }
 
 /* Teléfono -> WhatsApp / llamada */
@@ -844,6 +928,7 @@ function renderListado(data){
     const alta=getVal(row,'Impulsor de mercado');
     const asig=vendedorAsignado(row);
     const cliente=esCliente(row);
+    const standby=esStandby(row);
     const tel=telLimpio(row);
     const f=fechaCorta(row);
     const prods=productosDe(row);
@@ -861,7 +946,7 @@ function renderListado(data){
 
     return `<div class="prow${cliente?' es-cliente':''}" onclick="showDetail(${row._row})">
       <div class="c-negocio">
-        <div class="nom">${cliente?'<span class="cli-tag">★ CLIENTE</span> ':''}${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
+        <div class="nom">${cliente?'<span class="cli-tag">★ CLIENTE</span> ':''}${standby?'<span class="sb-tag">⏸ STANDBY</span> ':''}${esc(getVal(row,'Nombre del negocio'))||'Prospecto'}</div>
         <div class="sub">Alta: <b>${esc(alta)||'—'}</b></div>
       </div>
       <div class="c-det">
@@ -956,6 +1041,9 @@ function populateFilters(){
     + asignados.map(v=>`<option value="${esc(v)}">Asignado a ${esc(v)}</option>`).join('');
 
   const c=document.getElementById('cSin'); if(c) c.textContent=sinAsignar?`(${sinAsignar})`:'';
+  const cc=document.getElementById('cCli'); if(cc){ const n=allData.filter(esCliente).length; cc.textContent=n?`(${n})`:''; }
+  const cr=document.getElementById('cCred'); if(cr){ const n=allData.filter(reqCredito).length; cr.textContent=n?`(${n})`:''; }
+  const cs=document.getElementById('cSb'); if(cs){ const n=allData.filter(esStandby).length; cs.textContent=n?`(${n})`:''; }
 }
 
 // Clave ordenable aaaa-mm a partir de la marca temporal
@@ -980,12 +1068,17 @@ function applyFilters(){
 
   let list=allData.filter(r=>{
     if(q && !Object.values(r).some(v=>String(v).toLowerCase().includes(q))) return false;
+    // Los StandBy no salen en la lista principal; solo aparecen si el chip StandBy está activo.
+    if(esStandby(r) && filtroAsig!=='__standby') return false;
+    if(filtroAsig==='__standby' && !esStandby(r)) return false;
     const alta=getVal(r,'Impulsor de mercado');
     const asig=vendedorAsignado(r);
     if(filtroAsig==='__asig'  && !asig) return false;
     if(filtroAsig==='__sin'   && asig)  return false;
     if(filtroAsig==='__seg'   && visitasDe(r)===0) return false;
     if(filtroAsig==='__noseg' && visitasDe(r)>0)   return false;
+    if(filtroAsig==='__cred'  && !reqCredito(r)) return false;
+    if(filtroAsig==='__cli'   && !esCliente(r)) return false;
     if(fv.startsWith('v:') && alta!==fv.slice(2)) return false;
     if(fz!=='__all' && getVal(r,'Zona')!==fz) return false;
     if(fm!=='__all' && mesClave(r)!==fm) return false;
@@ -1076,6 +1169,30 @@ function showDetail(rowNum, focusVisit){
       ${asigActual?`<button class="btn-mic" title="Quitar asignación" onclick="quitarAsignacion(${r._row}, this)"><i class="fas fa-eraser"></i></button>`:''}
     </div>
     <p class="text-[10px] text-slate-400 font-bold mt-1">Se guarda en la columna AF. Vacío = sin asignar.</p>`;
+
+  // CRÉDITO Y MONTO (columnas AU / AV)
+  const credYa = reqCredito(r);
+  html += `<p class="sec-title">Crédito / capacidad de compra</p>
+    <div class="cred-box ${credYa?'activo':''}">
+      <button class="cred-toggle ${credYa?'on':''}" onclick="toggleCredito(${r._row}, this)">
+        <i class="fas fa-hand-holding-dollar"></i> ${credYa?'Sí requiere crédito':'¿Requiere crédito?'}
+      </button>
+      <div class="monto-row">
+        <span class="monto-simbolo">$</span>
+        <input id="monto_${r._row}" class="monto-input" inputmode="decimal" value="${esc(montoCredito(r))}" placeholder="Capacidad de compra mensual">
+        <button class="venta-btn" style="background:var(--marino)" onclick="guardarMonto(${r._row}, this)"><i class="fas fa-floppy-disk"></i></button>
+      </div>
+      <p class="text-[10px] text-slate-400 font-bold mt-1">Monto mensual estimado de compra del cliente.</p>
+    </div>`;
+
+  // STANDBY (columna AT)
+  const sbYa = esStandby(r);
+  html += `<div class="mt-3">
+      <button class="sb-btn ${sbYa?'on':''}" onclick="toggleStandby(${r._row}, this)">
+        <i class="fas fa-${sbYa?'play':'pause'}"></i> ${sbYa?'Quitar de StandBy (reactivar)':'Poner en StandBy'}
+      </button>
+      <p class="text-[10px] text-slate-400 font-bold mt-1 text-center">${sbYa?'Este prospecto está en pausa y no aparece en la lista principal.':'En StandBy se guarda para no borrarlo, pero sale de la lista principal.'}</p>
+    </div>`;
 
   // Datos generales
   html += `<p class="sec-title">Datos generales</p>` +
