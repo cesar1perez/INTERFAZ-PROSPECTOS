@@ -412,6 +412,14 @@
   <div class="filter-bar">
     <select id="fVendedor" onchange="applyFilters()"></select>
     <select id="fZona" onchange="applyFilters()"></select>
+    <select id="fProducto" onchange="applyFilters()">
+      <option value="__all">📦 Cualquier producto</option>
+      <option value="Acumuladores">Acumuladores</option>
+      <option value="Motobaterías">Motobaterías</option>
+      <option value="Lubricantes">Lubricantes</option>
+      <option value="Filtros">Filtros</option>
+      <option value="Llantas">Llantas</option>
+    </select>
     <select id="fAsignado" onchange="applyFilters()"></select>
     <select id="fMes" onchange="applyFilters()"></select>
     <select id="fFecha" onchange="applyFilters()">
@@ -672,9 +680,8 @@ function toggleResumen(){
 }
 
 function empresaDe(row){
-  const z=getVal(row,'Zona');
-  const pr=(CONFIG.EMPRESAS.zonasPozaRica||[]).map(s=>s.toLowerCase().trim());
-  return pr.includes(z.toLowerCase().trim()) ? 'Poza Rica' : 'Tulancingo';
+  const d=getVal(row,'Distribuidor Comercial');
+  return d || 'Sin especificar';
 }
 function mesDe(row){
   const m=getVal(row,'Mes correspondiente');
@@ -704,7 +711,7 @@ function renderResumen(){
 
   const porVend=Object.entries(cuenta(r=>getVal(r,'Impulsor de mercado'))).sort((a,b)=>b[1]-a[1]);
   const porZona=Object.entries(cuenta(r=>getVal(r,'Zona'))).sort((a,b)=>b[1]-a[1]);
-  const porEmp=cuenta(empresaDe);
+  const porEmp=Object.entries(cuenta(empresaDe)).sort((a,b)=>b[1]-a[1]);
   const porMesObj=cuenta(mesDe);
   const porMes=Object.entries(porMesObj).sort((a,b)=>ORDEN_MESES.indexOf(a[0])-ORDEN_MESES.indexOf(b[0]));
 
@@ -764,11 +771,9 @@ function renderResumen(){
     </div>
 
     <div class="res-block">
-      <h4>Por empresa</h4>
-      <div class="emp-row"><span>Llanterama Tulancingo S.A. de C.V.</span><b>${porEmp['Tulancingo']||0}</b></div>
-      <div class="emp-row" style="border:none"><span>Llanterama Poza Rica S.A. de C.V.</span><b>${porEmp['Poza Rica']||0}</b></div>
-      ${(CONFIG.EMPRESAS.zonasPozaRica||[]).length ? '' :
-        '<p class="text-[10px] text-red-600 font-bold mt-2">⚠ Define las zonas de Poza Rica en CONFIG.EMPRESAS para separar el conteo.</p>'}
+      <h4><i class="fas fa-building" style="color:var(--marino)"></i> Prospectos por empresa (Distribuidor Comercial)</h4>
+      ${porEmp.length ? porEmp.map(([k,v],i)=>`<div class="emp-row"${i===porEmp.length-1?' style="border:none"':''}><span>${esc(k)}</span><b>${v}</b></div>`).join('')
+        : '<p class="text-[11px] text-slate-400 font-bold">Sin datos en la columna Distribuidor Comercial.</p>'}
     </div>
 
     <div class="res-block">
@@ -846,6 +851,13 @@ const PRODUCTOS=[
   ['LLTA','¿Compra llanta','#dc2626'],
 ];
 function productosDe(row){ return PRODUCTOS.filter(([,col])=>esSi(getVal(row,col))); }
+const PROD_COL={
+  'Acumuladores':'¿Compra acumuladores',
+  'Motobaterías':'¿Compra motobaterías',
+  'Lubricantes':'¿Compra lubricantes',
+  'Filtros':'¿Compra filtros',
+  'Llantas':'¿Compra llanta'
+};
 function visitasDe(row){ let n=0; for(let i=1;i<=5;i++) if(getVal(row,'VISITA '+i)) n++; return n; }
 
 /* ---------- Listado ---------- */
@@ -1008,6 +1020,7 @@ function limpiarFiltros(){
   document.getElementById('fZona').value='__all';
   document.getElementById('fFecha').value='__all';
   document.getElementById('fMes').value='__all';
+  document.getElementById('fProducto').value='__all';
   document.getElementById('fAsignado').value='__all';
   document.getElementById('fOrden').value='reciente';
   filtroAsig='__all';
@@ -1061,6 +1074,7 @@ function applyFilters(){
   const q=(document.getElementById('searchInput').value||'').toLowerCase();
   const fv=document.getElementById('fVendedor').value;
   const fz=document.getElementById('fZona').value;
+  const fp=document.getElementById('fProducto').value;
   const ff=document.getElementById('fFecha').value;
   const fm=document.getElementById('fMes').value;
   const fa=document.getElementById('fAsignado').value;
@@ -1081,6 +1095,7 @@ function applyFilters(){
     if(filtroAsig==='__cli'   && !esCliente(r)) return false;
     if(fv.startsWith('v:') && alta!==fv.slice(2)) return false;
     if(fz!=='__all' && getVal(r,'Zona')!==fz) return false;
+    if(fp!=='__all' && !esSi(getVal(r, PROD_COL[fp]))) return false;
     if(fm!=='__all' && mesClave(r)!==fm) return false;
     if(fa!=='__all' && vendedorCorto(r)!==fa) return false;
     if(ff!=='__all' && !esReciente(r, ff)) return false;
