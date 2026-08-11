@@ -306,6 +306,11 @@
     font-weight:800; font-size:14px; background:#fff; color:var(--marino); }
 
   /* BLOQUE CONVERSIÓN A CLIENTE */
+  .ficha-tools { display:flex; gap:8px; margin-bottom:12px; }
+  .ficha-tool { flex:1; border:none; border-radius:11px; padding:11px; font-family:inherit; font-weight:800; font-size:12.5px;
+    display:flex; align-items:center; justify-content:center; gap:7px; color:#fff; }
+  .ficha-tool.pdf { background:#b91c1c; }
+  .ficha-tool.gps { background:#1a73e8; }
   .venta-box { border:2px dashed #f59e0b; background:#fffbeb; border-radius:14px; padding:12px; margin-bottom:14px; }
   .venta-box.convertido { border-style:solid; border-color:#16a34a; background:#f0fdf4; }
   .venta-head { display:flex; align-items:center; gap:8px; font-weight:900; font-size:13px; color:#b45309; text-transform:uppercase; letter-spacing:.3px; }
@@ -558,6 +563,14 @@ function parseGPS(s){
   const [a,b] = s.split(',');
   const lat = parseFloat(a), lng = parseFloat(b);
   return (isNaN(lat)||isNaN(lng)) ? null : [lat,lng];
+}
+// Devuelve un enlace de mapa a partir de coordenadas O de un link pegado de Google Maps
+function gpsURL(raw){
+  raw=String(raw||'').trim(); if(!raw) return '';
+  if(/^https?:\/\//i.test(raw)) return raw;                 // pegaron un link directo
+  const c=parseGPS(raw);
+  if(c) return `https://www.google.com/maps/search/?api=1&query=${c[0]},${c[1]}`;
+  return '';
 }
 
 // FIX: el potencial venía en 3 columnas separadas; aquí se unifica.
@@ -1150,7 +1163,12 @@ function showDetail(rowNum, focusVisit){
     ['Llantas', getVal(r,'¿Compra llanta'), getVal(r,'marca de llanta')],
   ];
 
-  let html = '';
+  // Barra superior: imprimir/PDF + GPS
+  const gpsU = gpsURL(gps);
+  html += `<div class="ficha-tools">
+      <button class="ficha-tool pdf" onclick="imprimirFicha(${r._row})"><i class="fas fa-file-pdf"></i> Ficha PDF / Imprimir</button>
+      ${gpsU?`<button class="ficha-tool gps" onclick="window.open('${gpsU}','_blank')"><i class="fas fa-location-dot"></i> Ir con GPS</button>`:''}
+    </div>`;
 
   // BLOQUE DESTACADO: conversión a cliente (código de venta -> columna AN "Codigo Cliente")
   const codActual = codigoCliente(r);
@@ -1165,11 +1183,6 @@ function showDetail(rowNum, focusVisit){
       <button class="venta-btn" onclick="guardarCodigo(${r._row}, this)"><i class="fas fa-floppy-disk"></i></button>
     </div>
   </div>`;
-
-  if(parseGPS(gps)){
-    html += `<button class="btn-gmaps mb-4" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gps)}','_blank')">
-      <i class="fas fa-directions text-lg"></i> IR AL CLIENTE (GPS)</button>`;
-  }
 
   // ASIGNACIÓN DE VENDEDOR (columna AF) — texto libre para no borrar lo ya escrito
   const asigActual = vendedorAsignado(r);
@@ -1530,6 +1543,158 @@ function verDiaCal(d){
       </div>`;
       }).join('');
   cont.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ==================================================================
+   FICHA EN PDF (una página, para imprimir al vendedor)
+   ================================================================== */
+function imprimirFicha(rowNum){
+  const r=findByRow(rowNum); if(!r) return;
+  const V=(n)=>esc(getVal(r,n))||'—';
+  const negocio=esc(getVal(r,'Nombre del negocio'))||'PROSPECTO';
+  const tel=telLimpio(r);
+  const telFmt=tel||'—';
+  const dir=esc(getVal(r,'Dirección completa'))||'—';
+  const cod=codigoCliente(r);
+  const asig=vendedorCorto(r);
+  const pot=getPotencial(r);
+  const cred=reqCredito(r), monto=montoCredito(r);
+  const gpsU=gpsURL(getVal(r,'GPS'));
+  const f=fechaCorta(r);
+
+  const prods=productosDe(r);
+  const prodHtml = prods.length
+    ? prods.map(([n,,c])=>`<span class="pchip" style="border-color:${c};color:${c}">${n}</span>`).join('')
+    : '<span class="muted">Sin líneas registradas</span>';
+
+  // Perfil de compra detallado (qué compra y marca)
+  const perfil=[
+    ['Acumuladores','¿Compra acumuladores','marca de acumuladores'],
+    ['Lubricantes','¿Compra lubricantes','marca de lubricante'],
+    ['Motobaterías','¿Compra motobaterías','marca de motobatería'],
+    ['Filtros','¿Compra filtros','marca de filtros'],
+    ['Llantas','¿Compra llanta','marca de llanta'],
+  ].map(([lbl,cQ,cM])=>{
+    const compra=esSi(getVal(r,cQ)); const marca=esc(getVal(r,cM));
+    return `<tr><td>${lbl}</td><td class="${compra?'si':'no'}">${compra?'SÍ':'—'}</td><td>${marca||'—'}</td></tr>`;
+  }).join('');
+
+  // Bitácora de visitas + citas
+  let bit='';
+  for(let n=1;n<=5;n++){
+    const c=esc(getVal(r,'VISITA '+n));
+    const cita=isoFecha(getVal(r,CONFIG.COL_FECHAS[n-1]));
+    if(c || cita){
+      bit+=`<tr><td class="vn">V${n}</td><td>${cita?`<b>${cita}</b> · `:''}${c||'<span class="muted">Cita agendada, sin comentario</span>'}</td></tr>`;
+    }
+  }
+  if(!bit) bit=`<tr><td colspan="2" class="muted" style="text-align:center">Sin visitas registradas todavía</td></tr>`;
+
+  const badge = cod
+    ? `<span class="tag verde">CLIENTE · ${esc(cod)}</span>`
+    : (esStandby(r) ? `<span class="tag morado">STANDBY</span>` : `<span class="tag azul">PROSPECTO</span>`);
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Ficha - ${negocio}</title>
+  <style>
+    @page { size:A4; margin:11mm; }
+    *{ box-sizing:border-box; margin:0; padding:0; font-family:Arial,Helvetica,sans-serif; }
+    body{ color:#0f172a; font-size:11px; }
+    .top{ display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #001529; padding-bottom:8px; margin-bottom:10px; }
+    .logo{ width:46px; height:46px; border:3px solid #facc15; border-radius:12px; display:flex; align-items:center; justify-content:center;
+      color:#001529; font-weight:900; font-style:italic; font-size:26px; background:#001529; }
+    .logo span{ color:#facc15; }
+    .top .r{ text-align:right; font-size:9px; color:#64748b; font-weight:700; }
+    .hero{ background:#001529; color:#fff; border-radius:10px; padding:11px 14px; margin-bottom:10px; }
+    .hero .nom{ font-size:20px; font-weight:900; text-transform:uppercase; line-height:1.1; }
+    .hero .sub{ color:#facc15; font-size:11px; font-weight:700; margin-top:3px; }
+    .tag{ display:inline-block; padding:2px 9px; border-radius:20px; font-size:10px; font-weight:900; margin-top:6px; }
+    .tag.verde{ background:#16a34a; } .tag.azul{ background:#2563eb; } .tag.morado{ background:#7c3aed; }
+    .destacado{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+    .dbox{ border:2px solid #001529; border-radius:9px; padding:8px 11px; }
+    .dbox.tel{ border-color:#16a34a; } .dbox.dir{ grid-column:1 / -1; border-color:#1a73e8; }
+    .dbox .k{ font-size:8.5px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.5px; }
+    .dbox .v{ font-size:16px; font-weight:900; color:#001529; margin-top:1px; }
+    .dbox.tel .v{ color:#16a34a; } .dbox.dir .v{ color:#1a73e8; font-size:13px; }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; margin-bottom:10px; }
+    .row{ display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid #e5eaf1; padding:3.5px 0; }
+    .row .k{ color:#64748b; font-weight:700; } .row .v{ color:#001529; font-weight:800; text-align:right; }
+    h3{ background:#facc15; color:#001529; font-size:11px; text-transform:uppercase; letter-spacing:.5px; padding:4px 9px;
+      border-radius:6px; margin:0 0 6px; }
+    .sect{ margin-bottom:10px; }
+    table{ width:100%; border-collapse:collapse; }
+    td{ padding:4px 6px; border-bottom:1px solid #e5eaf1; font-size:10.5px; vertical-align:top; }
+    th{ text-align:left; font-size:8.5px; color:#64748b; text-transform:uppercase; padding:2px 6px; }
+    td.si{ color:#16a34a; font-weight:900; } td.no{ color:#cbd5e1; font-weight:700; }
+    td.vn{ font-weight:900; color:#001529; width:34px; }
+    .pchip{ display:inline-block; border:1.5px solid; border-radius:5px; padding:1px 7px; font-size:10px; font-weight:800; margin:2px 3px 0 0; }
+    .muted{ color:#94a3b8; font-style:italic; }
+    .cols{ display:grid; grid-template-columns:1.05fr .95fr; gap:14px; }
+    .foot{ margin-top:8px; border-top:2px solid #001529; padding-top:6px; font-size:8.5px; color:#64748b; display:flex; justify-content:space-between; }
+    @media print{ .noprint{ display:none; } }
+    .noprint{ text-align:center; margin:10px 0; }
+    .noprint button{ background:#001529; color:#facc15; border:none; padding:9px 22px; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; }
+  </style></head><body>
+    <div class="top">
+      <div class="logo"><span>LL</span></div>
+      <div class="r">FICHA DE PROSPECTO · GRUPO LLANTERAMA<br>Generada: ${new Date().toLocaleDateString('es-MX')} · Alta: ${f.dia} ${f.hora}</div>
+    </div>
+
+    <div class="hero">
+      <div class="nom">${negocio}</div>
+      <div class="sub">${V('Giro del negocio')} · Zona ${V('Zona')}</div>
+      ${badge}
+    </div>
+
+    <div class="destacado">
+      <div class="dbox tel"><div class="k">Teléfono</div><div class="v">${telFmt}</div></div>
+      <div class="dbox"><div class="k">Encargado / Dueño</div><div class="v" style="font-size:13px">${V('encargado')}</div></div>
+      <div class="dbox dir"><div class="k">Dirección</div><div class="v">${dir}</div></div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <div class="row"><span class="k">Vendedor asignado</span><span class="v">${esc(asig)||'Sin asignar'}</span></div>
+        <div class="row"><span class="k">Dio de alta</span><span class="v">${V('Impulsor de mercado')}</span></div>
+        <div class="row"><span class="k">Distribuidor (empresa)</span><span class="v">${V('Distribuidor Comercial')}</span></div>
+        <div class="row"><span class="k">Correo</span><span class="v">${V('Correo')}</span></div>
+      </div>
+      <div>
+        <div class="row"><span class="k">Potencial</span><span class="v">${pot||'—'}</span></div>
+        <div class="row"><span class="k">Nivel de interés</span><span class="v">${V('nivel de interés')}</span></div>
+        <div class="row"><span class="k">Requiere crédito</span><span class="v">${cred?'SÍ':'No'}</span></div>
+        <div class="row"><span class="k">Capacidad compra/mes</span><span class="v">${monto?('$'+esc(monto)):'—'}</span></div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="sect">
+        <h3>Perfil de compra</h3>
+        <table><tr><th>Línea</th><th>Compra</th><th>Marca</th></tr>${perfil}</table>
+        <div style="margin-top:6px">${prodHtml}</div>
+      </div>
+      <div class="sect">
+        <h3>Competencia</h3>
+        <div class="row"><span class="k">¿Le surte competencia?</span><span class="v">${V('¿Le distribuye la competencia')}</span></div>
+        <div class="row"><span class="k">Líneas competencia</span><span class="v">${V('líneas de producto')}</span></div>
+        ${gpsU?`<div class="row"><span class="k">Ubicación GPS</span><span class="v">${esc(getVal(r,'GPS'))}</span></div>`:''}
+      </div>
+    </div>
+
+    <div class="sect">
+      <h3>Bitácora de visitas y citas</h3>
+      <table>${bit}</table>
+    </div>
+
+    ${getVal(r,'Observaciones')?`<div class="sect"><h3>Observaciones</h3><div style="font-size:10.5px">${esc(getVal(r,'Observaciones'))}</div></div>`:''}
+
+    <div class="foot"><span>Grupo Llanterama · CRM de prospección</span><span>Prospecto: ${negocio}</span></div>
+
+    <div class="noprint"><button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button></div>
+    <script>window.onload=function(){ setTimeout(function(){ window.print(); }, 400); };<\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 window.onload = loadData;
