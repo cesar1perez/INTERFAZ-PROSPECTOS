@@ -1164,6 +1164,7 @@ function showDetail(rowNum, focusVisit){
   ];
 
   // Barra superior: imprimir/PDF + GPS
+  let html = '';
   const gpsU = gpsURL(gps);
   html += `<div class="ficha-tools">
       <button class="ficha-tool pdf" onclick="imprimirFicha(${r._row})"><i class="fas fa-file-pdf"></i> Ficha PDF / Imprimir</button>
